@@ -304,7 +304,7 @@ export default class VaultKosmosPlugin extends Plugin {
     const persisted = await this.loadData();
     this.agentSettings = migrateAgentSettings(persisted);
     this.nextcloudSettings = migrateNextcloudSettings(persisted?.nextcloud);
-    if (!persisted?.nextcloud) this.nextcloudSettings.remoteFolder = `Kosmos-Oden/${this.app.vault.getName()}`;
+    if (!persisted?.nextcloud) this.nextcloudSettings.remoteFolder = `Vault-Kosmos/${this.app.vault.getName()}`;
     const scope = syncScope(this.nextcloudSettings);
     this.nextcloudState = migrateNextcloudState(persisted?.nextcloudState, scope);
     this.nextcloudStatus = this.nextcloudSettings.serverUrl ? "Ready" : "Not configured";

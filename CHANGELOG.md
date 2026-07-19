@@ -7,6 +7,20 @@ changes, called out under **Compatibility**).
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-07-19
+
+### Fixed
+- Branding consistency: replaced the remaining user-facing "Kosmos-Oden"
+  strings on the Options screen (Nextcloud sync, config-sync, and GKOS
+  formatting tab descriptions) and in the Graphiti ingestion-status API
+  response with the ratified **Vault Kosmos** name, so the Options tabs no
+  longer show two different product names.
+
+### Changed
+- Default Nextcloud remote folder renamed from `Kosmos-Oden` to `Vault-Kosmos`
+  for **fresh installs only**. Already-saved settings are never overwritten:
+  the default applies only when no stored folder value is present.
+
 ## [1.0.0] — 2026-07-19 (Kosmos-Oden Lite)
 
 The 0.5.x line graduates into its own product: **Kosmos-Oden Lite (Vault

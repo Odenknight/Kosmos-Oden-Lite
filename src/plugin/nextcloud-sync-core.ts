@@ -11,7 +11,7 @@ export interface NextcloudSettings {
 }
 export const DEFAULT_NEXTCLOUD_SETTINGS: NextcloudSettings = {
   schemaVersion: NEXTCLOUD_SYNC_SCHEMA, enabled: false, serverUrl: "", username: "",
-  remoteFolder: "Kosmos-Oden", syncOnStartup: false, intervalMinutes: 0,
+  remoteFolder: "Vault-Kosmos", syncOnStartup: false, intervalMinutes: 0,
   propagateDeletes: false, syncObsidianConfig: false, excludePatterns: [...DEFAULT_SYNC_EXCLUDES],
 };
 export interface SyncRecord { localHash: string; remoteEtag: string; remoteMtime: number; remoteSize: number; syncedAt: number; }
@@ -28,7 +28,7 @@ export function migrateNextcloudSettings(raw: any): NextcloudSettings {
   s.syncObsidianConfig = s.syncObsidianConfig === true;
   s.intervalMinutes = Math.max(0, Math.min(1440, Math.floor(Number(s.intervalMinutes) || 0)));
   s.serverUrl = String(s.serverUrl || "").trim(); s.username = String(s.username || "").trim();
-  s.remoteFolder = normalizeRemotePath(String(s.remoteFolder || "Kosmos-Oden")) || "Kosmos-Oden";
+  s.remoteFolder = normalizeRemotePath(String(s.remoteFolder || "Vault-Kosmos")) || "Vault-Kosmos";
   s.excludePatterns = Array.isArray(s.excludePatterns)
     ? s.excludePatterns.map(String).map((v) => v.trim()).filter((v) => v && v.toLowerCase() !== OBSIDIAN_CONFIG_PATTERN).slice(0, 200)
     : [...DEFAULT_SYNC_EXCLUDES];

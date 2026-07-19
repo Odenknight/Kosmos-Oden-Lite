@@ -897,7 +897,7 @@ export class KosmosAgentServer {
     return {
       state: "export-ready",
       searchable: false,
-      reason: "Kosmos-Oden prepares episodes but does not assume a queued Graphiti MCP ingestion is searchable.",
+      reason: "Vault Kosmos prepares episodes but does not assume a queued Graphiti MCP ingestion is searchable.",
       sourceIndexedAt: graph.stats.indexedAt,
       profile: graphitiIngestionProfile({ combinedExtraction: this.settings.graphitiCombinedExtraction }),
       upstreamCheckRequired: true,

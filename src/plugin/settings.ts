@@ -169,7 +169,7 @@ export class KosmosSettingTab extends PluginSettingTab {
 
     syncEl.createEl("h2", { text: "Connectivity to Sync Vault" });
     syncEl.createEl("p", {
-      text: "Native two-way Nextcloud Files synchronization over WebDAV. Kosmos-Oden compares local and remote state before every write, uses conditional requests, and preserves a conflict copy when both sides changed.",
+      text: "Native two-way Nextcloud Files synchronization over WebDAV. Vault Kosmos compares local and remote state before every write, uses conditional requests, and preserves a conflict copy when both sides changed.",
       cls: "setting-item-description",
     });
     const ncStatus = syncEl.createEl("p", { text: `Nextcloud status: ${this.plugin.nextcloudStatus}` });
@@ -206,7 +206,7 @@ export class KosmosSettingTab extends PluginSettingTab {
       .setDesc("Off by default: a file missing on one side is restored from the other. When on, an unchanged file deleted on one side is deleted on the other; changed-vs-deleted cases remain conflicts.")
       .addToggle((t) => t.setValue(nc.propagateDeletes).onChange(async (v) => { nc.propagateDeletes = v; await this.plugin.saveNextcloudSettings(); }));
     new Setting(syncEl).setName("Sync hidden Obsidian configuration (.obsidian)")
-      .setDesc(`Off by default. Enable to sync themes, snippets, hotkeys, and plugin files under .obsidian. Kosmos-Oden's own ${PROTECTED_SYNC_EXCLUDES[0]} always remains excluded because it contains local sync state and Agent API credentials.`)
+      .setDesc(`Off by default. Enable to sync themes, snippets, hotkeys, and plugin files under .obsidian. Vault Kosmos's own ${PROTECTED_SYNC_EXCLUDES[0]} always remains excluded because it contains local sync state and Agent API credentials.`)
       .addToggle((t) => t.setValue(nc.syncObsidianConfig).onChange(async (v) => { nc.syncObsidianConfig = v; await this.plugin.saveNextcloudSettings(); }));
     new Setting(syncEl).setName("Hidden-file and path exclusions")
       .setDesc(`One case-insensitive glob per line for individual hidden files or folders. The .obsidian toggle above controls the whole configuration folder. Other defaults: ${DEFAULT_SYNC_EXCLUDES.join(", ")}. Protected paths cannot be overridden.`)
@@ -234,7 +234,7 @@ export class KosmosSettingTab extends PluginSettingTab {
       .addButton((b) => b.setButtonText("Safety validation pending").setDisabled(true));
 
     okfEl.createEl("h2", { text: "GKOS Note Formatting" });
-    okfEl.createEl("p", { text: "GKOS note formatting for Kosmos-Oden. It implements the OKF+ v2.3 Validating Projection Profile under GKOS: it preserves authored content, separates authored/derived/proposed/approved data, and does not claim to be a full GKOS governance engine." });
+    okfEl.createEl("p", { text: "GKOS note formatting for Vault Kosmos. It implements the OKF+ v2.3 Validating Projection Profile under GKOS: it preserves authored content, separates authored/derived/proposed/approved data, and does not claim to be a full GKOS governance engine." });
     okfEl.createEl("h3", { text: "Portable note timestamps" });
     okfEl.createEl("p", { text: "Maintains created_at and updated_at timestamps. By default they are ISO 8601 UTC values ending in Z; you can switch to local time with an explicit numeric UTC offset. Existing created_at values are preserved; updated_at follows Obsidian file modifications. Internal .obsidian and .okf files are excluded." });
     new Setting(okfEl).setName("Stamp note creation and modification times")
