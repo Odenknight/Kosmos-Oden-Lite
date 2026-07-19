@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "note": "Legacy vendored Three.js r128 global build, retained per RENDERER-UPGRADE-BUILD-INSTRUCTIONS.md §7 until the modern r185 module build is qualified and promoted. Not used by the current build on this branch. May back an optional frozen WebGL1-era compatibility artifact (vault-kosmos-legacy.html) only if real user evidence justifies it.",
+  "package": "three",
+  "revision": "128",
+  "upstreamTag": "r128",
+  "license": "MIT",
+  "buildFormat": "global (build/three.min.js)",
+  "supersededBy": "three@0.185.1 (renderer-provenance.json)"
+}

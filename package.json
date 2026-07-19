@@ -1,0 +1,41 @@
+{
+  "name": "kosmos-oden",
+  "version": "1.0.0",
+  "description": "Kosmos-Oden Lite (Vault Kosmos, v1.0.0) — the classic cosmos view with GKOS-Engine-Lite note formatting: OKF+ Notes 2.2 plus Agent-Ready flat 2.3, read-only MCP Agent API, and Nextcloud WebDAV sync. Feature-complete; bug fixes only.",
+  "main": "main.js",
+  "type": "module",
+  "engines": {
+    "node": ">=22 <25",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node scripts/build.mjs",
+    "build:standalone": "node scripts/build.mjs --standalone-only",
+    "dev": "node scripts/build.mjs --dev",
+    "pretest": "node scripts/build.mjs --for-tests",
+    "test": "node --test \"test/*.test.mjs\"",
+    "bench": "node benchmarks/bench.mjs",
+    "check:artifacts": "node scripts/check-artifacts.mjs",
+    "check:versions": "node scripts/check-versions.mjs",
+    "check:invariants": "node scripts/check-invariants.mjs",
+    "check:renderer-provenance": "node scripts/check-renderer-provenance.mjs",
+    "verify": "npm run typecheck && npm run build && npm test && npm run check:versions && npm run check:artifacts && npm run check:invariants && npm run check:renderer-provenance",
+    "test:browser": "playwright test --project=chromium --project=firefox --project=webkit",
+    "test:visual": "playwright test test/browser/visual.spec.ts",
+    "test:renderer": "npm run test:browser && npm run test:visual",
+    "package:release": "node scripts/package-release.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "1.61.1",
+    "@types/node": "26.1.1",
+    "esbuild": "0.21.5",
+    "obsidian": "1.13.1",
+    "typescript": "5.9.3"
+  },
+  "author": "OdenKnight",
+  "dependencies": {
+    "three": "0.185.1"
+  }
+}

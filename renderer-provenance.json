@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "package": "three",
+  "threeRevision": "185",
+  "npmVersion": "0.185.1",
+  "upstreamTag": "r185",
+  "upstreamRepository": "https://github.com/mrdoob/three.js",
+  "license": "MIT",
+  "sourceOfIntegrity": "package-lock.json",
+  "lockfileIntegrity": "sha512-5aojFCXKwnjBRZvUnt3WFfEcvUJgkN5LlijRFN95hMy8WVkG4I0QNcJE+OuWvuJ0bOdStrbfXn0pkd6/QyiAlg==",
+  "stableBackend": "WebGLRenderer",
+  "webglVersion": 2,
+  "buildFormat": "esm module, esbuild-bundled and inlined into the single-file HTML (no CDN, no runtime fetch)",
+  "colorManagement": "disabled (Strategy A): shader owns ACES tone map + manual sRGB output; renderer.outputColorSpace = LinearSRGBColorSpace, so Three applies no second output transform (r128 parity)",
+  "note": "Migrated from vendored global three r128 (see vendor/legacy/) to exact-pinned ESM three@0.185.1. Stable renderer is WebGL2-only; WebGPU/TSL is a separate future phase and not part of this build.",
+  "verifiedUtc": "2026-07-12T00:00:00Z"
+}

@@ -1,0 +1,17 @@
+{
+  "date": "2026-07-18",
+  "baselineMainJs": { "raw": 1349137, "gzip": 431157, "brotli": 335340 },
+  "existingNextcloudModule": { "raw": 13234, "gzip": 4625, "brotli": 4106 },
+  "officialSdk": {
+    "onedrive": { "raw": 298266, "gzip": 76186, "brotli": 64150 },
+    "dropbox": { "raw": 48849, "gzip": 8325, "brotli": 7194 },
+    "s3": { "raw": 263355, "gzip": 82927, "brotli": 69497 }
+  },
+  "leanConnectivityFloor": {
+    "googleDrive": { "raw": 1929, "gzip": 967, "brotli": 821 },
+    "oneDrive": { "raw": 1748, "gzip": 887, "brotli": 744 },
+    "dropbox": { "raw": 2015, "gzip": 912, "brotli": 777 },
+    "s3": { "raw": 8117, "gzip": 3276, "brotli": 2951 },
+    "allFourDeduplicated": { "raw": 12157, "gzip": 4387, "brotli": 3929 }
+  }
+}

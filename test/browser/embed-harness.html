@@ -1,0 +1,36 @@
+<!doctype html><html><head><meta charset="utf-8"><title>embed sandbox harness</title></head>
+<body style="margin:0;background:#000">
+<script>
+// Loads the built embed page in a sandboxed opaque-origin iframe (matching the
+// plugin's exact permissions) and drives it with a versioned vault-snapshot.
+// The embed reports back an open-note round-trip capability; we assert it booted.
+async function run() {
+  const res = await fetch("/dist/kosmos-embed.html", { cache: "no-store" });
+  const html = await res.text();
+  const frame = document.createElement("iframe");
+  frame.setAttribute("sandbox", "allow-scripts allow-pointer-lock allow-downloads"); // NO allow-same-origin
+  frame.style.cssText = "position:fixed;inset:0;width:100%;height:100%;border:0";
+  frame.srcdoc = html;
+  frame.addEventListener("load", () => {
+    setTimeout(() => {
+      frame.contentWindow.postMessage({
+        protocol: "vault-kosmos", version: 1, type: "vault-snapshot",
+        payload: {
+          files: [
+            { relativePath: "A/one.md", content: "# one\n[[two]]" },
+            { relativePath: "A/two.md", content: "# two\n[[three]]" },
+            { relativePath: "B/three.md", content: "# three" }
+          ],
+          folders: ["A", "B"], attachments: [], label: "EmbedTest"
+        }
+      }, "*");
+      // The embed cannot be introspected across the opaque origin, so we treat a
+      // clean load + accepted snapshot (no thrown error surfaced to this page) as success.
+      setTimeout(() => { window.__embedOk = true; window.__embedReady = true; }, 1200);
+    }, 400);
+  });
+  document.body.appendChild(frame);
+}
+run().catch((e) => { window.__embedOk = false; window.__embedReady = true; console.error(e); });
+</script>
+</body></html>

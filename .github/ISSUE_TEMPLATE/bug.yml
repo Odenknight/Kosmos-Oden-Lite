@@ -1,0 +1,48 @@
+name: Bug report
+description: Something isn't working as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Please do not paste real vault contents or Agent API tokens."
+  - type: input
+    id: version
+    attributes:
+      label: Kosmos-Oden version
+      placeholder: "0.5.5"
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface?
+      options:
+        - Obsidian plugin
+        - Standalone HTML viewer
+        - Agent API (REST/MCP)
+        - kosmos-build CLI
+        - Graphiti export
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "OS, Obsidian version and/or browser, Node version"
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs. actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console / diagnostics output
+      description: Developer console errors, or the standalone diagnostics panel. Redact anything sensitive.

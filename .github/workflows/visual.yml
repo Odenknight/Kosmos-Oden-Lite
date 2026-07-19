@@ -1,0 +1,45 @@
+name: Visual
+
+# Deterministic visual-regression (CI/CD directive §7.5). Per-browser reference
+# images with a perceptual threshold — NOT bit-for-bit across GPU vendors.
+# Baselines live under test/browser/*-snapshots/ and change only via an
+# explicitly reviewed update (an agent may propose but not self-approve one).
+
+on:
+  pull_request:
+    paths:
+      - "src/renderer/**"
+      - "src/standalone/**"
+      - "scripts/build.mjs"
+      - "test/browser/visual.spec.ts"
+      - ".github/workflows/visual.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install Playwright + browsers
+        run: |
+          npm install --no-save --save-exact @playwright/test@1.48.2
+          npx playwright install --with-deps chromium firefox webkit
+      - name: Visual regression
+        run: npm run test:visual
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-diff-${{ github.sha }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14

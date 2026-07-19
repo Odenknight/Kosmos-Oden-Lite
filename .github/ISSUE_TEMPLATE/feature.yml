@@ -1,0 +1,34 @@
+name: Feature request
+description: Suggest an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: What are you trying to do that Kosmos-Oden makes hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface would this affect?
+      multiple: true
+      options:
+        - Kosmos Core (shared semantics)
+        - Obsidian plugin
+        - Standalone HTML viewer
+        - Agent API (REST/MCP)
+        - kosmos-build CLI
+        - Graphiti export
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints
+      options:
+        - label: This keeps the viewer local-first and offline (no new network dependency).
+        - label: This keeps the Agent API read-only.

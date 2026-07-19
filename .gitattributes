@@ -1,0 +1,12 @@
+# Normalize to LF in the repo; the build and tests are line-ending sensitive in artifacts.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
+
+# Mark generated/vendored files so GitHub language stats and reviews treat them
+# as generated (Doc1 §4.7). They are committed on purpose (see docs/RELEASE-PROCESS.md).
+main.js linguist-generated=true
+vault-kosmos.html linguist-generated=true
+vendor/three.min.js linguist-vendored=true
+dist/** linguist-generated=true

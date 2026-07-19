@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install (clean, from lockfile)
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build (plugin + embed + standalone + node bundles)
+        run: npm run build
+
+      - name: Build standalone artifact
+        run: npm run build:standalone
+
+      - name: Tests
+        run: npm test
+
+      - name: Version synchronization
+        run: npm run check:versions
+
+      - name: Artifact checks (main.js, vault-kosmos.html, self-containment)
+        run: npm run check:artifacts
+
+      - name: Invariants policy (kosmos-invariants.yml)
+        run: npm run check:invariants
+
+      - name: Renderer provenance (exact-pinned three, marker, no CDN)
+        run: npm run check:renderer-provenance
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kosmos-oden-${{ github.sha }}
+          path: |
+            main.js
+            manifest.json
+            styles.css
+            vault-kosmos.html
+
+  reproducibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Build twice from a clean tree; the executable artifacts must be identical (Doc2 §4.4).
+      - name: First build
+        run: |
+          npm run build
+          sha256sum main.js vault-kosmos.html dist/kosmos-embed.html > first.sha256
+      - name: Second build
+        run: |
+          git clean -xfd -e node_modules -e first.sha256
+          npm run build
+          sha256sum main.js vault-kosmos.html dist/kosmos-embed.html > second.sha256
+      - name: Compare
+        run: diff -u first.sha256 second.sha256
+
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4

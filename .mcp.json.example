@@ -1,0 +1,12 @@
+{
+  "//": "Anthropic-style project config for the universal Vault Kosmos Streamable HTTP endpoint. Replace <TOKEN>; keep the filled file out of git. OpenAI Codex/ChatGPT desktop use the equivalent config.toml shown in plugin settings. STDIO-only clients can launch the bundled kosmos-mcp-stdio.mjs adapter.",
+  "mcpServers": {
+    "vault-kosmos": {
+      "type": "streamable-http",
+      "url": "http://127.0.0.1:4816/mcp",
+      "headers": {
+        "Authorization": "Bearer <TOKEN>"
+      }
+    }
+  }
+}

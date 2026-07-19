@@ -1,0 +1,55 @@
+name: Release
+
+# Obsidian community plugins require the release TAG to equal the manifest
+# version EXACTLY, with no `v` prefix (e.g. `0.5.5`, or `0.6.0-beta.1` for a
+# pre-release). Legacy `v*` tags are still accepted for back-compat.
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"      # stable, e.g. 0.5.5
+      - "[0-9]+.[0-9]+.[0-9]+-*"    # pre-release, e.g. 0.6.0-beta.1
+      - "v*"                         # legacy prefixed tags
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # The release ships only if the full validation pipeline passes.
+      - run: npm ci
+      - run: npm run verify
+
+      - name: Verify tag matches manifest version exactly (Obsidian requirement)
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"          # tolerate a legacy v prefix
+          VER=$(node -p "require('./manifest.json').version")
+          if [ "$TAG" != "$VER" ]; then
+            echo "::error::tag '$TAG' does not equal manifest version '$VER' — Obsidian requires an exact match" >&2
+            exit 1
+          fi
+
+      # Assembles release/ with plugin components + the stdio adapter + the
+      # standalone as a separate asset, plus BUILD-INFO.json + SHA256SUMS.
+      - name: Assemble release (plugin assets + standalone + provenance)
+        run: npm run package:release
+
+      - name: Verify checksums
+        run: cd release && sha256sum -c SHA256SUMS
+
+      # Individual files as assets: Obsidian installs manifest.json + main.js +
+      # styles.css (+ stdio adapter for local clients); standalone is separate.
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}

@@ -1,0 +1,50 @@
+name: Security
+
+# Security + provenance (CI/CD directive §7.7): CodeQL static analysis, an
+# SBOM, and the renderer-provenance / invariant policy checks. Dependency
+# review + Dependabot are configured separately (ci.yml + dependabot.yml).
+
+on:
+  push:
+    branches: ["main", "renderer/**", "security/**"]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  codeql:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3
+
+  provenance-and-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Renderer provenance + invariant policy
+        run: |
+          npm run check:renderer-provenance
+          npm run check:invariants
+      - name: Generate SBOM (CycloneDX)
+        run: npm sbom --sbom-format cyclonedx > sbom.cdx.json || echo "npm sbom unavailable on this npm version"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom.cdx.json
+          retention-days: 30

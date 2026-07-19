@@ -1,0 +1,48 @@
+name: Browser
+
+# Real-browser rendering gate (CI/CD directive §7.4) — the assessment's largest
+# assurance gap. Boots the built WebGL2 artifacts in Chromium/Firefox/WebKit via
+# Playwright and asserts the r185 renderer initializes and draws the scene.
+
+on:
+  push:
+    paths:
+      - "src/**"
+      - "scripts/**"
+      - "test/browser/**"
+      - "playwright.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/browser.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build artifacts (needed by the browser tests)
+        run: npm run build
+      # Playwright is an optional QA dependency; install it here rather than
+      # pinning it into the offline runtime bundle.
+      - name: Install Playwright + browsers
+        run: |
+          npm install --no-save --save-exact @playwright/test@1.48.2
+          npx playwright install --with-deps chromium firefox webkit
+      - name: Browser smoke tests
+        run: npx playwright test test/browser/standalone.spec.ts test/browser/embed.spec.ts test/browser/context-loss.spec.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: playwright-report/
+          retention-days: 14

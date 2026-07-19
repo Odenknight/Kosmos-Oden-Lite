@@ -1,0 +1,12 @@
+{
+  "name": "kosmos-provider-size-study",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1090.0",
+    "@azure/msal-browser": "5.17.1",
+    "@microsoft/microsoft-graph-client": "3.0.7",
+    "aws4fetch": "1.0.20",
+    "dropbox": "10.37.1"
+  }
+}

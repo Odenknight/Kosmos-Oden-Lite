@@ -1,0 +1,94 @@
+# Machine-readable assurance policy (Engineering Assurance Guide §6.4).
+# scripts/check-invariants.mjs enforces this against the source and artifacts;
+# CI runs it on every push. It is the single declaration an agent can read to
+# know what must remain true.
+schema: 1
+
+project:
+  name: vault-kosmos
+
+security:
+  # Agent API is opt-in, localhost-only, authenticated by default.
+  agent_api_default_enabled: false
+  default_bind_mode: localhost
+  default_require_token: true
+  # LAN mode must never run without authentication (enforced at start()).
+  lan_requires_token: true
+  # Query-string token auth is deprecated and off by default; never in LAN mode.
+  query_tokens_default_enabled: false
+  query_tokens_allowed_in_lan: false
+  # OKF+ sensitivity enforcement: legacy/unlabeled notes are internal;
+  # confidential and PHI require an explicit local policy choice.
+  default_agent_sensitivity_ceiling: internal
+  invalid_sensitivity_fails_closed_as: secret
+  invalid_v23_sensitivity_fails_closed_as: secret
+  # The Agent API is read-only: no write routes exist.
+  api_write_routes_allowed: false
+  # Request body cap, in bytes.
+  max_request_bytes: 4194304
+  # Tokens come from a CSPRNG only; no Math.random fallback.
+  token_source: crypto.getRandomValues
+  token_bytes: 32
+  # Host/Origin validation must be present.
+  host_validation: required
+  origin_validation: required
+  mcp_latest_protocol: 2025-11-25
+
+build:
+  lockfile_required: package-lock.json
+  no_latest_dependencies: true
+  node_engines_declared: true
+  # Executable artifacts must be byte-reproducible across clean builds.
+  reproducible_executables: true
+
+release:
+  required_files:
+    - manifest.json
+    - main.js
+    - styles.css
+    - versions.json
+    - vault-kosmos.html
+    - kosmos-mcp-stdio.mjs
+    - BUILD-INFO.json
+    - SHA256SUMS
+  forbidden_files:
+    - .env
+    - data.json
+    - "*.pem"
+    - "*.key"
+
+standalone:
+  # The single-file viewer must have no external runtime URL dependencies.
+  no_external_runtime_urls: true
+  offline_single_file: true
+  read_only_scanner: true
+
+renderer:
+  # The plugin iframe is sandboxed without allow-same-origin.
+  iframe_sandboxed: true
+  iframe_sandbox_forbid_same_origin: true
+  # Host <-> renderer messages carry a protocol version and are validated.
+  message_protocol_versioned: true
+
+okf_migration:
+  audit_before_apply: true
+  plan_hash: sha256
+  byte_exact_backup: true
+  source_match_before_write: true
+  body_preserved: true
+  llm_required: false
+  network_dispatch_allowed: false
+
+okf23_projection:
+  profile: validating-projection
+  full_gkos_claimed: false
+  source_notes_silently_modified: false
+  origins_preserved:
+    - authored
+    - derived
+    - proposed
+    - approved
+  proposed_values_effective_without_approval: false
+  scores_are_truth: false
+  policy_hash_required: true
+  remote_schema_updates_enabled: false

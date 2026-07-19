@@ -1,0 +1,71 @@
+  <div id="stage"></div>
+  <div class="labels" id="labels"></div>
+
+  <div class="ui brand">
+    <div class="glyph"></div>
+    <div><h1>Vault Kosmos</h1><div class="sub">Local Cluster</div></div>
+    <span class="badge" id="vaultBadge"><span class="dot"></span><span id="connlbl">Demo</span></span>
+  </div>
+
+  <div class="ui toolbar">
+    <input id="search" class="search" type="text" placeholder="Search…" autocomplete="off" autocapitalize="off" spellcheck="false" />
+    <button class="iconbtn" id="filterToggle"><span data-i="filters">Filters</span></button>
+    <button class="iconbtn" id="legendToggle" aria-pressed="false">Key</button>
+    <button class="iconbtn lang" id="langBtn">EN</button>
+  </div>
+
+  <div class="ui filterPanel" id="filterPanel"><div id="filterBody"></div></div>
+
+  <div class="ui stats" id="stats"></div>
+
+    <div class="ui chronoBar" id="chronoBar">
+    <input id="chronoRange" type="range" min="0" max="1000" value="1000">
+    <span id="chronoLabel">&mdash;</span>
+  </div>
+  <div class="ui deck">
+    <div class="seg" id="modes">
+      <button data-mode="overview" class="on"><span data-i="overview">Overview</span><span class="k">A</span></button>
+      <button data-mode="focus"><span data-i="focus">Focus</span><span class="k">S</span></button>
+      <button data-mode="deep"><span data-i="depth">Depth</span><span class="k">D</span></button>
+      <button data-mode="fly"><span data-i="fly">Fly</span><span class="k">F</span></button>
+    </div>
+    <div class="div"></div>
+    <button class="btn on" id="labelsBtn"><span data-i="labels">Labels</span></button>
+    <button class="btn" id="allLinksBtn"><span data-i="allLinks">All links</span><span class="k">C</span></button>
+    <button class="btn" id="allObjBtn"><span data-i="allObjects">All objects</span><span class="k">O</span></button>
+    <button class="btn" id="resetBtn"><span data-i="clear">Clear</span></button>
+    <div class="div"></div>
+    <button class="btn" id="growBtn"><span data-i="grow">Grow</span></button>
+    <button class="btn" id="trailerBtn"><span data-i="trailer">Trailer</span></button>
+    <button class="btn" id="chronoBtn"><span data-i="chrono">Chrono</span><span class="k">H</span></button>
+  </div>
+
+  <div class="ui mmwrap"><canvas id="minimap" width="180" height="180"></canvas></div>
+
+  <div class="ui legend">
+    <h4 data-i="keyTitle">Constellation key</h4>
+    <div class="row"><span class="mk star"><i></i></span><b data-i="star">Star</b>&nbsp;— <span data-i="hubMajor">major hub</span></div>
+    <div class="row"><span class="mk planet"><i></i></span><b data-i="planet">Planet</b>&nbsp;— <span data-i="hubMinor">minor hub</span></div>
+    <div class="row"><span class="mk moon"><i></i></span><b data-i="moon">Moon</b>&nbsp;— <span data-i="related">related note</span></div>
+    <div class="row"><span class="mk aster"><i></i></span><b data-i="asteroid">Asteroid</b>&nbsp;— <span data-i="rogue">rogue</span></div>
+    <div class="row"><span class="mk link"><i></i></span><span data-i="relrow">links &amp; relations</span></div>
+  </div>
+
+  <div class="ui inspector" id="inspector">
+    <button class="x" id="insX">×</button>
+    <div class="top"><span class="bod" id="insBody">Planet</span></div>
+    <h3 id="insName">—</h3>
+    <div class="path" id="insPath"></div>
+    <dl class="grid" id="insGrid"></dl>
+    <div class="linkchips" id="insLinks"></div>
+  </div>
+
+  <div class="ui flypad" id="flyPad"><div class="flystick" id="flyStick"></div></div>
+  <div class="ui flybtns"><button id="flyUp">▲</button><button id="flyDn">▼</button></div>
+
+  <div class="hint" id="hint"></div>
+
+  <div class="boot" id="boot">
+    <div class="ring" id="bootRing"></div>
+    <p id="bootMsg">Charting the constellation…</p>
+  </div>

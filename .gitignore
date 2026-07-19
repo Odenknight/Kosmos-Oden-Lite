@@ -1,0 +1,53 @@
+node_modules/
+*.map
+*.tgz
+.DS_Store
+release/
+
+# Generated build outputs — rebuilt by `npm run build`, attached to GitHub
+# Releases by CI (not committed). The committed plugin components are only
+# manifest.json + styles.css + versions.json (+ source). The standalone viewer
+# (vault-kosmos.html) is a separate release download, kept out of the tracked
+# tree so the plugin footprint stays clean. main.js is also generated (embeds
+# the iframe page as base64) — rebuilding on Windows re-encodes its embedded
+# HTML's line endings even with no source change, producing spurious diffs;
+# it's rebuilt by CI and attached to each release like the rest.
+vault-kosmos.html
+dist/
+main.js
+
+# Obsidian plugin runtime data (contains the local Agent API token — never commit)
+data.json
+
+# Filled-in MCP client config holds the Agent API token — commit only .mcp.json.example
+.mcp.json
+
+# AI session handoff notes — local scratch, not part of the product
+_Claude-Code/
+AGENT.md
+
+# local working material, not part of the release (v0.5.x baselines live in git history)
+vault-kosmos_v0.5.0/
+vault-kosmos_v0.5.1/
+vault-kosmos_v0.5.5/
+vault-kosmos_v0.6.0/
+vault-kosmos_v0.6.5/
+0001-*.patch
+.claude/
+
+# benchmark scratch fixtures (generated on demand)
+benchmarks/fixtures/
+
+# Playwright browser/visual output (QA-run, not committed except reviewed baselines)
+playwright-report/
+test-results/
+sbom.cdx.json
+
+# Codex/AI tooling state and alternate package-manager artifacts (repo is npm-based)
+.codex/
+.pnpm-store/
+pnpm-lock.yaml
+pnpm-workspace.yaml
+
+# retired global vendored Three.js (canonical copy: vendor/legacy/three-r128.min.js)
+vendor/three.min.js
