@@ -341,6 +341,21 @@ test("Mitigation 4: a single agent's concurrent requests are capped for fairness
   server.stop();
 });
 
+test("rate-limit map does not leak: stale client keys are swept, fresh ones kept", () => {
+  const server = new KosmosAgentServer(http, settings({ agentBindMode: "lan" }), fixtureProvider());
+  const now = performance.now();
+  // Seed one client whose only hit is well outside the window (stale) and one that is current.
+  server.hits.set("192.168.1.50", [now - 60_000]);
+  server.hits.set("192.168.1.51", [now - 100]);
+  assert.equal(server.hits.size, 2);
+  // A request from a brand-new remote triggers the periodic sweep of fully-stale keys.
+  const res = server.rateLimited({ socket: { remoteAddress: "192.168.1.99" } });
+  assert.equal(res.limited, false);
+  assert.equal(server.hits.has("192.168.1.50"), false, "stale key pruned");
+  assert.equal(server.hits.has("192.168.1.51"), true, "recently-active key retained");
+  assert.equal(server.hits.has("192.168.1.99"), true, "new client recorded");
+});
+
 test("auth disabled + empty token: requireToken(on)+empty token fails closed (§16)", async () => {
   const server = new KosmosAgentServer(http, {
     agentEnabled: true, agentPort: 0, agentToken: "", agentRequireToken: true, agentBindMode: "localhost",

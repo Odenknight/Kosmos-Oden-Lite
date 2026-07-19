@@ -20,6 +20,7 @@ import { buildOkf23Projection, okf23Inverse, okf23RelationTargets, refreshOkf23A
 import {
   areaFromFilePath,
   areaFromPath,
+  codeUnitCompare,
   contentHash,
   extensionFromPath,
   normalizeVaultRelative,
@@ -103,7 +104,7 @@ export interface AssembleOptions {
 }
 
 const asStr = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
-const uniq = (a: string[]): string[] => [...new Set(a)].sort((x, y) => x.localeCompare(y));
+const uniq = (a: string[]): string[] => [...new Set(a)].sort(codeUnitCompare);
 
 function addFolder(nodes: Map<string, KosmosNode>, rel: string, areaOverride?: string): void {
   const n = normalizeVaultRelative(rel);
@@ -371,7 +372,7 @@ export function assembleGraph(
   }
 
   applyCounts(nodes, links);
-  const list = [...nodes.values()].sort((a, b) => a.path.localeCompare(b.path));
+  const list = [...nodes.values()].sort((a, b) => codeUnitCompare(a.path, b.path));
   // one O(links) pass instead of an O(nodes × links) orphan scan
   const linkedIds = new Set<string>();
   let wikilinks = 0, markdownLinks = 0, propertyLinks = 0;
@@ -423,7 +424,7 @@ export function assembleGraph(
     // mutation to discover the graph's time range.
     __timeSpan: temporal.timeSpan,
     okfProfile: "OKF+ v2.3 Validating Projection Profile",
-    okfUidIndex: Object.fromEntries([...uidIndex.entries()].sort(([a], [b]) => a.localeCompare(b))),
+    okfUidIndex: Object.fromEntries([...uidIndex.entries()].sort(([a], [b]) => codeUnitCompare(a, b))),
     okfAssessments: records.flatMap((rec) => rec.okf?.projection ? [rec.okf.projection.assessment] : []),
     okfDiagnostics: records.flatMap((rec) => rec.okf?.projection?.diagnostics ?? []),
   };

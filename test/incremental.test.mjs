@@ -72,6 +72,29 @@ test("rename moves the cached record without reparsing", () => {
   assert.ok(graph.nodes.some((n) => n.id === "file:Notes/C2.md"));
 });
 
+test("batch rename that swaps two paths preserves both records (no clobber)", () => {
+  const idx = new KosmosIndex();
+  idx.setFiles([N("A.md", "# Alpha AAA"), N("B.md", "# Beta BBB")]);
+  const before = idx.parseCount;
+  idx.applyChanges({ renames: [{ from: "A.md", to: "B.md" }, { from: "B.md", to: "A.md" }] });
+  const recs = idx.getRecords();
+  assert.equal(idx.parseCount, before); // renames never reparse
+  assert.equal(idx.noteCount, 2); // neither record lost
+  // Content swapped: A now holds Beta, B now holds Alpha.
+  assert.equal(recs.get("A.md").parsed.content, "# Beta BBB");
+  assert.equal(recs.get("B.md").parsed.content, "# Alpha AAA");
+});
+
+test("rename onto an existing out-of-batch path replaces the target (rename wins)", () => {
+  const idx = new KosmosIndex();
+  idx.setFiles([N("A.md", "# Alpha AAA"), N("B.md", "# Beta BBB")]);
+  idx.applyChanges({ renames: [{ from: "A.md", to: "B.md" }] });
+  const recs = idx.getRecords();
+  assert.equal(idx.noteCount, 1); // A folded onto B
+  assert.equal(recs.get("B.md").parsed.content, "# Alpha AAA"); // rename overwrote B
+  assert.equal(recs.has("A.md"), false);
+});
+
 test("add folder -> folder node appears (new galaxy candidate), no note reparses", () => {
   const { idx } = seeded();
   const before = idx.parseCount;

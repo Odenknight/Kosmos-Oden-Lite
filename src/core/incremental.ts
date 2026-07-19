@@ -126,15 +126,20 @@ export class KosmosIndex {
     let reparsed = 0;
 
     // Renames move the cached record: content is unchanged, so no re-parse (§10).
+    // Two-phase so a batch that swaps paths (e.g. [A->B, B->A]) or otherwise
+    // reorders keys can't clobber a source before it's read: snapshot every
+    // source record from the PRE-batch state first, then delete all `from`
+    // keys, then write all `to` keys. A `to` that names a path outside the
+    // batch is treated as replaced — the rename wins, matching filesystem
+    // rename semantics (mv overwrites its target).
+    const moves: Array<{ to: string; rec: NoteRecord }> = [];
     for (const r of renames) {
       const from = normalizeVaultRelative(r.from);
-      const to = normalizeVaultRelative(r.to);
       const rec = this.records.get(from);
-      if (rec) {
-        this.records.delete(from);
-        this.records.set(to, { ...rec, relativePath: to });
-      }
+      if (rec) moves.push({ to: normalizeVaultRelative(r.to), rec });
     }
+    for (const r of renames) this.records.delete(normalizeVaultRelative(r.from));
+    for (const { to, rec } of moves) this.records.set(to, { ...rec, relativePath: to });
     for (const p of removed) this.records.delete(normalizeVaultRelative(p));
     for (const f of changed) {
       const path = normalizeVaultRelative(f.relativePath);

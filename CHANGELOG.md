@@ -7,6 +7,32 @@ changes, called out under **Compatibility**).
 
 ## [Unreleased]
 
+## [1.0.2] — 2026-07-19
+
+### Fixed
+- Ported already-reviewed upstream bug fixes into the vendored engine and
+  plugin copies:
+  - **Determinism**: canonical output orderings now route through a shared,
+    locale-independent `codeUnitCompare` (UTF-16 code-unit order) instead of
+    `localeCompare`, so hash/export/API-payload ordering is byte-identical
+    across host ICU locales (graph, graphiti, okf23 diagnostics, okf-migration
+    and okf-enrichment source iteration, plus the plugin enrichment candidate
+    scan and the agent `qAtTime` API payload).
+  - **Incremental rename swap**: `applyChanges` now applies renames in two
+    phases (snapshot pre-batch records, delete all `from` keys, then write all
+    `to` keys) so a swap batch `[A->B, B->A]` no longer clobbers a record
+    before it is read.
+  - **Same-indent YAML block sequences**: the OKF+ 2.3 parser now accepts a
+    `- ` list whose items sit at the same indent as the mapping key (valid YAML
+    that Obsidian emits), instead of dropping the tags/relationships and
+    emitting a spurious parse diagnostic.
+  - **onunload timer cleanup**: pending note-stamp debounce timers and the
+    one-shot startup Nextcloud sync timer are now cleared on plugin teardown so
+    no write or sync fires after unload.
+  - **Rate-limit pruning**: the Agent API rate limiter now sweeps fully-stale
+    per-client keys once per window so the map cannot grow one permanent entry
+    per distinct LAN client IP.
+
 ## [1.0.1] — 2026-07-19
 
 ### Fixed

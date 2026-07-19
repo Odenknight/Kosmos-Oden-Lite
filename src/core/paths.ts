@@ -6,6 +6,18 @@ export const toPosixPath = (s: string): string =>
 export const normalizeVaultRelative = (s: string): string =>
   toPosixPath(s).replace(/^\/+/, "").replace(/^\.\//, "");
 
+/**
+ * Deterministic, locale-INDEPENDENT string comparator for canonical output.
+ *
+ * `String.prototype.localeCompare` orders by the host's ICU collation, so the
+ * same input can sort differently on different machines/locales (e.g. "z" vs
+ * "ä" flips between en and sv). Every ordering that reaches a hash, export or
+ * API payload MUST use this instead: plain UTF-16 code-unit comparison, which
+ * matches the byte order that bare `Array.prototype.sort()` already produces.
+ */
+export const codeUnitCompare = (a: string, b: string): number =>
+  a < b ? -1 : a > b ? 1 : 0;
+
 export function areaFromPath(p: string): string {
   const n = normalizeVaultRelative(p);
   if (!n || n === ".") return "Vault";

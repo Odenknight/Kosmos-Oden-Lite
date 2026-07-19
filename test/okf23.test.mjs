@@ -231,3 +231,65 @@ test("missing sensitivity defaults to internal and invalid sensitivity fails clo
   const graph = buildGraph([{ relativePath: "Flat.md", extension: "md", content: flat }], []);
   assert.equal(graph.nodes.find((node) => node.path === "Flat.md").okf.projection.effective.sensitivity, "secret");
 });
+
+// --- Same-indent block-sequence regression (Defect B) ---------------------
+// A `- ` list whose items sit at the SAME indent as the mapping key is valid
+// YAML (Obsidian emits this). Before the fix, parseBlock only accepted items
+// indented DEEPER than the key, so the key parsed as null, an "Unparsed YAML
+// content remains" diagnostic fired, and tags/relationships vanished.
+
+test("same-indent flat block sequence under a top-level key parses", () => {
+  const doc = 'top:\ntags:\n- a\n- b\nafter: "x"';
+  const { data, issues } = parseOkf23Frontmatter(`---\n${doc}\n---\nBody.`);
+  assert.deepEqual(data.tags, ["a", "b"], "same-indent list is captured");
+  assert.equal(data.after, "x", "a following same-indent key still terminates the list");
+  assert.equal(data.top, null);
+  assert.equal(issues.length, 0, `no parse issues, got: ${JSON.stringify(issues)}`);
+});
+
+test("same-indent block sequence under a NESTED key parses", () => {
+  const doc = 'labels:\n  authored:\n  - x\n  - y\n  system:\n  - z';
+  const { data, issues } = parseOkf23Frontmatter(`---\n${doc}\n---\nBody.`);
+  assert.deepEqual(data.labels, { authored: ["x", "y"], system: ["z"] });
+  assert.equal(issues.length, 0, `no parse issues, got: ${JSON.stringify(issues)}`);
+});
+
+test("mixed doc: same-indent list followed by another same-level key", () => {
+  const doc = 'title: "T"\ntags:\n- one\n- two\ntype: "semantic"';
+  const { data, issues } = parseOkf23Frontmatter(`---\n${doc}\n---\nBody.`);
+  assert.equal(data.title, "T");
+  assert.deepEqual(data.tags, ["one", "two"]);
+  assert.equal(data.type, "semantic");
+  assert.equal(issues.length, 0, `no parse issues, got: ${JSON.stringify(issues)}`);
+});
+
+test("deeper-indent block sequence still parses unchanged", () => {
+  const doc = 'tags:\n  - a\n  - b';
+  const { data, issues } = parseOkf23Frontmatter(`---\n${doc}\n---\nBody.`);
+  assert.deepEqual(data.tags, ["a", "b"]);
+  assert.equal(issues.length, 0);
+});
+
+test("flat 2.3 note with same-indent tags projects tags with zero schema errors", () => {
+  const flat = `---
+okf_version: "2.3"
+uid: "019b2d14-4230-7db7-87d4-7d81cfaec9aa"
+title: "Same indent tags"
+type: "semantic"
+created_at: "2026-07-01T00:00:00Z"
+updated_at: "2026-07-02T00:00:00Z"
+epistemic_state: "fact"
+sensitivity: "restricted"
+authorship_origin: "authored"
+tags:
+- alpha
+- beta
+---
+Body.`;
+  const projection = buildOkf23Projection(flat, "SameIndent.md", "si:1", null);
+  assert.deepEqual(projection.authored.tags, ["alpha", "beta"]);
+  assert.ok(
+    !projection.diagnostics.some((d) => d.code === "OKF-SCHEMA-001"),
+    `no OKF-SCHEMA-001, got: ${JSON.stringify(projection.diagnostics)}`
+  );
+});

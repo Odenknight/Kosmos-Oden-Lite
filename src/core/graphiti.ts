@@ -6,7 +6,7 @@
  * proposed relationships never become fact triples, and a completed upstream
  * ingest is not assumed searchable until the caller performs a read check.
  */
-import { contentHash } from "./paths";
+import { codeUnitCompare, contentHash } from "./paths";
 import type { GraphitiEpisode, KosmosGraph, KosmosNode, OkfRelation } from "./types";
 
 export const GRAPHITI_CORE_VERSION = "0.29.0";
@@ -359,7 +359,7 @@ export function buildGraphitiEpisodes(graph: KosmosGraph, options: GraphitiOptio
   }
 
   output.sort((left, right) =>
-    left.reference_time.localeCompare(right.reference_time) || left.uuid.localeCompare(right.uuid)
+    codeUnitCompare(left.reference_time, right.reference_time) || codeUnitCompare(left.uuid, right.uuid)
   );
   return output;
 }

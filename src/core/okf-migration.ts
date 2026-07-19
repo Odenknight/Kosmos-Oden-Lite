@@ -10,6 +10,7 @@
  */
 import type { OkfSensitivity } from "./types";
 import { buildOkf23Projection, parseOkf23Frontmatter } from "./okf23";
+import { codeUnitCompare } from "./paths";
 
 export type OkfAuditStatus =
   | "okf-plus-2.2"
@@ -1016,7 +1017,7 @@ export async function createOkfMigrationPlan(
   const createdAt = now().toISOString();
   const runId = `okf-${createdAt.replace(/[-:.]/g, "").replace("Z", "Z")}-${uuid().slice(0, 8)}`;
   const entries: OkfMigrationEntry[] = [];
-  for (const source of [...sources].sort((a, b) => a.path.localeCompare(b.path))) {
+  for (const source of [...sources].sort((a, b) => codeUnitCompare(a.path, b.path))) {
     if (source.path.toLowerCase().startsWith(".okf/")) continue;
     entries.push(await auditOne(source, { createdAt, defaults, uuid, mode }));
   }

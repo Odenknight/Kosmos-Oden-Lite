@@ -8,6 +8,7 @@
  * governed writer and never changes a source note.
  */
 import { KOSMOS_VERSION } from "./version";
+import { codeUnitCompare } from "./paths";
 import type {
   OkfAssessment,
   OkfAssessmentScores,
@@ -199,6 +200,12 @@ function parseBlock(lines: YamlLine[], start: number, indent: number, issues: Ar
     if (Object.prototype.hasOwnProperty.call(out, entry.key)) issues.push({ line: lines[i - 1].line, message: `Duplicate key ${entry.key}.` });
     if (entry.rest) out[entry.key] = scalar(entry.rest);
     else if (i < lines.length && lines[i].indent > indent) { const child = parseBlock(lines, i, lines[i].indent, issues); out[entry.key] = child.value; i = child.next; }
+    // Same-indent block sequence: a `- ` list whose items sit at the SAME
+    // indent as the mapping key (standard YAML; Obsidian emits this). Only
+    // valid when the key had no inline value and the next line at this indent
+    // begins a sequence item. parseBlock's array loop terminates on the next
+    // non-`-` line at this indent, so a following `key:` still ends the list.
+    else if (i < lines.length && lines[i].indent === indent && lines[i].text.startsWith("-")) { const child = parseBlock(lines, i, indent, issues); out[entry.key] = child.value; i = child.next; }
     else out[entry.key] = null;
   }
   return { value: out, next: i };
@@ -583,7 +590,7 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
 
 /** Recalculate derived assessment after corpus-level diagnostics/resolution. */
 export function refreshOkf23Assessment(projection: OkfProjection): void {
-  projection.diagnostics.sort((a, b) => a.code.localeCompare(b.code) || (a.field ?? "").localeCompare(b.field ?? "") || a.message.localeCompare(b.message));
+  projection.diagnostics.sort((a, b) => codeUnitCompare(a.code, b.code) || codeUnitCompare(a.field ?? "", b.field ?? "") || codeUnitCompare(a.message, b.message));
   projection.assessment = assessOkf23(projection);
   projection.derived.labels = [...new Set([
     ...projection.derived.labels.filter((x): x is string => typeof x === "string" && !x.startsWith("assessment:")),

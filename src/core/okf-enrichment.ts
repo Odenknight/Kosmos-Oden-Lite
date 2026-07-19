@@ -1,4 +1,5 @@
 import { parseFrontmatter } from "./markdown";
+import { codeUnitCompare } from "./paths";
 import { applyOkfEnrichmentFrontmatter, makeOkfUuidV4, sha256Text, type OkfEnrichmentFrontmatterUpdates } from "./okf-migration";
 
 export type OkfEnrichmentField = "description" | "type" | "tags" | "supersedes" | "related_to";
@@ -248,7 +249,7 @@ export async function createOkfEnrichmentApplyPlan(
   const createdAt = now().toISOString();
   const runId = `okf-enrich-${createdAt.replace(/[-:.]/g, "")}-${uuid().slice(0, 8)}`;
   const entries: OkfEnrichmentApplyEntry[] = [];
-  for (const source of [...sources].sort((a, b) => a.path.localeCompare(b.path))) {
+  for (const source of [...sources].sort((a, b) => codeUnitCompare(a.path, b.path))) {
     const originalHash = await sha256Text(source.content);
     const entry: OkfEnrichmentApplyEntry = { path: source.path, proposalId: source.proposalId, status: "no-change", reasons: [], expectedNoteHash: source.expectedNoteHash, originalHash, decisions: source.decisions.map((decision) => ({ ...decision })), resolvedRelationships: [], originalContent: source.content };
     if (originalHash !== source.expectedNoteHash) { entry.status = "blocked"; entry.reasons.push("note content changed after the enrichment proposal was generated"); entries.push(entry); continue; }

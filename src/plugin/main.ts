@@ -258,6 +258,7 @@ export default class VaultKosmosPlugin extends Plugin {
   private nextcloudSyncRunning = false;
   private timestampTimers = new Map<string, number>();
   private timestampWriteUntil = new Map<string, number>();
+  private startupSyncTimer: number | null = null;
 
   scheduleTimestamp(file: any, delay = 350): void {
     if (!this.agentSettings.noteTimestampsEnabled || !timestampEligible(file?.path || "", file?.extension || "")) return;
@@ -361,7 +362,10 @@ export default class VaultKosmosPlugin extends Plugin {
       this.eventsLive = true;
       this.provider.markFullDirty();
       if (this.nextcloudSettings.enabled && this.nextcloudSettings.syncOnStartup) {
-        window.setTimeout(() => void this.runNextcloudSync(false), 1500);
+        this.startupSyncTimer = window.setTimeout(() => {
+          this.startupSyncTimer = null;
+          void this.runNextcloudSync(false);
+        }, 1500);
       }
     });
 
@@ -524,7 +528,14 @@ export default class VaultKosmosPlugin extends Plugin {
     new Notice("Vault Kosmos: wrote AGENT-API.md to your vault root (with your address + token filled in)");
   }
 
-  onunload(): void { this.agentApi?.stop(); }
+  onunload(): void {
+    this.agentApi?.stop();
+    // Cancel pending note-stamp debounce timers so no frontmatter write fires after teardown.
+    for (const timer of this.timestampTimers.values()) window.clearTimeout(timer);
+    this.timestampTimers.clear();
+    // Cancel the one-shot startup Nextcloud sync if it hasn't fired yet.
+    if (this.startupSyncTimer != null) { window.clearTimeout(this.startupSyncTimer); this.startupSyncTimer = null; }
+  }
 
   /** Export readable source assertions as a non-authoritative Graphiti projection.
    * Stable episode UUIDs make re-ingestion idempotent; later supersession state

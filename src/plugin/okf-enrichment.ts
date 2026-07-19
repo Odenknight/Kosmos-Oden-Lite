@@ -1,6 +1,7 @@
 import { App, Modal, Notice, Setting, TFile } from "obsidian";
 import { assessOkfEvidence, createOkfEnrichmentApplyPlan, deterministicOkfSuggestions, selectOkfEvidenceWindow, validateLlmEnrichmentResponse, type OkfEnrichmentApplySource, type OkfEnrichmentField, type OkfEnrichmentReviewDecision, type OkfEnrichmentSuggestion, type OkfEvidenceAssessment, type OkfEvidenceBlock } from "../core/okf-enrichment";
 import { matchedOkfExclusion } from "../core/okf-exclusions";
+import { codeUnitCompare } from "../core/paths";
 import { parseOkf23Frontmatter } from "../core/okf23";
 import { sha256Text } from "../core/okf-migration";
 import type { OkfSensitivity } from "../core/types";
@@ -57,7 +58,7 @@ async function buildRecords(app: App, settings: AgentSettings): Promise<{ record
   const records: OkfEnrichmentRecord[] = [], skipped: string[] = [], excluded: Array<{ path: string; pattern: string }> = [], issues: OkfEnrichmentIssue[] = [];
   let usedInputChars = 0;
   let consecutiveProviderErrors = 0;
-  const candidates = app.vault.getMarkdownFiles().filter((file) => !file.path.toLowerCase().startsWith(".okf/")).sort((a, b) => a.path.localeCompare(b.path));
+  const candidates = app.vault.getMarkdownFiles().filter((file) => !file.path.toLowerCase().startsWith(".okf/")).sort((a, b) => codeUnitCompare(a.path, b.path));
   const files: TFile[] = [];
   for (const file of candidates) {
     const pattern = matchedOkfExclusion(file.path, settings.okfExcludePatterns, settings.okfDeveloperExclusions);
