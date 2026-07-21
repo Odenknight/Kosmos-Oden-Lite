@@ -318,3 +318,138 @@ Body bytes remain exact.
   assert.doesNotMatch(entry.proposedContent, /authorship:|provenance:|authorization:|labels:/);
   assert.ok(entry.proposedContent.endsWith("Body bytes remain exact.\n"));
 });
+
+// ── v1.0.5: auto-stamper timestamp collision fix ──────────────────────────────
+
+test("converting a plain note carrying stamper created_at/updated_at to flat 2.3 emits each key once and preserves the stamper's created_at", async () => {
+  const stamped = `---
+created_at: 2026-03-01T09:00:00Z
+updated_at: 2026-03-05T10:00:00Z
+title: Plain Note
+type: semantic
+---
+Plain body.
+`;
+  const plan = await createOkfMigrationPlan([{ path: "Plain.md", content: stamped }], { ...options(), mode: "convert-to-23" });
+  const entry = plan.entries[0];
+  assert.equal(entry.status, "needs-okf-plus");
+  assert.equal((entry.proposedContent.match(/^created_at:/gm) ?? []).length, 1);
+  assert.equal((entry.proposedContent.match(/^updated_at:/gm) ?? []).length, 1);
+  assert.match(entry.proposedContent, /created_at: "2026-03-01T09:00:00Z"/);
+  assert.match(entry.proposedContent, /updated_at: "2026-03-05T10:00:00Z"/);
+  assert.match(entry.proposedContent, /okf_version: "2\.3"/);
+  // Output is clean flat 2.3, and a rescan proposes zero further changes.
+  const rescan = await createOkfMigrationPlan([{ path: "Plain.md", content: entry.proposedContent }], options());
+  assert.equal(rescan.totals["okf-plus-2.3"], 1);
+  assert.equal(rescan.totals.changes, 0);
+});
+
+test("converting a 2.2 note carrying stamper created_at/updated_at to 2.3 does not duplicate the timestamp keys", async () => {
+  const source = validOkf.replace("forked_to: []", "forked_to: []\ncreated_at: 2026-02-02T08:00:00Z\nupdated_at: 2026-02-09T08:00:00Z");
+  const plan = await createOkfMigrationPlan([{ path: "Existing.md", content: source }], { ...options(), mode: "convert-to-23" });
+  const entry = plan.entries[0];
+  assert.equal(entry.status, "needs-okf-plus");
+  assert.equal((entry.proposedContent.match(/^created_at:/gm) ?? []).length, 1);
+  assert.equal((entry.proposedContent.match(/^updated_at:/gm) ?? []).length, 1);
+  // The stamper's created_at is preferred over the 2.2 timestamp for created_at.
+  assert.match(entry.proposedContent, /created_at: "2026-02-02T08:00:00Z"/);
+  assert.match(entry.proposedContent, /updated_at: "2026-02-09T08:00:00Z"/);
+  const rescan = await createOkfMigrationPlan([{ path: "Existing.md", content: entry.proposedContent }], options());
+  assert.equal(rescan.totals.changes, 0);
+});
+
+test("converting a note with stamper fields to 2.2 drops created_at/updated_at and derives timestamp from created_at", async () => {
+  const stamped = `---
+created_at: 2026-02-02T08:00:00Z
+updated_at: 2026-02-09T08:00:00Z
+title: Legacy
+---
+Body.
+`;
+  const plan = await createOkfMigrationPlan([{ path: "Legacy.md", content: stamped }], { ...options(), mode: "upgrade-all" });
+  const entry = plan.entries[0];
+  assert.equal(entry.status, "needs-okf-plus");
+  assert.match(entry.proposedContent, /okf_version: "2\.2"/);
+  assert.equal((entry.proposedContent.match(/^created_at:/gm) ?? []).length, 0);
+  assert.equal((entry.proposedContent.match(/^updated_at:/gm) ?? []).length, 0);
+  assert.match(entry.proposedContent, /timestamp: "2026-02-02T08:00:00Z"/);
+});
+
+test("marker-less duplicate created_at/updated_at is repaired by a bounded dedupe; other duplicates stay blocked; beta.10 notes still flatten", async () => {
+  // The user's exact broken state: a quoted timestamp pair mid-block plus an
+  // unquoted appended pair written by the auto-stamper — no beta.10 marker.
+  const brokenDup = `---
+okf_version: "2.3"
+uid: "019b2d14-4230-7db7-87d4-7d81cfaec932"
+title: "User Note"
+type: "semantic"
+created_at: "2026-01-01T00:00:00Z"
+updated_at: "2026-01-02T00:00:00Z"
+description: "Real user note."
+tags:
+  - "alpha"
+epistemic_state: "hypothesis"
+sensitivity: "internal"
+authorship_origin: "authored"
+created_at: 2026-03-01T12:00:00Z
+updated_at: 2026-03-10T12:00:00Z
+---
+User body stays exact.
+`;
+  const plan = await createOkfMigrationPlan([{ path: "User.md", content: brokenDup }], options());
+  const entry = plan.entries[0];
+  assert.equal(entry.status, "needs-okf-plus");
+  assert.ok(entry.findings.some((f) => f.code === "repair-duplicate-timestamps"));
+  assert.equal((entry.proposedContent.match(/^created_at:/gm) ?? []).length, 1);
+  assert.equal((entry.proposedContent.match(/^updated_at:/gm) ?? []).length, 1);
+  // First created_at kept, newest updated_at kept.
+  assert.match(entry.proposedContent, /created_at: "2026-01-01T00:00:00Z"/);
+  assert.match(entry.proposedContent, /updated_at: "2026-03-10T12:00:00Z"/);
+  // Body byte-identical; result is clean flat 2.3 on rescan.
+  assert.ok(entry.proposedContent.endsWith("User body stays exact.\n"));
+  const rescan = await createOkfMigrationPlan([{ path: "User.md", content: entry.proposedContent }], options());
+  assert.equal(rescan.totals["okf-plus-2.3"], 1);
+  assert.equal(rescan.totals.changes, 0);
+
+  // A note with a DIFFERENT duplicate key (tags) is not this defect: stays blocked.
+  const otherDup = `---
+okf_version: "2.3"
+uid: "019b2d14-4230-7db7-87d4-7d81cfaec933"
+title: "Other"
+type: "semantic"
+created_at: "2026-01-01T00:00:00Z"
+tags:
+  - "alpha"
+tags:
+  - "beta"
+---
+Body.
+`;
+  const blockedPlan = await createOkfMigrationPlan([{ path: "Other.md", content: otherDup }], options());
+  assert.equal(blockedPlan.entries[0].status, "blocked");
+  assert.ok(!blockedPlan.entries[0].findings.some((f) => f.code === "repair-duplicate-timestamps"));
+
+  // Regression: a beta.10 marker-carrying note still takes the flatten repair.
+  const markerNote = `---
+okf_version: "2.3"
+uid: "019b2d14-4230-7db7-87d4-7d81cfaec934"
+title: "Generated"
+type: "semantic"
+created_at: "2026-07-01T00:00:00Z"
+updated_at: "2026-07-01T01:00:00Z"
+authorship:
+  origin: "authored"
+  author_id: "migration:human-review-required"
+provenance:
+  extraction:
+    method: "deterministic-migration"
+created_at: "2026-07-02T00:00:00Z"
+updated_at: "2026-07-02T01:00:00Z"
+---
+Body.
+`;
+  const markerPlan = await createOkfMigrationPlan([{ path: "Generated.md", content: markerNote }], options());
+  const markerEntry = markerPlan.entries[0];
+  assert.ok(markerEntry.findings.some((f) => f.code === "repair-generated-okf-2.3"));
+  assert.ok(!markerEntry.findings.some((f) => f.code === "repair-duplicate-timestamps"));
+});

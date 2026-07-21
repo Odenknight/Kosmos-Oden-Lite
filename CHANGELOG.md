@@ -7,6 +7,32 @@ changes, called out under **Compatibility**).
 
 ## [Unreleased]
 
+## [1.0.3] — 2026-07-21
+
+### Fixed
+- **Duplicate-timestamp frontmatter** (ported from gkos-engine v1.0.5): the
+  Obsidian auto-timestamp stamper (default ON) writes `created_at`/`updated_at`
+  into plain notes. Converting such a note to flat OKF+ 2.3 previously emitted
+  the converter's own timestamp pair *and* passed the stamper's pair through as
+  unknown fields, producing duplicate YAML keys — Obsidian then rendered the
+  whole frontmatter as raw invalid text instead of Properties.
+  - Both converters now **consume** the machine-stamped `created_at`/
+    `updated_at`/`authorship_origin` (a new `CONVERTER_CONSUMED` set kept out of
+    the unknown-field passthrough, and deliberately out of RECOGNIZED/canonical
+    ordering). `sources` is intentionally *not* consumed so a user's flat
+    sources list is never silently dropped.
+  - Timestamp precedence: the 2.3 writer's `created_at` prefers an existing
+    valid `created_at`, then a valid 2.2 `timestamp`, then file createdTime,
+    then now; `updated_at` is the newer of the stamper's `updated_at` and the
+    file mtime. The 2.2 writer's `timestamp` prefers an existing valid
+    `timestamp`, then a valid `created_at`, then file times.
+  - New bounded repair `repair-duplicate-timestamps` for already-broken,
+    marker-less flat 2.3 notes whose only defect is duplicated
+    `created_at`/`updated_at` keys: keeps the first `created_at` and the newest
+    `updated_at`, drops the duplicate lines, leaves the body byte-identical, and
+    self-validates. Other duplicate keys stay blocked; beta.10 marker notes
+    still take the flatten repair.
+
 ## [1.0.2] — 2026-07-19
 
 ### Fixed

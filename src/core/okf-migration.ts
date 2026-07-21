@@ -121,6 +121,22 @@ const CANONICAL_KEYS = [
   "blocks", "documents", "cites", "related_to",
 ] as const;
 const RECOGNIZED = new Set<string>(CANONICAL_KEYS);
+// Machine-maintained 2.3-profile fields that the converters emit themselves
+// (created_at/updated_at) or supply from governance defaults
+// (authorship_origin). These MUST NOT be carried through the unknown-field
+// passthrough: the Obsidian plugin's auto-timestamp stamper (default ON) writes
+// unquoted created_at/updated_at into plain notes, and passing them through
+// alongside the converter's own emitted keys produced DUPLICATE YAML keys,
+// which Obsidian renders as raw invalid frontmatter. Deliberately kept out of
+// RECOGNIZED/CANONICAL_KEYS, which drive 2.2 validation and canonical ordering
+// that these 2.3-profile keys must not join.
+//
+// NOTE: `sources` is intentionally NOT consumed. Neither writer re-emits a
+// sources list, so consuming it would silently DROP a user's flat sources
+// field. It stays in the unknown-field passthrough and is preserved verbatim.
+const CONVERTER_CONSUMED = new Set<string>([
+  "created_at", "updated_at", "authorship_origin",
+]);
 const LINEAGE_KEYS = ["supersedes", "superseded_by", "forked_from", "forked_to"] as const;
 const RELATION_KEYS = [
   "depends_on", "derives_from", "contradicts", "refines", "implements",
@@ -549,6 +565,66 @@ function repairableGenerated23Issues(issues: Array<{ line: number; message: stri
 }
 
 /**
+ * Bounded repair for the duplicate-timestamp state that broke real users: a
+ * flat OKF+ 2.3 note whose ONLY YAML defect is duplicated top-level
+ * created_at/updated_at keys (the converter's own emitted pair colliding with
+ * the auto-timestamp stamper's pre-existing pair). This handles the
+ * MARKER-LESS flat-profile note — no beta.10 deterministic-migration marker —
+ * so it is distinct from the flatten repair in proposedEditableOkf22.
+ *
+ * It keeps the FIRST created_at value and the NEWEST valid updated_at value,
+ * drops the duplicate lines, and changes NOTHING else: the note is already
+ * flat, so this is header-line surgery, not a re-flatten. Body bytes stay
+ * byte-identical. Both fields are machine-maintained timestamps, so deduping
+ * them guesses nothing. Returns null (caller falls back to blocked) if the
+ * defect is not exactly this shape or the result would not parse cleanly.
+ */
+function proposedDedupeTimestamps23(source: OkfMigrationSource): string | null {
+  const raw = source.content;
+  const bom = raw.charCodeAt(0) === 0xfeff ? "﻿" : "";
+  const text = bom ? raw.slice(1) : raw;
+  const eol: "\n" | "\r\n" = text.includes("\r\n") ? "\r\n" : "\n";
+  if (!(text.startsWith("---\n") || text.startsWith("---\r\n"))) return null;
+  const openLength = text.startsWith("---\r\n") ? 5 : 4;
+  const closing = /^---\r?$/gm;
+  closing.lastIndex = openLength;
+  const match = closing.exec(text);
+  if (!match) return null;
+  const header = text.slice(openLength, match.index).replace(/\r?\n$/, "");
+  const rest = text.slice(match.index); // the closing "---" delimiter onward
+  const lines = header.split(/\r?\n/);
+  // Collect the valid timestamp values from every top-level occurrence.
+  const values: Record<"created_at" | "updated_at", string[]> = { created_at: [], updated_at: [] };
+  for (const line of lines) {
+    const m = /^(created_at|updated_at):\s*(.*)$/.exec(line);
+    if (!m) continue;
+    const value = yamlUnquote(splitYamlComment(m[2]).value);
+    if (validTimestamp(value)) values[m[1] as "created_at" | "updated_at"].push(value);
+  }
+  // Only proceed when both keys actually recur with valid values to choose from.
+  if (values.created_at.length < 1 || values.updated_at.length < 1) return null;
+  const chosenCreated = values.created_at[0]; // FIRST valid created_at
+  const chosenUpdated = values.updated_at.reduce((a, b) => (Date.parse(b) > Date.parse(a) ? b : a)); // NEWEST
+  const out: string[] = [];
+  const emitted = { created_at: false, updated_at: false };
+  for (const line of lines) {
+    const m = /^(created_at|updated_at):\s*/.exec(line);
+    if (!m) { out.push(line); continue; }
+    const key = m[1] as "created_at" | "updated_at";
+    if (emitted[key]) continue; // drop the duplicate line
+    emitted[key] = true;
+    out.push(`${key}: ${yamlQuote(key === "created_at" ? chosenCreated : chosenUpdated)}`);
+  }
+  const proposed = bom + "---" + eol + out.join(eol) + eol + rest;
+  // Mechanical safety: the result must parse as clean flat 2.3 and the body
+  // bytes must be untouched, or we refuse and let the note stay blocked.
+  const checked = parseOkf23Frontmatter(proposed);
+  if (checked.issues.length || checked.data.okf_version !== "2.3") return null;
+  if (strictFrontmatter(proposed).body !== strictFrontmatter(raw).body) return null;
+  return proposed;
+}
+
+/**
  * Flatten metadata produced by the faulty beta.10 writer back to the compact,
  * human-editable OKF+ 2.2 Properties surface. This is intentionally limited to
  * notes carrying the deterministic-migration marker; native authored 2.3 notes
@@ -643,6 +719,15 @@ function proposedOkf(
   const existingScope = scalar(fm, "scope");
   const existingSensitivity = scalar(fm, "sensitivity");
   const existingTimestamp = scalar(fm, "timestamp");
+  // Timestamp precedence for the 2.2 writer: an existing valid 2.2 `timestamp`
+  // wins; otherwise consume a stamper-written flat `created_at` (plain notes
+  // carry created_at, not timestamp — see src/core/timestamps.ts, where 2.2
+  // notes use `timestamp` and plain notes use created_at/updated_at); else
+  // file times.
+  const existingCreatedAt = scalar(fm, "created_at");
+  const timestampValue = validTimestamp(existingTimestamp) ? existingTimestamp!
+    : validTimestamp(existingCreatedAt) ? existingCreatedAt!
+      : created;
   const lines: string[] = [
     "---",
     `okf_version: "2.2"`,
@@ -654,7 +739,7 @@ function proposedOkf(
   const resource = scalar(fm, "resource");
   if (resource) lines.push(`resource: ${yamlQuote(resource)}`);
   lines.push(
-    `timestamp: ${yamlQuote(validTimestamp(existingTimestamp) ? existingTimestamp! : created)}`,
+    `timestamp: ${yamlQuote(timestampValue)}`,
     `epistemic_state: ${yamlQuote(existingEpistemic && EPISTEMIC.has(existingEpistemic) ? existingEpistemic : defaults.epistemicState)}`,
     `scope: ${yamlQuote(existingScope && SCOPES.has(existingScope) ? existingScope : defaults.scope)}`,
     `scope_id: ${yamlQuote((existingScope && SCOPES.has(existingScope) ? scalar(fm, "scope_id") : undefined) || actualUid)}`,
@@ -664,7 +749,9 @@ function proposedOkf(
   for (const key of LINEAGE_KEYS) lines.push(...emitList(key, list(fm, key) ?? [], eol, true));
   for (const key of RELATION_KEYS) if (fm.byKey.has(key)) lines.push(...emitList(key, list(fm, key) ?? [], eol, true));
   for (const field of fm.fields) {
-    if (!RECOGNIZED.has(field.key) && !salvage.some((record) => record.field === field.key)) lines.push(...field.rawLines);
+    // Exclude machine-stamped 2.3-profile fields (created_at/updated_at/
+    // authorship_origin) so a 2.2 conversion doesn't carry them forward.
+    if (!RECOGNIZED.has(field.key) && !CONVERTER_CONSUMED.has(field.key) && !salvage.some((record) => record.field === field.key)) lines.push(...field.rawLines);
   }
   if (fm.looseLines.some((x) => x.trim())) lines.push(...fm.looseLines);
   lines.push("---");
@@ -700,6 +787,26 @@ function proposedNativeOkf23(
   const existingScope = scalar(fm, "scope");
   const existingSensitivity = scalar(fm, "sensitivity");
   const existingTimestamp = scalar(fm, "timestamp");
+  const existingCreatedAt = scalar(fm, "created_at");
+  const existingUpdatedAt = scalar(fm, "updated_at");
+  const fileModified = Number.isFinite(source.modifiedTime) && (source.modifiedTime ?? 0) > 0
+    ? new Date(source.modifiedTime!).toISOString()
+    : undefined;
+  // created_at precedence: the stamper's existing created_at (the note's true
+  // creation time) → an existing valid 2.2 timestamp → file createdTime → now.
+  // Consuming it here (instead of ignoring it and falling back to timestamp)
+  // preserves the real creation instant AND prevents a duplicate created_at.
+  const createdAtValue = validTimestamp(existingCreatedAt) ? existingCreatedAt!
+    : validTimestamp(existingTimestamp) ? existingTimestamp!
+      : created;
+  // updated_at: take the NEWER of the stamper's updated_at and the file mtime,
+  // so a genuine later edit is never rolled back to a stale mtime, and a stale
+  // mtime never erases the stamper's more recent value. Falls back to
+  // created_at when neither is a valid timestamp.
+  const updatedAtValue = [existingUpdatedAt, fileModified]
+    .filter((v): v is string => validTimestamp(v))
+    .reduce<string | undefined>((newest, v) => (newest && Date.parse(newest) >= Date.parse(v) ? newest : v), undefined)
+    ?? createdAtValue;
   const tags = list(fm, "tags") ?? (scalar(fm, "tags") ? [scalar(fm, "tags")!] : []);
   const relationships = new Map<string, string[]>();
   for (const key of RELATION_KEYS) {
@@ -725,8 +832,8 @@ function proposedNativeOkf23(
     `uid: ${yamlQuote(actualUid)}`,
     `title: ${yamlQuote(title)}`,
     `type: ${yamlQuote(existingType && TYPES.has(existingType) ? existingType : defaults.type)}`,
-    `created_at: ${yamlQuote(validTimestamp(existingTimestamp) ? existingTimestamp! : created)}`,
-    `updated_at: ${yamlQuote(Number.isFinite(source.modifiedTime) && (source.modifiedTime ?? 0) > 0 ? new Date(source.modifiedTime!).toISOString() : (validTimestamp(existingTimestamp) ? existingTimestamp! : created))}`,
+    `created_at: ${yamlQuote(createdAtValue)}`,
+    `updated_at: ${yamlQuote(updatedAtValue)}`,
     `description: ${yamlQuote(description)}`,
   ];
   const resource = scalar(fm, "resource");
@@ -744,7 +851,10 @@ function proposedNativeOkf23(
   for (const key of LINEAGE_KEYS) lines.push(...emitList(key, lineage.get(key) ?? [], eol, true));
   for (const key of RELATION_KEYS) if (relationships.has(key)) lines.push(...emitList(key, relationships.get(key) ?? [], eol, true));
   for (const field of fm.fields) {
-    if (!RECOGNIZED.has(field.key) && !salvage.some((record) => record.field === field.key)) lines.push(...field.rawLines);
+    // Exclude the machine-stamped 2.3-profile fields the converter emits itself
+    // (created_at/updated_at/authorship_origin); passing them through would
+    // duplicate created_at/updated_at and break Obsidian's YAML render.
+    if (!RECOGNIZED.has(field.key) && !CONVERTER_CONSUMED.has(field.key) && !salvage.some((record) => record.field === field.key)) lines.push(...field.rawLines);
   }
   if (fm.looseLines.some((x) => x.trim())) lines.push(...fm.looseLines);
   lines.push("---");
@@ -921,6 +1031,32 @@ async function auditOne(source: OkfMigrationSource, opts: AuditOptions): Promise
         proposedContent,
         uid,
       });
+    }
+    // Second repair route: a MARKER-LESS flat 2.3 note whose only parse defect
+    // is duplicated created_at/updated_at keys (converter + auto-stamper
+    // collision). These broke real users' Properties render. Propose a minimal,
+    // hash-bound dedupe (first created_at, newest updated_at) — nothing else
+    // changes. A note with any OTHER duplicate/parse issue falls through to the
+    // blocked path below. proposedDedupeTimestamps23 self-validates and returns
+    // null if the rewrite would not be clean.
+    if (native.issues.length && repairableGenerated23Issues(native.issues)) {
+      const proposedContent = proposedDedupeTimestamps23(source);
+      if (proposedContent) {
+        return assessed({
+          path: source.path,
+          status: "needs-okf-plus",
+          standard: "OKF+ 2.3",
+          findings: [{
+            code: "repair-duplicate-timestamps",
+            message: "Duplicate machine-maintained created_at/updated_at keys (auto-timestamp stamper colliding with the 2.3 converter) will be deduplicated: the first created_at and the newest updated_at are kept, the duplicate lines are dropped, and nothing else in the note changes.",
+          }],
+          originalHash,
+          proposedHash: await sha256Text(proposedContent),
+          originalContent: source.content,
+          proposedContent,
+          uid: typeof native.data.uid === "string" ? native.data.uid : undefined,
+        });
+      }
     }
     const projection = buildOkf23Projection(source.content, source.path, `sha256:${originalHash}`, null);
     const findings: OkfMigrationFinding[] = [
