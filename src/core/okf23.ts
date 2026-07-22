@@ -9,6 +9,7 @@
  */
 import { KOSMOS_VERSION } from "./version";
 import { codeUnitCompare } from "./paths";
+import { isValidOkfTimestamp } from "./timestamps";
 import type {
   OkfAssessment,
   OkfAssessmentScores,
@@ -78,9 +79,48 @@ const EPISTEMIC_STATES = new Set([
   "unknown", "observation", "reported", "inferred", "hypothesis", "modeled",
   "supported", "contested", "refuted", "retracted", "accepted", "superseded",
 ]);
-const SENSITIVITY_LEVELS: OkfSensitivity[] = [
+// The seven-level sensitivity vocabulary, ordered open→restrictive. Exported so
+// downstream plugins can populate a "default sensitivity" picker from the ONE
+// canonical list instead of duplicating it.
+export const SENSITIVITY_LEVELS: OkfSensitivity[] = [
   "public", "internal", "restricted", "confidential", "regulated", "phi", "secret",
 ];
+// Ordering used for "raise-only, never lower" comparisons. Higher index = more
+// restrictive. Any automatic detection (none ships today — see below) may only
+// move effective sensitivity UP this ladder, never down.
+export const SENSITIVITY_RANK: Record<OkfSensitivity, number> = Object.freeze(
+  Object.fromEntries(SENSITIVITY_LEVELS.map((level, index) => [level, index])) as Record<OkfSensitivity, number>,
+);
+// GKOS §11 fail-closed default: a note that declares NO sensitivity resolves to
+// the most restrictive practical level out of the box. Deployments may relax
+// this via Okf23ProjectionOptions.defaultSensitivity (validated below), but the
+// engine ships closed.
+export const FAIL_CLOSED_SENSITIVITY_DEFAULT: OkfSensitivity = "secret";
+// Fallback effective epistemic state for a value outside the frozen twelve-state
+// vocabulary. "unknown" is one of the twelve states (see EPISTEMIC_STATES) and is
+// the GKOS-designated null-weight state.
+export const EPISTEMIC_FALLBACK_STATE = "unknown" as const;
+
+/** Options controlling deterministic projection behavior. */
+export interface Okf23ProjectionOptions {
+  /**
+   * Effective sensitivity applied when a note declares no sensitivity field.
+   * Fail-closed to {@link FAIL_CLOSED_SENSITIVITY_DEFAULT} ("secret") when
+   * omitted. Validated against the seven-level vocabulary; an unrecognized
+   * value falls back to "secret". Downstream plugins may surface this as a
+   * user-facing "default sensitivity" setting.
+   *
+   * NOTE: the engine ships NO PII/sensitive-content detection. If a deployment
+   * adds detection, it must only RAISE effective sensitivity above this default
+   * (never lower it) — the projection enforces raise-only via SENSITIVITY_RANK.
+   */
+  defaultSensitivity?: OkfSensitivity;
+}
+
+function resolveDefaultSensitivity(options?: Okf23ProjectionOptions): OkfSensitivity {
+  const configured = options?.defaultSensitivity;
+  return configured && SENSITIVITY_LEVELS.includes(configured) ? configured : FAIL_CLOSED_SENSITIVITY_DEFAULT;
+}
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const NAMESPACED_ID = /^[a-z][a-z0-9_.-]*:[a-z0-9][a-z0-9_.:/-]{2,}$/i;
 const SHA256 = /^sha256:[0-9a-f]{64}$/i;
@@ -444,7 +484,7 @@ export function assessOkf23(projection: OkfProjection): OkfAssessment {
 }
 
 /** Build an origin-preserving projection for canonical v2.3 and legacy notes. */
-export function buildOkf23Projection(raw: string, sourcePath: string, contentHash: string, legacy: OkfData | null): OkfProjection | undefined {
+export function buildOkf23Projection(raw: string, sourcePath: string, contentHash: string, legacy: OkfData | null, options: Okf23ProjectionOptions = {}): OkfProjection | undefined {
   const parsed = parseOkf23Frontmatter(raw);
   const data = parsed.data;
   const version = text(data.okf_version);
@@ -535,15 +575,62 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
   const uid = text(authored.uid);
   if (!uid) diagnostics.push(diagnostic("OKF-IDENTITY-001", "warning", "The note has no canonical UID and remains path-bound.", sourcePath, "uid", "Assign a stable UUIDv7 through an authorized migration."));
   else if (!UUID.test(uid) && !NAMESPACED_ID.test(uid)) diagnostics.push(diagnostic("OKF-IDENTITY-002", "error", "The UID is neither a UUID nor a policy-permitted namespaced globally unique identifier.", sourcePath, "uid"));
-  const epistemicState = text(authored.epistemicState);
-  if (epistemicState && !EPISTEMIC_STATES.has(epistemicState)) diagnostics.push(diagnostic("OKF-EPISTEMIC-002", "error", `Unknown epistemic state: ${epistemicState}.`, sourcePath, "epistemic.state"));
-  if (epistemicState === "accepted" && !hasApproval(origins.approved, authored)) diagnostics.push(diagnostic("OKF-EPISTEMIC-004", "warning", "Accepted state lacks an approval or authorization record; acceptance is not treated as verified authority.", sourcePath, "epistemic.state"));
+  // Epistemic state: the AUTHORED value (kept verbatim on authored.epistemicState
+  // and echoed in the diagnostic below) is never silently erased, but a value
+  // outside the frozen twelve-state vocabulary must not flow through as the
+  // EFFECTIVE state. It falls back to "unknown" (null-weight) with a
+  // machine-detectable defaulted-marking on the effective projection so a
+  // consumer reading only effective state still treats the note as unknown.
+  const authoredEpistemicState = text(authored.epistemicState);
+  let effectiveEpistemicState = authoredEpistemicState;
+  let epistemicStateDefaulted = false;
+  if (authoredEpistemicState && !EPISTEMIC_STATES.has(authoredEpistemicState)) {
+    diagnostics.push(diagnostic(
+      "OKF-EPISTEMIC-002", "error",
+      `Unknown epistemic state: ${authoredEpistemicState}. Effective state falls back to "${EPISTEMIC_FALLBACK_STATE}" (null-weight); the invalid value is retained here for repair.`,
+      sourcePath, "epistemic.state",
+      `Rewrite epistemic.state (or the flat epistemic_state property) to one of the twelve valid GKOS states, e.g. "hypothesis" or "${EPISTEMIC_FALLBACK_STATE}". An upgrade-all migration run rewrites invalid states to the conservative default automatically.`,
+    ));
+    effectiveEpistemicState = EPISTEMIC_FALLBACK_STATE;
+    epistemicStateDefaulted = true;
+  }
+  if (authoredEpistemicState === "accepted" && !hasApproval(origins.approved, authored)) diagnostics.push(diagnostic("OKF-EPISTEMIC-004", "warning", "Accepted state lacks an approval or authorization record; acceptance is not treated as verified authority.", sourcePath, "epistemic.state"));
 
+  // Temporal diagnostic (DIV-001): a naive wall-clock timestamp (no Z, no
+  // numeric offset) is rejected by the schema and the stamper; the projection
+  // must flag it too, using the SAME shared validator (isValidOkfTimestamp).
+  for (const [field, value] of [
+    ["created_at", text(data.created_at) ?? legacy?.timestamp ?? null],
+    ["updated_at", text(data.updated_at)],
+  ] as const) {
+    if (value && !isValidOkfTimestamp(value)) {
+      diagnostics.push(diagnostic(
+        "OKF-TEMPORAL-001", "warning",
+        `${field} "${value}" is not a portable timestamp: it lacks a UTC "Z" designator or a numeric ±HH:MM offset (naive wall-clock is rejected by the schema and the stamper).`,
+        sourcePath, field,
+        "Rewrite as ISO-8601 with an explicit zone, e.g. 2026-07-20T12:00:00Z or 2026-07-20T12:00:00-04:00.",
+      ));
+    }
+  }
+
+  // Fail-closed sensitivity (DIV-002 / GKOS §11): a note that declares no
+  // sensitivity resolves to the configured restricted default ("secret" out of
+  // the box), NOT to a mid-open level. The default is configurable per
+  // deployment via options.defaultSensitivity but can only be relaxed
+  // explicitly; the engine never silently defaults to an open level.
+  // OKF-SENSITIVITY-001 keeps firing so the defaulting stays visible.
   const rawSensitivity = text(record(data.sensitivity).level) ?? flatSensitivity ?? legacy?.sensitivity ?? null;
-  let effectiveSensitivity: OkfSensitivity = OKF23_POLICY.sensitivityDefault;
-  if (!rawSensitivity) diagnostics.push(diagnostic("OKF-SENSITIVITY-001", "warning", "Sensitivity is missing; effective sensitivity defaults to internal.", sourcePath, "sensitivity.level"));
+  const defaultSensitivity = resolveDefaultSensitivity(options);
+  let effectiveSensitivity: OkfSensitivity = defaultSensitivity;
+  if (!rawSensitivity) diagnostics.push(diagnostic("OKF-SENSITIVITY-001", "warning", `Sensitivity is missing; effective sensitivity fails closed to the restricted default (${defaultSensitivity}).`, sourcePath, "sensitivity.level"));
   else if (SENSITIVITY_LEVELS.includes(rawSensitivity as OkfSensitivity)) effectiveSensitivity = rawSensitivity as OkfSensitivity;
   else { effectiveSensitivity = "secret"; diagnostics.push(diagnostic("OKF-SENSITIVITY-005", "error", "Invalid sensitivity fails closed to secret for effective access control.", sourcePath, "sensitivity.level")); }
+  // Detection hook (raise-only, per SENSITIVITY_RANK): no PII/sensitive-content
+  // detection ships in the engine today. If a deployment adds one, it plugs in
+  // here and may only INCREASE effectiveSensitivity above the value resolved
+  // from the authored/default classification — never lower it. An authored
+  // classification (including a legitimately open one) is otherwise respected
+  // as-is; the fail-closed default only governs the MISSING-sensitivity case.
 
   const provenance = record(authored.provenance);
   const refs = list(provenance.source_refs).filter((x) => text(x));
@@ -562,14 +649,14 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
   derivedLabels.push(uid ? (UUID.test(uid) || NAMESPACED_ID.test(uid) ? "identity:stable" : "identity:invalid") : "identity:missing");
   derivedLabels.push(refs.length ? (hash && SHA256.test(hash) ? "provenance:traceable" : "provenance:partial") : "provenance:missing");
   derivedLabels.push(`sensitivity:${effectiveSensitivity}`);
-  if (epistemicState) derivedLabels.push(`epistemic:${epistemicState}`);
+  if (effectiveEpistemicState) derivedLabels.push(`epistemic:${effectiveEpistemicState}`);
   origins.derived.labels = [...new Set(derivedLabels)].sort();
   origins.derived.sensitivity = effectiveSensitivity;
   origins.derived.effectiveSensitivityReason = rawSensitivity ? "authored-source-classification" : "policy-default";
   const effective: OkfOriginProjection = {
     tags: [...(authored.tags ?? [])],
     labels: [...new Set([...origins.authored.labels, ...origins.derived.labels, ...origins.approved.labels])],
-    relationships: {}, epistemicState, sensitivity: effectiveSensitivity,
+    relationships: {}, epistemicState: effectiveEpistemicState, epistemicStateDefaulted, sensitivity: effectiveSensitivity,
   };
   for (const origin of [origins.authored, origins.derived, origins.approved]) for (const [kind, items] of Object.entries(origin.relationships)) {
     effective.relationships[kind] = [...(effective.relationships[kind] ?? []), ...items];
