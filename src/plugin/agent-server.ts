@@ -1088,7 +1088,7 @@ export class KosmosAgentServer {
         return ok({
           protocolVersion,
           capabilities: { tools: { listChanged: false } },
-          serverInfo: { name: "vault-kosmos", title: "Vault Kosmos", version: KOSMOS_VERSION },
+          serverInfo: { name: "vault-kosmos-oden", title: "Vault Kosmos", version: KOSMOS_VERSION },
           instructions: "Read-only, sensitivity-filtered OKF+ v2.3 Validating Projection Profile. Authored, derived, proposed, approved, and effective values remain distinct. Scores measure documentation/support quality, not truth or authorization. Use get_okf_note/get_assessment/get_diagnostics for governance projections and get_lineage/graph_at_time for temporal views. Graphiti exports are non-authoritative projections. The server never modifies notes.",
         });
       }
@@ -1241,7 +1241,7 @@ export class KosmosAgentServer {
           rest: ["/health", "/overview", "/diagnostics", "/graph", "/notes?q=&tag=&area=&limit=", "/note?path=|title=", "/lineage?path=|title=", "/related?path=|title=", "/at?time=ISO", "/episodes", "/graphiti/status", "/okf/note?uid=|path=|title=", "/okf/assessment?uid=|path=|title=", "/okf/diagnostics?uid=|path=|title=", "/okf/labels?uid=|path=|title=", "/okf/evidence?uid=|path=|title=", "/okf/relationships?uid=|path=|title=", "/okf/validate?uid=|path=|title=", "/okf/policy", "/okf/assess-vault?limit="],
         });
         return;
-      case "/health": this.json(res, 200, { ok: true, name: "vault-kosmos", version: KOSMOS_VERSION, vault: this.provider.vaultName() }); return;
+      case "/health": this.json(res, 200, { ok: true, name: "vault-kosmos-oden", version: KOSMOS_VERSION, vault: this.provider.vaultName() }); return;
       case "/overview": this.json(res, 200, await this.qOverview()); return;
       case "/diagnostics": this.json(res, 200, await this.qDiagnostics()); return;
       case "/graph": this.json(res, 200, await this.qGraph()); return;

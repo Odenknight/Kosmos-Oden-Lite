@@ -8,7 +8,7 @@ import { DEFAULT_SYNC_EXCLUDES, PROTECTED_SYNC_EXCLUDES } from "./nextcloud-sync
 export function installedBridgePath(app: App, plugin: any): string {
   try {
     const base = String((app.vault.adapter as any).getBasePath?.() || "").replace(/\\/g, "/");
-    const dir = String(plugin?.manifest?.dir || `${app.vault.configDir}/plugins/${plugin?.manifest?.id || "vault-kosmos"}`).replace(/\\/g, "/");
+    const dir = String(plugin?.manifest?.dir || `${app.vault.configDir}/plugins/${plugin?.manifest?.id || "vault-kosmos-oden"}`).replace(/\\/g, "/");
     const pluginDir = /^[A-Za-z]:\//.test(dir) || dir.startsWith("/")
       ? dir.replace(/\/$/, "")
       : `${base ? base.replace(/\/$/, "") + "/" : ""}${dir.replace(/^\//, "")}`;
@@ -46,14 +46,14 @@ Desktop only: Obsidian on iPhone/Android can't run local servers, so this featur
 
 ### Claude Code (terminal) — native HTTP, no bridge
 \`\`\`bash
-claude mcp add --transport http --header "Authorization: Bearer ${token}" vault-kosmos "${URLB}/mcp"
+claude mcp add --transport http --header "Authorization: Bearer ${token}" vault-kosmos-oden "${URLB}/mcp"
 \`\`\`
 
 …or save this as \`.mcp.json\` where you run \`claude\` (no \`mcp-remote\` bridge needed):
 \`\`\`json
 {
   "mcpServers": {
-    "vault-kosmos": {
+    "vault-kosmos-oden": {
       "type": "streamable-http",
       "url": "${URLB}/mcp",
       "headers": { "Authorization": "Bearer ${token}" }
@@ -81,7 +81,7 @@ The release includes a first-party stdio adapter (no \`mcp-remote\` package):
 \`\`\`json
 {
   "mcpServers": {
-    "vault-kosmos": {
+    "vault-kosmos-oden": {
       "command": "node",
       "args": [${JSON.stringify(bridgePath)}],
       "env": {
@@ -414,7 +414,7 @@ export class KosmosSettingTab extends PluginSettingTab {
       }));
     new Setting(connectEl).setName("Anthropic · Claude Code project").setDesc("Copies a native Streamable HTTP .mcp.json block for a Claude Code project.")
       .addButton((b) => b.setButtonText("Copy .mcp.json").onClick(() => {
-        navigator.clipboard.writeText(JSON.stringify({ mcpServers: { "vault-kosmos": { type: "streamable-http", url: `${url()}/mcp`, headers: { Authorization: `Bearer ${s.agentToken}` } } } }, null, 2));
+        navigator.clipboard.writeText(JSON.stringify({ mcpServers: { "vault-kosmos-oden": { type: "streamable-http", url: `${url()}/mcp`, headers: { Authorization: `Bearer ${s.agentToken}` } } } }, null, 2));
         new Notice(".mcp.json copied — save it next to where you run claude");
       }));
     new Setting(connectEl).setName("OpenAI · Codex app / CLI / IDE").setDesc("Copies config.toml for the shared Codex MCP configuration layers used across Codex surfaces.")
@@ -424,7 +424,7 @@ export class KosmosSettingTab extends PluginSettingTab {
       }));
     new Setting(connectEl).setName("Anthropic · Claude Desktop / stdio clients").setDesc("Copies stdio JSON using the bundled first-party adapter; no mcp-remote dependency.")
       .addButton((b) => b.setButtonText("Copy stdio config").onClick(() => {
-        navigator.clipboard.writeText(JSON.stringify({ mcpServers: { "vault-kosmos": { command: "node", args: [bridgePath], env: { KOSMOS_MCP_URL: `${url()}/mcp`, KOSMOS_MCP_TOKEN: s.agentToken } } } }, null, 2));
+        navigator.clipboard.writeText(JSON.stringify({ mcpServers: { "vault-kosmos-oden": { command: "node", args: [bridgePath], env: { KOSMOS_MCP_URL: `${url()}/mcp`, KOSMOS_MCP_TOKEN: s.agentToken } } } }, null, 2));
         new Notice("STDIO connector config copied");
       }));
     new Setting(connectEl).setName("Universal MCP client").setDesc("Copies vendor-neutral MCP Streamable HTTP connection details.")
