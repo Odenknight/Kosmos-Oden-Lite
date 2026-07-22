@@ -5,7 +5,7 @@
 schema: 1
 
 project:
-  name: vault-kosmos
+  name: vault-kosmos-oden
 
 security:
   # Agent API is opt-in, localhost-only, authenticated by default.

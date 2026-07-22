@@ -1,7 +1,7 @@
 /** Pure, DOM-free Nextcloud sync settings, URL, exclusion, and three-way planning logic. */
 export const NEXTCLOUD_SYNC_SCHEMA = 2;
 export const OBSIDIAN_CONFIG_PATTERN = ".obsidian/**";
-export const PROTECTED_SYNC_EXCLUDES = [".obsidian/plugins/vault-kosmos/data.json"];
+export const PROTECTED_SYNC_EXCLUDES = [".obsidian/plugins/vault-kosmos-oden/data.json"];
 export const DEFAULT_SYNC_EXCLUDES = [".git/**", ".trash/**"];
 
 export interface NextcloudSettings {
