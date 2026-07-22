@@ -16,7 +16,7 @@
 import { colorForArea } from "./colors";
 import { parseMarkdownFile, type ParsedMarkdown } from "./markdown";
 import { parseOkfPlus, parseOkfTimestamp } from "./okf";
-import { buildOkf23Projection, okf23Inverse, okf23RelationTargets, refreshOkf23Assessment } from "./okf23";
+import { buildOkf23Projection, okf23Inverse, okf23RelationTargets, refreshOkf23Assessment, type Okf23ProjectionOptions } from "./okf23";
 import {
   areaFromFilePath,
   areaFromPath,
@@ -73,7 +73,7 @@ export interface NoteRecord {
 }
 
 /** Parse ONE file into a cacheable record (the expensive step). */
-export function parseSourceFile(f: SourceFile): NoteRecord {
+export function parseSourceFile(f: SourceFile, options: Okf23ProjectionOptions = {}): NoteRecord {
   const ext = f.extension?.toLowerCase() ?? extensionFromPath(f.relativePath);
   const content = f.content ?? "";
   const parseable = !!ext && PARSEABLE.has(ext);
@@ -82,7 +82,7 @@ export function parseSourceFile(f: SourceFile): NoteRecord {
     : { data: {}, content: "", links: [], tags: [], aliases: [] };
   const hash = contentHash(content);
   const okf = parseable ? parseOkfPlus(parsed.data, parsed.content) : null;
-  const projection = parseable ? buildOkf23Projection(content, normalizeVaultRelative(f.relativePath), hash, okf) : undefined;
+  const projection = parseable ? buildOkf23Projection(content, normalizeVaultRelative(f.relativePath), hash, okf, options) : undefined;
   if (okf && projection) okf.projection = projection;
   return {
     relativePath: normalizeVaultRelative(f.relativePath),
@@ -436,7 +436,7 @@ function graphUid(node: KosmosNode | undefined): string | null {
 }
 
 /** Full build convenience: parse every file, then assemble. */
-export function buildGraph(files: SourceFile[], folders: string[], now?: number): KosmosGraph {
-  const records = files.map(parseSourceFile);
+export function buildGraph(files: SourceFile[], folders: string[], now?: number, options: Okf23ProjectionOptions = {}): KosmosGraph {
+  const records = files.map((f) => parseSourceFile(f, options));
   return assembleGraph(records, folders, { now });
 }

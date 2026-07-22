@@ -17,9 +17,17 @@ security:
   # Query-string token auth is deprecated and off by default; never in LAN mode.
   query_tokens_default_enabled: false
   query_tokens_allowed_in_lan: false
-  # OKF+ sensitivity enforcement: legacy/unlabeled notes are internal;
-  # confidential and PHI require an explicit local policy choice.
+  # OKF+ sensitivity enforcement. The agent read ceiling defaults to internal
+  # (confidential and PHI require an explicit local policy choice). A note that
+  # declares NO sensitivity now FAILS CLOSED to secret (DIV-002): the engine
+  # ships closed and the plugin's user-facing "Default sensitivity" setting
+  # (agentDefaultSensitivity) defaults to secret. That default is threaded into
+  # every projection and is validated on load. Detection, if ever added, may
+  # only RAISE effective sensitivity above the default, never lower it, and an
+  # authored classification is always respected as-is.
   default_agent_sensitivity_ceiling: internal
+  missing_sensitivity_fails_closed_as: secret
+  default_sensitivity_setting_default: secret
   invalid_sensitivity_fails_closed_as: secret
   invalid_v23_sensitivity_fails_closed_as: secret
   # The Agent API is read-only: no write routes exist.

@@ -10,6 +10,7 @@
 import type { App, TFile } from "obsidian";
 import { KosmosIndex } from "../core/incremental";
 import { stripFrontmatter } from "../core/graphiti";
+import type { Okf23ProjectionOptions } from "../core/okf23";
 import type { AgentDataProvider } from "./agent-server";
 import type { KosmosGraph, SourceFile } from "../core/types";
 
@@ -66,15 +67,25 @@ export function attachmentListFrom(all: Array<{ path: string; extension?: string
 
 export class VaultDataProvider implements AgentDataProvider {
   private app: App;
-  private index = new KosmosIndex();
+  private readonly projectionOptions: () => Okf23ProjectionOptions;
+  private index: KosmosIndex;
   private fullDirty = true;
   private changedPaths = new Set<string>();
   private removedPaths = new Set<string>();
   private renamedPaths: Array<{ from: string; to: string }> = [];
   private building: Promise<KosmosGraph> | null = null;
 
-  constructor(app: App) {
+  /**
+   * @param projectionOptions live getter for the engine projection options
+   *   (notably the fail-closed defaultSensitivity from plugin settings). Read at
+   *   every FULL rebuild so a settings change (which triggers markFullDirty)
+   *   re-projects unlabeled notes at the new default. Incremental reparses reuse
+   *   the same index/options, staying consistent between full builds.
+   */
+  constructor(app: App, projectionOptions: () => Okf23ProjectionOptions = () => ({})) {
     this.app = app;
+    this.projectionOptions = projectionOptions;
+    this.index = new KosmosIndex(this.projectionOptions());
   }
 
   /* ---- change notifications (wired to vault events by the plugin) ---- */
@@ -114,6 +125,9 @@ export class VaultDataProvider implements AgentDataProvider {
     const folders = folderListFrom(md);
     const attachments = attachmentListFrom(this.app.vault.getFiles());
     if (this.fullDirty || !this.index.graph) {
+      // Rebuild the index fresh so any changed projection option (e.g. the
+      // default-sensitivity setting) is applied to every note.
+      this.index = new KosmosIndex(this.projectionOptions());
       const files: SourceFile[] = [];
       for (const f of md) files.push(await this.toSourceFile(f));
       const update = this.index.setFiles(files, folders, attachments);

@@ -2,8 +2,22 @@
 import { App, Notice, PluginSettingTab, Platform, Setting } from "obsidian";
 import { COMMON_OKF_DEVELOPER_EXCLUSIONS, normalizeOkfExclusionPatterns } from "../core/okf-exclusions";
 import { KOSMOS_VERSION } from "../core/version";
+import { SENSITIVITY_LEVELS, FAIL_CLOSED_SENSITIVITY_DEFAULT } from "../core/okf23";
 import { LATEST_MCP_PROTOCOL_VERSION, makeToken, type AgentSettings } from "./agent-server";
 import { DEFAULT_SYNC_EXCLUDES, PROTECTED_SYNC_EXCLUDES } from "./nextcloud-sync";
+
+/** Human-readable labels for the engine's sensitivity vocabulary. Keyed by the
+ *  canonical level so the option LIST is always the engine's SENSITIVITY_LEVELS
+ *  (never a duplicated vocabulary); only the display text lives here. */
+const SENSITIVITY_LABELS: Record<string, string> = {
+  public: "Public (most open)",
+  internal: "Internal",
+  restricted: "Restricted",
+  confidential: "Confidential",
+  regulated: "Regulated",
+  phi: "PHI",
+  secret: "Secret (fail-closed default, most restrictive)",
+};
 
 export function installedBridgePath(app: App, plugin: any): string {
   try {
@@ -260,11 +274,40 @@ export class KosmosSettingTab extends PluginSettingTab {
     };
     refresh();
 
+    // Default sensitivity is placed BEFORE the enable toggle on purpose: the
+    // user must be able to see and set the fail-closed default that governs
+    // unlabeled notes before any agent-facing server can be turned on.
+    new Setting(agentEl).setName("Default sensitivity for unlabeled notes")
+      .setDesc("Fail-closed classification applied to notes that declare NO sensitivity field. Wired into every governed projection the plugin builds. Defaults to Secret so unlabeled notes stay hidden from agents by default; relax it only if your unlabeled notes are safe to expose at that level. The engine may only RAISE a note's effective sensitivity above this default and never lowers an authored classification (raise-only) — it performs no content/PII detection.")
+      .addDropdown((d) => {
+        for (const level of SENSITIVITY_LEVELS) d.addOption(level, SENSITIVITY_LABELS[level] ?? level);
+        d.setValue(SENSITIVITY_LEVELS.includes(s.agentDefaultSensitivity) ? s.agentDefaultSensitivity : FAIL_CLOSED_SENSITIVITY_DEFAULT)
+          .onChange(async (v: any) => {
+            s.agentDefaultSensitivity = v;
+            await this.plugin.saveAgentSettings();
+            // Re-project the whole vault so unlabeled notes pick up the new default.
+            this.plugin.provider.markFullDirty();
+          });
+      });
+
     new Setting(agentEl).setName("Enable local Agent API").setDesc(Platform.isDesktopApp ? "Start the read-only REST and MCP server now and on every launch." : "Unavailable on mobile Obsidian; mobile can still use visualization and vault sync.")
       .addToggle((t) => t.setValue(s.agentEnabled).setDisabled(!Platform.isDesktopApp).onChange(async (v) => {
         s.agentEnabled = v;
         await this.plugin.saveAgentSettings();
-        if (v) this.plugin.startAgentApi(); else this.plugin.agentApi.stop();
+        if (v) {
+          // Network-exposure disclosure: when the agent server is being enabled
+          // and any network-facing surface is involved (LAN binding here, or an
+          // active Nextcloud sync), remind the user that the default-sensitivity
+          // setting governs which unlabeled notes become reachable.
+          const lanBound = s.agentBindMode === "lan";
+          const nextcloudActive = this.plugin.nextcloudSettings?.enabled === true;
+          if (lanBound || nextcloudActive) {
+            const surface = lanBound && nextcloudActive ? "the LAN-bound Agent API and Nextcloud sync"
+              : lanBound ? "the LAN-bound Agent API" : "Nextcloud sync";
+            new Notice(`Vault Kosmos: your notes may be reachable over the network via ${surface}. The "Default sensitivity for unlabeled notes" setting (currently ${SENSITIVITY_LABELS[s.agentDefaultSensitivity] ?? s.agentDefaultSensitivity}) governs any note without an explicit sensitivity — check it before proceeding.`, 12000);
+          }
+          this.plugin.startAgentApi();
+        } else this.plugin.agentApi.stop();
         setTimeout(refresh, 150);
       }));
 

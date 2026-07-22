@@ -23,7 +23,12 @@ const FILES = [
 ];
 
 function fixtureProvider() {
-  const graph = buildGraph(FILES, ["Ideas"]);
+  // These fixtures are legacy notes with NO sensitivity field. Under the
+  // DIV-002 fail-closed default they would project to "secret" and be filtered
+  // out by the "internal" ceiling; the plugin threads its configured default
+  // sensitivity into the projection, so mirror that here (internal) to exercise
+  // the visible-note paths these tests cover.
+  const graph = buildGraph(FILES, ["Ideas"], undefined, { defaultSensitivity: "internal" });
   const contents = new Map(FILES.map((f) => [f.relativePath, stripFrontmatter(f.content)]));
   return {
     getGraph: async () => graph,
@@ -493,7 +498,9 @@ test("onTraversal: paths are CAPPED per tool so broad results never flood the ha
     const sup = i > 0 ? `supersedes:\n  - Note ${i - 1}\n` : "";
     files.push({ relativePath: `Note ${i}.md`, content: `---\ntype: idea\ntimestamp: 2026-01-${String((i % 27) + 1).padStart(2, "0")}T00:00:00Z\n${sup}---\nnote body ${i}` });
   }
-  const graph = buildGraph(files, []);
+  // Unlabeled fixtures: project at the plugin's configured default (internal)
+  // so they clear the "internal" ceiling instead of failing closed to secret.
+  const graph = buildGraph(files, [], undefined, { defaultSensitivity: "internal" });
   const provider = { getGraph: async () => graph, getNoteContent: async () => "", vaultName: () => "V", lanAddresses: () => [] };
   const server = new KosmosAgentServer(http, settings(), provider);
   const seen = [];
@@ -551,4 +558,30 @@ test("settings migration: v1 (no schema) turns query tokens OFF (Doc1 §3.7)", (
   // defaults fill in for a null load
   const fresh = migrateAgentSettings(null);
   assert.equal(fresh.agentEnabled, DEFAULT_AGENT_SETTINGS.agentEnabled);
+});
+
+test("default-sensitivity setting: fail-closed default, validated on migration, and threaded into projection", () => {
+  // The shipped default is fail-closed to secret.
+  assert.equal(DEFAULT_AGENT_SETTINGS.agentDefaultSensitivity, "secret");
+  // A fresh/absent value fails closed to secret.
+  assert.equal(migrateAgentSettings(null).agentDefaultSensitivity, "secret");
+  assert.equal(migrateAgentSettings({ agentEnabled: true }).agentDefaultSensitivity, "secret");
+  // An out-of-vocabulary persisted value is repaired to secret.
+  assert.equal(migrateAgentSettings({ agentDefaultSensitivity: "bogus" }).agentDefaultSensitivity, "secret");
+  // A valid value is honored.
+  assert.equal(migrateAgentSettings({ agentDefaultSensitivity: "internal" }).agentDefaultSensitivity, "internal");
+
+  // Plumbing: the setting flows through buildGraph -> parseSourceFile ->
+  // buildOkf23Projection so an unlabeled note resolves to the configured
+  // default, and an authored classification is never lowered (raise-only).
+  const unlabeled = { relativePath: "Unlabeled.md", content: "---\ntype: idea\n---\nno sensitivity here" };
+  const authoredPublic = { relativePath: "Public.md", content: "---\ntype: idea\nsensitivity: public\n---\npublic note" };
+  const secretGraph = buildGraph([unlabeled, authoredPublic], [], undefined, { defaultSensitivity: "secret" });
+  const relaxedGraph = buildGraph([unlabeled, authoredPublic], [], undefined, { defaultSensitivity: "internal" });
+  const eff = (g, p) => g.nodes.find((n) => n.path === p).okf.projection.effective.sensitivity;
+  assert.equal(eff(secretGraph, "Unlabeled.md"), "secret");
+  assert.equal(eff(relaxedGraph, "Unlabeled.md"), "internal");
+  // Authored public is respected regardless of the default (never raised/lowered by the default).
+  assert.equal(eff(secretGraph, "Public.md"), "public");
+  assert.equal(eff(relaxedGraph, "Public.md"), "public");
 });

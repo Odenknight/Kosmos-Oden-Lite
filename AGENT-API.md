@@ -16,10 +16,21 @@ GKOS governance engine.
 ## Start the connector
 
 1. Open **Obsidian → Settings → Community plugins → Vault Kosmos**.
-2. Enable **local Agent API**.
-3. Keep **Require auth token** enabled.
-4. Choose the highest OKF+ sensitivity agents may read. The default is
-   `internal`; `confidential` and `phi` remain hidden until explicitly enabled.
+2. Set **Default sensitivity for unlabeled notes** first — it appears above the
+   enable toggle on purpose. Any note with no explicit `sensitivity` field is
+   projected at this level. It ships **fail-closed to `secret`**, so unlabeled
+   notes stay hidden from agents until you deliberately relax it. The engine may
+   only *raise* a note's effective sensitivity above this default and never
+   lowers an authored classification (raise-only); it performs no content/PII
+   detection.
+3. Enable **local Agent API**. If you enable it while a network-facing surface
+   is active (LAN binding, or Nextcloud sync turned on), a notice reminds you
+   that your notes may be reachable over the network and that the
+   default-sensitivity setting governs unlabeled notes — check it first.
+4. Keep **Require auth token** enabled.
+5. Choose the highest OKF+ sensitivity agents may read (the read *ceiling*). The
+   default is `internal`; `confidential` and `phi` remain hidden until
+   explicitly enabled.
 
 The default endpoint is `http://127.0.0.1:4816/mcp`. LAN mode is opt-in and
 refuses to start without a token.

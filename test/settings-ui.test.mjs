@@ -23,6 +23,23 @@ test("Options exposes the four required first-class tabs and routes Sync control
   assert.doesNotMatch(source, /enhanceSectionNavigation|openSections/);
 });
 
+test("Default-sensitivity setting sits before the Agent API enable toggle and fires a network disclosure", async () => {
+  const source = await readFile(settingsPath, "utf8");
+  const defIdx = source.indexOf('"Default sensitivity for unlabeled notes"');
+  const enableIdx = source.indexOf('"Enable local Agent API"');
+  assert.ok(defIdx > -1, "Default sensitivity setting present");
+  assert.ok(enableIdx > -1, "Enable toggle present");
+  assert.ok(defIdx < enableIdx, "Default sensitivity must render before the enable toggle");
+  // Options come from the engine vocabulary, not a hardcoded list.
+  assert.match(source, /for \(const level of SENSITIVITY_LEVELS\)/);
+  // Enabling with a network-facing surface (LAN bind or active Nextcloud sync) warns the user.
+  assert.match(source, /agentBindMode === "lan"/);
+  assert.match(source, /nextcloudSettings\?\.enabled === true/);
+  assert.match(source, /may be reachable over the network/);
+  // Raise-only semantics are documented in the setting description.
+  assert.match(source, /raise-only/i);
+});
+
 test("Options CSS stacks controls on mobile and keeps tabs horizontally reachable", async () => {
   const css = await readFile(stylesPath, "utf8");
   assert.match(css, /\.kosmos-settings-tabs[\s\S]*grid-template-columns:\s*repeat\(4/);
