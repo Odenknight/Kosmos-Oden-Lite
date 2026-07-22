@@ -16,19 +16,16 @@ import {
   makeToken,
 } from "../dist/kosmos-agent-server.mjs";
 
+// Fixtures carry explicit sensitivity so they stay visible at the default
+// internal ceiling: DIV-002 fails unlabeled notes closed to "secret".
 const FILES = [
   { relativePath: "Home.md", content: "# Home\n[[Engine v2]]" },
-  { relativePath: "Ideas/Engine v1.md", content: "---\ntype: idea\ntimestamp: 2026-01-01T00:00:00Z\n---\nOld engine." },
-  { relativePath: "Ideas/Engine v2.md", content: "---\ntype: idea\ntimestamp: 2026-03-01T00:00:00Z\nsupersedes:\n  - Engine v1\n---\nNew engine.\n\n**Related:** [[Home]]" },
+  { relativePath: "Ideas/Engine v1.md", content: "---\ntype: idea\nsensitivity: internal\ntimestamp: 2026-01-01T00:00:00Z\n---\nOld engine." },
+  { relativePath: "Ideas/Engine v2.md", content: "---\ntype: idea\nsensitivity: internal\ntimestamp: 2026-03-01T00:00:00Z\nsupersedes:\n  - Engine v1\n---\nNew engine.\n\n**Related:** [[Home]]" },
 ];
 
 function fixtureProvider() {
-  // These fixtures are legacy notes with NO sensitivity field. Under the
-  // DIV-002 fail-closed default they would project to "secret" and be filtered
-  // out by the "internal" ceiling; the plugin threads its configured default
-  // sensitivity into the projection, so mirror that here (internal) to exercise
-  // the visible-note paths these tests cover.
-  const graph = buildGraph(FILES, ["Ideas"], undefined, { defaultSensitivity: "internal" });
+  const graph = buildGraph(FILES, ["Ideas"]);
   const contents = new Map(FILES.map((f) => [f.relativePath, stripFrontmatter(f.content)]));
   return {
     getGraph: async () => graph,
@@ -49,6 +46,10 @@ function settings(overrides = {}) {
     agentRequireToken: true,
     agentBindMode: "localhost",
     agentSensitivityCeiling: "internal",
+    // Production default: unlabeled notes without a projection fail closed to
+    // "secret" (DIV-002). Shared fixtures above carry explicit sensitivity
+    // labels so the non-sensitivity tests stay deterministic.
+    agentDefaultSensitivity: "secret",
     agentGraphNamespace: "testnamespace",
     agentAllowQueryToken: false,
     ...overrides,
@@ -414,7 +415,7 @@ test("query-token is rejected in LAN mode even when allowed (Doc1 §3.6)", async
 test("output cap: a huge note body is truncated (Doc2 §5.6)", async () => {
   const big = "x".repeat(MAX_NOTE_CONTENT_CHARS + 5000);
   const provider = {
-    getGraph: async () => buildGraph([{ relativePath: "Big.md", content: "# Big\n" + big }], []),
+    getGraph: async () => buildGraph([{ relativePath: "Big.md", content: "---\ntype: note\nsensitivity: internal\ntimestamp: 2026-01-01T00:00:00Z\n---\n# Big\n" + big }], []),
     getNoteContent: async () => big,
     vaultName: () => "V", lanAddresses: () => [],
   };
@@ -450,6 +451,33 @@ test("OKF+ sensitivity ceiling filters search, note content, graph, and Graphiti
   server.settings.agentSensitivityCeiling = "confidential";
   assert.equal((await server.qNote({ title: "Secret" })).title, "Secret");
   assert.equal((await server.qNote({ title: "Patient" })).error, "note not found");
+});
+
+test("fail-closed read gate: a node with NO projection and NO okf.sensitivity ranks as the default, not internal", async () => {
+  // The verifier's scenario: an unlabeled node that also carries no OKF+
+  // projection must fall through to the CONFIGURED default sensitivity, never
+  // the mid-open "internal" rank (which was the residual fail-open).
+  const bareNode = {
+    id: "bare", kind: "file", label: "Bare", path: "Bare.md", type: "note", area: "", tags: [],
+    validAt: "2026-01-01T00:00:00Z",
+    okf: { uid: null, type: "note" }, // no projection, no sensitivity
+  };
+  const graph = { nodes: [bareNode], links: [], diagnostics: {} };
+  const provider = {
+    getGraph: async () => graph,
+    getNoteContent: async () => "bare body",
+    vaultName: () => "V", vaultIdentity: () => "v", lanAddresses: () => [],
+  };
+  // Default secret + internal ceiling => the bare node is hidden (fail-closed).
+  const closed = new KosmosAgentServer(http, settings({ agentSensitivityCeiling: "internal", agentDefaultSensitivity: "secret" }), provider);
+  assert.deepEqual((await closed.qSearch("")).results.map((n) => n.title), [], "unlabeled+unprojected note must be hidden under a default of secret");
+  assert.equal((await closed.qNote({ title: "Bare" })).error, "note not found");
+  // Relaxing the default to internal makes it visible again, and its reported
+  // sensitivity reflects the configured default rather than a hardcoded internal.
+  const relaxed = new KosmosAgentServer(http, settings({ agentSensitivityCeiling: "internal", agentDefaultSensitivity: "internal" }), provider);
+  const res = (await relaxed.qSearch("")).results;
+  assert.deepEqual(res.map((n) => n.title), ["Bare"]);
+  assert.equal(res[0].sensitivity, "internal", "brief() must report the configured default, not a hardcoded internal");
 });
 
 test("Host validation: loopback forms accepted, foreign/trailing-dot rejected", async () => {
@@ -496,11 +524,9 @@ test("onTraversal: paths are CAPPED per tool so broad results never flood the ha
   const files = [];
   for (let i = 0; i < 30; i++) {
     const sup = i > 0 ? `supersedes:\n  - Note ${i - 1}\n` : "";
-    files.push({ relativePath: `Note ${i}.md`, content: `---\ntype: idea\ntimestamp: 2026-01-${String((i % 27) + 1).padStart(2, "0")}T00:00:00Z\n${sup}---\nnote body ${i}` });
+    files.push({ relativePath: `Note ${i}.md`, content: `---\ntype: idea\nsensitivity: internal\ntimestamp: 2026-01-${String((i % 27) + 1).padStart(2, "0")}T00:00:00Z\n${sup}---\nnote body ${i}` });
   }
-  // Unlabeled fixtures: project at the plugin's configured default (internal)
-  // so they clear the "internal" ceiling instead of failing closed to secret.
-  const graph = buildGraph(files, [], undefined, { defaultSensitivity: "internal" });
+  const graph = buildGraph(files, []);
   const provider = { getGraph: async () => graph, getNoteContent: async () => "", vaultName: () => "V", lanAddresses: () => [] };
   const server = new KosmosAgentServer(http, settings(), provider);
   const seen = [];

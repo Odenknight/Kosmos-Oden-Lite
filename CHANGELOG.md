@@ -7,6 +7,54 @@ changes, called out under **Compatibility**).
 
 ## [Unreleased]
 
+## [1.0.5] — 2026-07-22
+
+### Fixed
+- **Engine divergence backport (DIV-001/002/003)** — mirrors the canonical
+  fixes from Odenknight/GKOS-Engine#4 into the vendored `src/core/`, preserving
+  the intentional identity diffs (`tool:kosmos-oden` assessor,
+  `KOSMOS_VERSION`/`KOSMOS_NAME`):
+  - **DIV-001 (temporal):** the projection now emits `OKF-TEMPORAL-001`
+    (warning) for naive wall-clock `created_at`/`updated_at`, via a single
+    shared timestamp validator lifted into `timestamps.ts`.
+  - **DIV-002 (sensitivity):** a note with no `sensitivity` field now **fails
+    closed to `secret`** instead of resolving to the mid-open `internal`.
+  - **DIV-003 (epistemic):** an out-of-vocabulary `epistemic_state` now projects
+    to `unknown` (null-weight) with a machine-detectable
+    `effective.epistemicStateDefaulted` marker; the invalid value is retained on
+    `authored.epistemicState` and echoed in `OKF-EPISTEMIC-002`.
+- **Residual fail-open in the Agent API read gate** — three sensitivity
+  fallbacks in `src/plugin/agent-server.ts` (`sensitivityRank`, the brief and
+  detail projections) bottomed out at a hardcoded `internal`. A node with no
+  OKF+ projection *and* no `sensitivity` therefore leaked at `internal` rank.
+  All three now route through the configured `agentDefaultSensitivity` (via the
+  engine's `SENSITIVITY_RANK`), defaulting to `secret`.
+
+### Added
+- **"Default sensitivity for unlabeled notes" setting** — a dropdown (the
+  engine's seven levels, read from the core vocabulary) that governs any note
+  without an explicit `sensitivity`. Defaults to `secret` (fail-closed) and is
+  threaded into every projection the plugin builds. Rendered **above** the
+  Enable Agent API toggle. Enabling the Agent API while a network-facing surface
+  is active (LAN binding or Nextcloud sync) shows a notice that notes may be
+  reachable over the network and this default governs unlabeled notes. The
+  engine may only **raise** effective sensitivity above the default, never lower
+  an authored classification (raise-only); no content/PII detection ships.
+
+### Compatibility
+- **BREAKING (behavior): unlabeled notes now fail closed to `secret`.** After
+  upgrading, notes that carry no explicit `sensitivity` field are classified at
+  the new "Default sensitivity for unlabeled notes" setting, which ships at
+  `secret`. Because the default Agent API read ceiling is `internal`, such notes
+  drop **below the ceiling and disappear from agent/MCP visibility** (search,
+  note reads, graph, Graphiti episodes). This is the intended fail-closed
+  correction (DIV-002), but it is a visible change for existing vaults whose
+  unlabeled notes were previously readable at `internal`.
+  - **To restore the prior behavior:** set **Settings → Vault Kosmos → Agent API
+    → "Default sensitivity for unlabeled notes"** to `internal`. Alternatively,
+    label individual notes with an explicit `sensitivity` (authored
+    classifications are always respected as-is and are never lowered).
+
 ## [1.0.3] — 2026-07-21
 
 ### Fixed
