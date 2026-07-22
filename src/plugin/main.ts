@@ -328,7 +328,7 @@ export default class VaultKosmosPlugin extends Plugin {
       } catch (_) { /* token failure above already leaves the API fail-closed */ }
     }
     if (settingsChanged) await this.saveAgentSettings();
-    this.provider = new VaultDataProvider(this.app);
+    this.provider = new VaultDataProvider(this.app, () => ({ defaultSensitivity: this.agentSettings.agentDefaultSensitivity }));
     this.agentApi = new KosmosAgentServer(nodeRequire("http"), this.agentSettings, this.provider);
     this.addSettingTab(new KosmosSettingTab(this.app, this));
     if (this.agentSettings.agentEnabled) this.startAgentApi();

@@ -53,7 +53,10 @@ care about stay visible and editable; the machinery stays out of the way.**
 - Automatic created/updated timestamps (UTC by default, optional local-time
   with explicit offset, configurable keys) — toggleable, disclosed, and safe.
 - A read-only local Agent API (REST + MCP) so your AI tools can *read* your
-  cosmos without ever being able to write to it.
+  cosmos without ever being able to write to it. A **Default sensitivity for
+  unlabeled notes** setting (fail-closed to `secret`) sits above the enable
+  toggle and governs any note without an explicit classification; the engine
+  may only raise sensitivity above it, never lower an authored value.
 - The safety architecture underneath everything: no silent writes, previewed
   plans, byte-exact backups, and repair paths instead of regrets.
 

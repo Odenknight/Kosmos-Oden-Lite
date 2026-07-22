@@ -76,6 +76,8 @@ const okfParser = read("src/core/okf.ts");
 must(sec.invalid_sensitivity_fails_closed_as === "secret" && /return typeof v === "string" && v\.trim\(\) \? "secret"/.test(okfParser), "invalid explicit sensitivity must fail closed as secret");
 const okf23 = read("src/core/okf23.ts");
 must(sec.invalid_v23_sensitivity_fails_closed_as === "secret" && /effectiveSensitivity = "secret"/.test(okf23), "invalid v2.3 sensitivity must fail closed as secret");
+must(sec.missing_sensitivity_fails_closed_as === "secret" && new RegExp(`FAIL_CLOSED_SENSITIVITY_DEFAULT: OkfSensitivity = "${sec.missing_sensitivity_fails_closed_as}"`).test(okf23), "missing sensitivity must fail closed to the policy default (secret)");
+must(new RegExp(`agentDefaultSensitivity: FAIL_CLOSED_SENSITIVITY_DEFAULT`).test(server) && sec.default_sensitivity_setting_default === "secret", "the default-sensitivity setting must ship fail-closed to secret");
 must(/GET only \(read-only API\)/.test(server) && !/\bcase "\/write"|app\.post\(|writeFile/.test(server), "Agent API must expose no write routes");
 
 const projectionPolicy = policy.okf23_projection || {};

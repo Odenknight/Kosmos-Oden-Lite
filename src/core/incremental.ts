@@ -19,6 +19,7 @@
  */
 import { assembleGraph, parseSourceFile, type NoteRecord } from "./graph";
 import { contentHash, normalizeVaultRelative } from "./paths";
+import type { Okf23ProjectionOptions } from "./okf23";
 import type { GraphDelta, KosmosDiagnostics, KosmosGraph, SourceFile } from "./types";
 
 export interface IndexChanges {
@@ -68,6 +69,14 @@ export class KosmosIndex {
   graph: KosmosGraph | null = null;
   /** Cumulative number of parseSourceFile calls (test/benchmark observability). */
   parseCount = 0;
+  /** Deterministic projection options (e.g. the fail-closed defaultSensitivity)
+   *  threaded to every parseSourceFile call so incrementally-reparsed notes
+   *  resolve missing sensitivity to the SAME configured default as a full build. */
+  private readonly projectionOptions: Okf23ProjectionOptions;
+
+  constructor(projectionOptions: Okf23ProjectionOptions = {}) {
+    this.projectionOptions = projectionOptions;
+  }
 
   get noteCount(): number {
     return this.records.size;
@@ -91,7 +100,7 @@ export class KosmosIndex {
     const t0 = Date.now();
     this.records.clear();
     for (const f of files) {
-      const rec = parseSourceFile(f);
+      const rec = parseSourceFile(f, this.projectionOptions);
       this.parseCount++;
       this.records.set(rec.relativePath, rec);
     }
@@ -146,7 +155,7 @@ export class KosmosIndex {
       const prev = this.records.get(path);
       // Hash gate: identical content (e.g. touch without edit) costs nothing.
       if (prev && f.content != null && prev.hash === contentHash(f.content)) continue;
-      const rec = parseSourceFile(f);
+      const rec = parseSourceFile(f, this.projectionOptions);
       this.parseCount++;
       reparsed++;
       this.records.set(path, rec);

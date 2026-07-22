@@ -2,6 +2,17 @@
  *  optionally ISO-8601 local time with an explicit numeric ±HH:MM UTC offset. */
 export const CREATED_AT_FIELD = "created_at";
 export const UPDATED_AT_FIELD = "updated_at";
+
+// Accept canonical UTC Zulu (…Z) and ISO-8601 local time with an explicit
+// numeric ±HH:MM UTC offset (e.g. 2026-07-19T14:42:07-04:00). Nothing looser:
+// a naive wall-clock value with no zone designator (and no `T` separator) is
+// rejected. This is the single shared validator used by the stamper path
+// (okf-migration.ts), the projection path (okf23.ts), and the schema so all
+// three agree on what a portable OKF+ timestamp is.
+export const OKF_TIMESTAMP_RE =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+export const isValidOkfTimestamp = (v: string | undefined | null): boolean =>
+  Boolean(v && OKF_TIMESTAMP_RE.test(v) && !Number.isNaN(Date.parse(v)));
 export function isoZulu(value: number | Date = Date.now()): string { const date=value instanceof Date?value:new Date(value); if(!Number.isFinite(date.getTime()))throw new Error("Invalid timestamp"); return date.toISOString(); }
 
 /** ISO-8601 local time with an explicit numeric UTC offset (never naive wall-clock).

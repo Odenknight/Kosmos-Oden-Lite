@@ -218,11 +218,14 @@ Body.`;
   assert.equal(projection.extensions.authorship_origin, undefined, "flat governance keys are not extensions");
 });
 
-test("missing sensitivity defaults to internal and invalid sensitivity fails closed", () => {
+// DIV-002: missing sensitivity fails closed to the restricted default (secret),
+// configurable and raise-only. (Updated from the old behavior, which resolved
+// missing sensitivity to the mid-open "internal" level.)
+test("missing sensitivity fails closed to secret by default and invalid sensitivity fails closed", () => {
   const missing = note.replace(/sensitivity:[\s\S]*?provenance:/, "provenance:");
   const p1 = buildOkf23Projection(missing, "Missing.md", "m:1", null);
-  assert.equal(p1.effective.sensitivity, "internal");
-  assert.ok(p1.diagnostics.some((d) => d.code === "OKF-SENSITIVITY-001"));
+  assert.equal(p1.effective.sensitivity, "secret");
+  assert.ok(p1.diagnostics.some((d) => d.code === "OKF-SENSITIVITY-001"), "OKF-SENSITIVITY-001 still fires so defaulting stays visible");
   const invalid = note.replace('level: "restricted"', 'level: "unclassified"');
   const p2 = buildOkf23Projection(invalid, "Invalid.md", "i:1", null);
   assert.equal(p2.effective.sensitivity, "secret");
@@ -230,6 +233,63 @@ test("missing sensitivity defaults to internal and invalid sensitivity fails clo
   const flat = `---\nokf_version: "2.2"\nuid: "11111111-1111-4111-8111-111111111111"\ntype: "semantic"\ntitle: "Flat"\ntimestamp: "2026-07-01T00:00:00Z"\nepistemic_state: "fact"\nsensitivity: "typo"\n---\nBody`;
   const graph = buildGraph([{ relativePath: "Flat.md", extension: "md", content: flat }], []);
   assert.equal(graph.nodes.find((node) => node.path === "Flat.md").okf.projection.effective.sensitivity, "secret");
+});
+
+test("DIV-002: defaultSensitivity option is honored, validated, and never lowers an authored classification", () => {
+  const missing = note.replace(/sensitivity:[\s\S]*?provenance:/, "provenance:");
+  // A deployment may relax the default to a less restrictive level.
+  const relaxed = buildOkf23Projection(missing, "Missing.md", "m:2", null, { defaultSensitivity: "internal" });
+  assert.equal(relaxed.effective.sensitivity, "internal");
+  assert.ok(relaxed.diagnostics.some((d) => d.code === "OKF-SENSITIVITY-001"));
+  // An out-of-vocabulary option value is ignored and falls back to secret.
+  const bogus = buildOkf23Projection(missing, "Missing.md", "m:3", null, { defaultSensitivity: "nonsense" });
+  assert.equal(bogus.effective.sensitivity, "secret");
+  // The default never overrides an authored classification, even a more open one.
+  const publicNote = note.replace('level: "restricted"', 'level: "public"');
+  const p = buildOkf23Projection(publicNote, "Public.md", "p:1", null, { defaultSensitivity: "secret" });
+  assert.equal(p.effective.sensitivity, "public");
+});
+
+test("DIV-001: naive wall-clock created_at emits an OKF-TEMPORAL diagnostic", () => {
+  const naive = `---
+okf_version: "2.3"
+uid: "019b2d14-4230-7db7-87d4-7d81cfaec9b0"
+title: "Naive timestamp"
+type: "semantic"
+created_at: 2026-07-20 12:00:00
+epistemic_state: "fact"
+sensitivity: "restricted"
+authorship_origin: "authored"
+tags: []
+---
+Body.`;
+  const p = buildOkf23Projection(naive, "Naive.md", "n:1", null);
+  const temporal = p.diagnostics.filter((d) => d.code.startsWith("OKF-TEMPORAL"));
+  assert.equal(temporal.length, 1, `expected one OKF-TEMPORAL diagnostic, got: ${JSON.stringify(p.diagnostics)}`);
+  assert.equal(temporal[0].field, "created_at");
+  assert.ok(temporal[0].severity === "warning" || temporal[0].severity === "error", "severity is warning-or-error");
+  // A properly zoned timestamp raises no temporal diagnostic.
+  const zoned = naive.replace("created_at: 2026-07-20 12:00:00", 'created_at: "2026-07-20T12:00:00Z"');
+  const clean = buildOkf23Projection(zoned, "Zoned.md", "n:2", null);
+  assert.equal(clean.diagnostics.some((d) => d.code.startsWith("OKF-TEMPORAL")), false);
+});
+
+test("DIV-003: invalid epistemic state falls back to unknown with defaulted-marking and retained diagnostic", () => {
+  const invalid = note.replace('state: "hypothesis"', 'state: "gospel"');
+  const p = buildOkf23Projection(invalid, "Gospel.md", "g:1", null);
+  // Effective state is the null-weight fallback, machine-detectable via the flag.
+  assert.equal(p.effective.epistemicState, "unknown");
+  assert.equal(p.effective.epistemicStateDefaulted, true);
+  // The original invalid value is retained on the authored projection and in the diagnostic.
+  assert.equal(p.authored.epistemicState, "gospel");
+  const epi = p.diagnostics.find((d) => d.code === "OKF-EPISTEMIC-002");
+  assert.ok(epi, "OKF-EPISTEMIC-002 still fires");
+  assert.equal(epi.severity, "error");
+  assert.ok(epi.message.includes("gospel"), "diagnostic retains the invalid value");
+  // A valid state carries no defaulted-marking.
+  const valid = buildOkf23Projection(note, "Valid.md", "v:1", null);
+  assert.equal(valid.effective.epistemicStateDefaulted, false);
+  assert.equal(valid.effective.epistemicState, "hypothesis");
 });
 
 // --- Same-indent block-sequence regression (Defect B) ---------------------

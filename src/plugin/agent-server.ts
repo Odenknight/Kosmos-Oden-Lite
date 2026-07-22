@@ -23,7 +23,7 @@
 import { projectAtTime, type ProjectableNote } from "../core/temporal";
 import { attachGraphitiContent, buildGraphitiEpisodes, graphitiIngestionProfile } from "../core/graphiti";
 import { KOSMOS_VERSION } from "../core/version";
-import { OKF23_POLICY, OKF23_PROFILE } from "../core/okf23";
+import { OKF23_POLICY, OKF23_PROFILE, SENSITIVITY_LEVELS, SENSITIVITY_RANK, FAIL_CLOSED_SENSITIVITY_DEFAULT } from "../core/okf23";
 import type { KosmosGraph, KosmosNode, OkfSensitivity } from "../core/types";
 import { codeUnitCompare } from "../core/paths";
 
@@ -38,7 +38,7 @@ export const MAX_BODY_BYTES = 4 * 1024 * 1024;
 export type AgentBindMode = "localhost" | "lan";
 
 /** Settings schema version — bump when the shape changes so old data migrates (Doc1 §3.7). */
-export const AGENT_SETTINGS_SCHEMA = 7;
+export const AGENT_SETTINGS_SCHEMA = 8;
 
 export interface AgentSettings {
   /** Settings schema version for migration on load. */
@@ -50,6 +50,12 @@ export interface AgentSettings {
   agentBindMode: AgentBindMode;
   /** Highest OKF+ sensitivity readable through the connector. */
   agentSensitivityCeiling: OkfSensitivity;
+  /** Fail-closed default sensitivity applied to notes that declare NO sensitivity
+   *  field. Threaded to every projection the plugin builds (as the engine's
+   *  Okf23ProjectionOptions.defaultSensitivity). Defaults to "secret" (fail
+   *  closed). The engine may only RAISE effective sensitivity above this value,
+   *  never lower it; an authored classification is always respected as-is. */
+  agentDefaultSensitivity: OkfSensitivity;
   /** Persistent opaque suffix for the Graphiti assertion namespace. */
   agentGraphNamespace: string;
   /** Accept `?token=` query authentication. Deprecated, OFF by default (Doc1 §3.6);
@@ -93,6 +99,7 @@ export const DEFAULT_AGENT_SETTINGS: AgentSettings = {
   agentRequireToken: true,
   agentBindMode: "localhost",
   agentSensitivityCeiling: "internal",
+  agentDefaultSensitivity: FAIL_CLOSED_SENSITIVITY_DEFAULT,
   agentGraphNamespace: "",
   agentAllowQueryToken: false,
   noteTimestampsEnabled: true,
@@ -127,6 +134,11 @@ export function migrateAgentSettings(raw: any): AgentSettings {
     // Existing unlabeled vaults are treated as internal, preserving local
     // behavior while keeping confidential/PHI notes opt-in.
     s.agentSensitivityCeiling = "internal";
+  }
+  // Default sensitivity for unlabeled notes fails closed to "secret"; an
+  // out-of-vocabulary persisted value is repaired to the fail-closed default.
+  if (!raw || !SENSITIVITY_LEVELS.includes(raw.agentDefaultSensitivity)) {
+    s.agentDefaultSensitivity = FAIL_CLOSED_SENSITIVITY_DEFAULT;
   }
   if (!["none", "local", "lan", "cloud"].includes(s.okfEnrichmentProvider)) s.okfEnrichmentProvider = "none";
   if (!["public", "internal"].includes(s.okfEnrichmentCloudCeiling)) s.okfEnrichmentCloudCeiling = "public";
@@ -486,8 +498,10 @@ export class KosmosAgentServer {
   /* ---------------- shared query helpers (one graph, §33) ---------------- */
 
   private sensitivityRank(value: OkfSensitivity | undefined): number {
-    // Unlabeled legacy notes are private workspace material, not public data.
-    return ({ public: 0, internal: 1, restricted: 2, confidential: 3, regulated: 4, phi: 5, secret: 6 } as Record<string, number>)[value || "internal"] ?? 6;
+    // Unlabeled notes fail closed to the configured default sensitivity (the
+    // engine's "secret" out of the box, via SENSITIVITY_RANK); an unknown value
+    // ranks as secret. Never fall back to the mid-open "internal" rank.
+    return SENSITIVITY_RANK[value || this.settings.agentDefaultSensitivity] ?? SENSITIVITY_RANK.secret;
   }
 
   private canRead(n: KosmosNode): boolean {
@@ -522,7 +536,7 @@ export class KosmosAgentServer {
     return {
       id: n.id, uid: n.okf?.uid ?? null,
       title: n.label, path: n.path, type: n.okf?.type || n.type || "note", area: n.area, tags: n.tags,
-      sensitivity: n.okf?.projection?.effective.sensitivity ?? n.okf?.sensitivity ?? "internal",
+      sensitivity: n.okf?.projection?.effective.sensitivity ?? n.okf?.sensitivity ?? this.settings.agentDefaultSensitivity,
       timestamp: n.validAt ?? null,
       head: temporal.head,
       superseded: temporal.invalidAt != null,
@@ -672,7 +686,7 @@ export class KosmosAgentServer {
         epistemic_state: n.okf.epistemicState,
         scope: n.okf.scope,
         scope_id: n.okf.scopeId,
-        sensitivity: n.okf.projection?.effective.sensitivity ?? n.okf.sensitivity ?? "internal",
+        sensitivity: n.okf.projection?.effective.sensitivity ?? n.okf.sensitivity ?? this.settings.agentDefaultSensitivity,
         supersedes: (n.okf.supersedesIds ?? []).map(nameOf).filter(Boolean),
         superseded_by: (n.okf.supersededByIds ?? []).map(nameOf).filter(Boolean),
         declared_supersedes: n.okf.supersedes,

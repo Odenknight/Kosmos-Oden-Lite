@@ -11,6 +11,7 @@
 import type { OkfSensitivity } from "./types";
 import { buildOkf23Projection, parseOkf23Frontmatter } from "./okf23";
 import { codeUnitCompare } from "./paths";
+import { isValidOkfTimestamp } from "./timestamps";
 
 export type OkfAuditStatus =
   | "okf-plus-2.2"
@@ -312,11 +313,8 @@ const list = (fm: StrictFrontmatter, key: string): string[] | undefined => {
   return f?.kind === "list" ? [...(f.values ?? [])] : undefined;
 };
 const nonempty = (v: unknown): v is string => typeof v === "string" && v.trim().length > 0;
-// Accept canonical UTC Zulu (…Z) and ISO-8601 local time with an explicit
-// numeric ±HH:MM UTC offset (e.g. 2026-07-19T14:42:07-04:00). Nothing looser:
-// a naive wall-clock value with no zone designator is still rejected.
-const OKF_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
-export const isValidOkfTimestamp = (v: string | undefined): boolean => Boolean(v && OKF_TIMESTAMP_RE.test(v) && !Number.isNaN(Date.parse(v)));
+// The single shared timestamp validator now lives in ./timestamps (imported
+// above) so the stamper, projection, and migration paths cannot drift.
 const validTimestamp = isValidOkfTimestamp;
 const safeWikiTargets = (field: ParsedField | undefined): boolean => {
   if (!field || field.kind !== "list") return false;
