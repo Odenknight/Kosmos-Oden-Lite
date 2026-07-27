@@ -14,10 +14,14 @@ test.describe("context loss", () => {
     await page.waitForFunction(() => (window as any).__kosmosRenderStats?.frames > 0, null, { timeout: 15_000 });
 
     // Force context loss via the debug extension on the live canvas.
+    // The extension handle MUST be captured (and kept) while the context is
+    // still alive: per the WebGL spec `getExtension()` returns null once the
+    // context is lost, so re-querying it afterwards yields no way back.
     await page.evaluate(() => {
       const c = document.querySelector("#stage canvas") as HTMLCanvasElement;
       const gl = c.getContext("webgl2");
       const ext = gl && (gl.getExtension("WEBGL_lose_context") as any);
+      (window as any).__loseContextExt = ext;
       if (ext) ext.loseContext();
     });
     // recovering state shown, loop stopped
@@ -25,9 +29,7 @@ test.describe("context loss", () => {
 
     // Restore and confirm the loop resumes and the scene rebuilds.
     await page.evaluate(() => {
-      const c = document.querySelector("#stage canvas") as HTMLCanvasElement;
-      const gl = c.getContext("webgl2");
-      const ext = gl && (gl.getExtension("WEBGL_lose_context") as any);
+      const ext = (window as any).__loseContextExt;
       if (ext) setTimeout(() => ext.restoreContext(), 50);
     });
     await page.waitForFunction(() => (window as any).__kosmosRenderStats?.running === true, null, { timeout: 15_000 });

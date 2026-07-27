@@ -1,0 +1,85 @@
+name: Browser (full matrix)
+
+# ADVISORY — requires a GPU/WebGL runner. NOT a required check.
+#
+# Firefox and WebKit renderer specs plus the deterministic visual-regression
+# suite (CI/CD directive §7.4/§7.5). These cannot be made to pass dependably on
+# GPU-less GitHub-hosted runners:
+#
+#   * Firefox — the Playwright build refuses WebGL2 context creation
+#     ("AllowWebgl2:false restricts context creation on this system"). The prefs
+#     in playwright.config.ts re-open that gate and pass locally, but the
+#     headless-Linux software path (Mesa/llvmpipe) is not dependable enough to
+#     gate every push on.
+#   * WebKit — no software-WebGL knob exists; WebGL on headless Linux WebKit is
+#     unreliable.
+#   * Visual — reference images are intentionally NOT committed, so this suite
+#     has no baseline to compare against in CI. Baselines are generated on the
+#     reference machine (`npx playwright test test/browser/visual.spec.ts
+#     --update-snapshots`) and reviewed by a human; an agent may propose but not
+#     self-approve a baseline update.
+#
+# Rather than leave these as a required check that is red on every single push
+# — which trains humans to merge through red and hides real failures — they run
+# on demand and weekly, and MUST be run locally before a release (see
+# CONTRIBUTING.md "Browser and visual tests"). Per-push coverage of the built
+# artifact is provided by the required `Browser / browser-chromium` job.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Mondays 05:17 UTC
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  browser-full:
+    name: browser-full (advisory — requires GPU/WebGL runner)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install Playwright + browsers
+        run: |
+          npm install --no-save --save-exact @playwright/test@1.48.2
+          npx playwright install --with-deps chromium firefox webkit
+      - name: Renderer specs — Firefox + WebKit (advisory)
+        id: ffwk
+        continue-on-error: true
+        run: npm run test:browser:full
+      - name: Visual regression (advisory — no baselines committed yet)
+        id: visual
+        continue-on-error: true
+        run: npm run test:visual
+      - name: Advisory result summary
+        if: always()
+        run: |
+          {
+            echo "### Browser (full matrix) — advisory"
+            echo ""
+            echo "This workflow is informational; it does not gate merges."
+            echo ""
+            echo "| suite | outcome |"
+            echo "| --- | --- |"
+            echo "| Firefox + WebKit renderer specs | ${{ steps.ffwk.outcome }} |"
+            echo "| Visual regression | ${{ steps.visual.outcome }} |"
+            echo ""
+            echo "Failures here are expected on GPU-less GitHub-hosted runners."
+            echo "Run these locally on a GPU machine before cutting a release —"
+            echo "see CONTRIBUTING.md, \"Browser and visual tests\"."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-full-report-${{ github.sha }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14

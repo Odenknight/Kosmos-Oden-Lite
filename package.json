@@ -24,6 +24,8 @@
     "check:core-drift": "node scripts/check-core-drift.mjs",
     "verify": "npm run typecheck && npm run build && npm test && npm run check:versions && npm run check:artifacts && npm run check:invariants && npm run check:renderer-provenance",
     "test:browser": "playwright test --project=chromium --project=firefox --project=webkit",
+    "test:browser:chromium": "playwright test --project=chromium test/browser/standalone.spec.ts test/browser/embed.spec.ts test/browser/context-loss.spec.ts",
+    "test:browser:full": "playwright test --project=firefox --project=webkit test/browser/standalone.spec.ts test/browser/embed.spec.ts",
     "test:visual": "playwright test test/browser/visual.spec.ts",
     "test:renderer": "npm run test:browser && npm run test:visual",
     "package:release": "node scripts/package-release.mjs"
