@@ -75,7 +75,7 @@ jobs:
             echo "Run these locally on a GPU machine before cutting a release —"
             echo "see CONTRIBUTING.md, \"Browser and visual tests\"."
           } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: browser-full-report-${{ github.sha }}
