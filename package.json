@@ -1,6 +1,7 @@
 {
-  "name": "kosmos-oden",
-  "version": "1.0.5",
+  "name": "kosmos-oden-lite",
+  "version": "1.0.6",
+  "engineParity": "v1.0.7",
   "description": "Kosmos-Oden Lite (Vault Kosmos, v1.0.0) — the classic cosmos view with GKOS-Engine-Lite note formatting: OKF+ Notes 2.2 plus Agent-Ready flat 2.3, read-only MCP Agent API, and Nextcloud WebDAV sync. Feature-complete; bug fixes only.",
   "main": "main.js",
   "type": "module",
@@ -20,6 +21,7 @@
     "check:versions": "node scripts/check-versions.mjs",
     "check:invariants": "node scripts/check-invariants.mjs",
     "check:renderer-provenance": "node scripts/check-renderer-provenance.mjs",
+    "check:core-drift": "node scripts/check-core-drift.mjs",
     "verify": "npm run typecheck && npm run build && npm test && npm run check:versions && npm run check:artifacts && npm run check:invariants && npm run check:renderer-provenance",
     "test:browser": "playwright test --project=chromium --project=firefox --project=webkit",
     "test:visual": "playwright test test/browser/visual.spec.ts",

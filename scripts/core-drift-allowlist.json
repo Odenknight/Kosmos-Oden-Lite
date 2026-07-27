@@ -1,0 +1,41 @@
+{
+  "$comment": [
+    "Intentional, reviewed deltas between this repo's vendored src/core/ and the GKOS Engine",
+    "at the declared parity tag. scripts/check-core-drift.mjs fails CI on any difference not",
+    "described here. Fingerprints are sha256 over the normalised unified diff (file headers and",
+    "@@ line numbers stripped, semver literals collapsed to <SEMVER> so version bumps do not",
+    "churn this file). To re-baseline after an intentional change: run the checker, copy the",
+    "printed 'actual fingerprint', and update the reason to match.",
+    "notVendored/liteOnly are empty at v1.0.7: the engine gained intelligence.ts and desktop-agent.ts only after this parity tag. If the parity tag moves forward, declare them there."
+  ],
+  "engineRepo": "https://github.com/Odenknight/GKOS-Engine",
+  "engineParity": "v1.0.7",
+  "notVendored": {},
+  "liteOnly": {},
+  "deltas": {
+    "graph.ts": {
+      "reason": "Doc-comment delta only: Lite keeps the shorter pre-v1.0.6 doc comments on parseSourceFile and buildGraph. Code identical.",
+      "fingerprint": "sha256:40615adbf36c9e022b4e9901decca8b0"
+    },
+    "incremental.ts": {
+      "reason": "Import-order delta only: the type-only Okf23ProjectionOptions import sits after the ./paths import. Code identical.",
+      "fingerprint": "sha256:97e467e3405a4894f752769ce4894c9a"
+    },
+    "okf-migration.ts": {
+      "reason": "Doc-comment delta only: the timestamp-precedence comment points at src/core/timestamps.ts (Lite's vendored path) rather than src/timestamps.ts.",
+      "fingerprint": "sha256:e3b9e4597535490257423ddf199f2ae5"
+    },
+    "okf23.ts": {
+      "reason": "Product identity: assessor id is tool:kosmos-oden with KOSMOS_VERSION rather than tool:gkos-engine with ENGINE_VERSION. Plus SENSITIVITY_LEVELS is exported so the plugin's default-sensitivity picker reads the one canonical vocabulary.",
+      "fingerprint": "sha256:4aba9ed40ced668b09805b64c5c3211c"
+    },
+    "types.ts": {
+      "reason": "Product identity: OkfAssessment.assessor.id is typed as the literal \"tool:kosmos-oden\" to match okf23.ts.",
+      "fingerprint": "sha256:5d69bdca04c8e85f9c97b0c55ac395b5"
+    },
+    "version.ts": {
+      "reason": "Product identity: Lite's own version constants (KOSMOS_VERSION / KOSMOS_NAME = vault-kosmos-oden) replace the engine's ENGINE_VERSION / ENGINE_NAME. KOSMOS_VERSION is this plugin's single source of truth (see scripts/check-versions.mjs); the semver literal is normalised out of the fingerprint so releases do not churn this entry.",
+      "fingerprint": "sha256:9b81bf8ed22805705715d5c951635e80"
+    }
+  }
+}

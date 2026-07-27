@@ -16,7 +16,9 @@ something simple yet effective — not for governing tens of thousands of
 documents. It is feature-complete and maintained for bug fixes. New feature
 development continues in the main [Kosmos-Oden](https://github.com/Odenknight/Kosmos-Oden)
 project, which builds the full GKOS Engine (governance sidecars, proposal and
-decision records, the standalone engine) on the same core.
+decision records, the standalone engine) on the same core. See
+[VERSIONING.md](VERSIONING.md) for what that means in practice: patches-only on
+the `1.0.x` line, and a vendored core kept at a declared engine parity tag.
 
 ## The originating story
 

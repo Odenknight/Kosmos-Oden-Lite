@@ -46,6 +46,13 @@ jobs:
       - name: Renderer provenance (exact-pinned three, marker, no CDN)
         run: npm run check:renderer-provenance
 
+      # Vendored src/core/ must stay at the engine parity tag declared in
+      # package.json ("engineParity"), apart from the reviewed deltas in
+      # scripts/core-drift-allowlist.json. Clones the public engine repo at
+      # that tag (shallow) — see VERSIONING.md.
+      - name: Vendored core drift (src/core vs GKOS-Engine parity tag)
+        run: npm run check:core-drift
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:

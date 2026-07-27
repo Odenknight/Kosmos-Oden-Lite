@@ -7,6 +7,39 @@ changes, called out under **Compatibility**).
 
 ## [Unreleased]
 
+## [1.0.6] — 2026-07-27
+
+Housekeeping only. **No behaviour changes** — no runtime source was touched
+beyond the version constant.
+
+### Added
+- **Vendored-core drift check** (`scripts/check-core-drift.mjs`, wired into
+  `.github/workflows/ci.yml` as `npm run check:core-drift`). `src/core/` is a
+  vendored copy of the GKOS Engine's `src/`; the checker clones the engine at
+  the parity tag now declared in `package.json` (`"engineParity": "v1.0.7"`),
+  normalises line endings, and fails on any difference not recorded in
+  `scripts/core-drift-allowlist.json`. The allowlist carries the six reviewed
+  deltas — product identity in `version.ts`, the `tool:kosmos-oden` assessor in
+  `okf23.ts`/`types.ts`, the widened `SENSITIVITY_LEVELS` export, and
+  doc-comment/import-order noise in `graph.ts`, `okf-migration.ts` and
+  `incremental.ts` — each with a reason and a fingerprint of the normalised
+  diff. Semver literals are normalised out, so a version bump does not churn
+  the allowlist.
+- **`VERSIONING.md`** — a pointer to the canonical policy in gkos-standard,
+  plus this repo's binding rules: patches-only on `1.0.x` forever, and
+  vendored-core changes as backports with allowlisted deltas.
+
+### Changed
+- **`package.json` `"name"` is now `kosmos-oden-lite`** (was `kosmos-oden`,
+  which collided with the full Kosmos-Oden product). This is npm-workspace
+  metadata only. The **Obsidian plugin id stays `vault-kosmos-oden`** and is
+  deliberately untouched — changing it would break existing installs.
+
+### Fixed
+- **Backfilled the missing `[1.0.4]` changelog entry** (below) and the `1.0.4`
+  and `1.0.5` git tags / GitHub releases, which were never cut even though both
+  versions shipped in `main`.
+
 ## [1.0.5] — 2026-07-22
 
 ### Fixed
@@ -54,6 +87,35 @@ changes, called out under **Compatibility**).
     → "Default sensitivity for unlabeled notes"** to `internal`. Alternatively,
     label individual notes with an explicit `sensitivity` (authored
     classifications are always respected as-is and are never lowered).
+
+## [1.0.4] — 2026-07-22
+
+*Entry written retroactively on 2026-07-27 from commits `c0866dd` and `8a3e919`;
+1.0.4 shipped in `main` without a changelog entry or a tag.*
+
+### Changed
+- **BREAKING (install): the Obsidian plugin id is now `vault-kosmos-oden`**
+  (was `vault-kosmos`). Per the 2026-07-22 plugin-ID split, Lite takes the
+  distinct id `vault-kosmos-oden` — an homage to the original Vault Kosmos
+  author — and the full Kosmos-Oden product takes `kosmos-oden`. The rename
+  covers `manifest.json`'s `id`, `KOSMOS_NAME` in `src/core/version.ts`,
+  `project.name` in `kosmos-invariants.yml`, the protected `data.json` sync
+  path in `src/plugin/nextcloud-sync-core.ts`, the `manifest.id` fallback and
+  MCP registration snippets/keys in `src/plugin/settings.ts`, and the MCP
+  `serverInfo.name` plus `/health` name in `src/plugin/agent-server.ts`.
+  - **Migration:** the plugin folder moves from
+    `.obsidian/plugins/vault-kosmos/` to `.obsidian/plugins/vault-kosmos-oden/`.
+  - Deliberately **unchanged** (renaming these breaks user-facing state): the
+    `obsidian://vault-kosmos` protocol handler, the `vault-kosmos-view`
+    `VIEW_TYPE`, the `open-vault-kosmos` command id, and `vault-kosmos.html`.
+
+### Fixed
+- **`.okf` corpus-scan exclusion backport** — `DEFAULT_IGNORED_DIRS` in
+  `src/core/paths.ts` lacked `.okf`, so Lite indexed its own `.okf/` JSON
+  artifacts as corpus attachments. The vendored core predated the engine's fix;
+  this was the only semantic drift against gkos-engine v1.0.5 at the time.
+- **Stale README version** — the README H1 still said v1.0.0 while everything
+  else read 1.0.3.
 
 ## [1.0.3] — 2026-07-21
 
