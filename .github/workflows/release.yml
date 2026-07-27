@@ -48,7 +48,7 @@ jobs:
       # Individual files as assets: Obsidian installs manifest.json + main.js +
       # styles.css (+ stdio adapter for local clients); standalone is separate.
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: release/*
           generate_release_notes: true
