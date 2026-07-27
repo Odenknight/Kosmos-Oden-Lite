@@ -1,4 +1,4 @@
-# Kosmos-Oden Lite (Vault Kosmos) — v1.0.3
+# Kosmos-Oden Lite (Vault Kosmos) — v1.0.6
 
 **A 3D cosmos for your notes, and note formatting that quietly makes them more
 useful — to you, and to AI.**
