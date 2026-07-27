@@ -6,11 +6,33 @@ import { defineConfig, devices } from "@playwright/test";
  * Serves the built stable WebGL2 artifacts over http on a fixed port and runs
  * the renderer smoke + visual tests across Chromium, Firefox and WebKit. These
  * tests require `npm run build` first (they load vault-kosmos.html) and the
- * Playwright browsers (`npx playwright install`). They are the real-browser
- * rendering gate the assessment flags as the largest assurance gap; they are
- * scaffolding here — wire them into browser.yml / visual.yml in CI.
+ * Playwright browsers (`npx playwright install`).
+ *
+ * SOFTWARE GL (CI): headless CI runners have no GPU. Without the flags below a
+ * WebGL2 context cannot be created at all and every renderer spec times out on
+ * `waitForFunction` — which is exactly how the `Browser` workflow came to be
+ * red on every push. Chromium is driven onto ANGLE/SwiftShader, a conformant
+ * software WebGL2 implementation the r185 renderer accepts; Firefox needs its
+ * WebGL2 gate re-opened because the Playwright build ships with
+ * `AllowWebgl2:false`. WebKit has no equivalent knob — its WebGL support on
+ * headless Linux is not dependable, which is why firefox/webkit run in the
+ * advisory `Browser (full matrix)` workflow rather than the per-push gate.
  */
 const PORT = 8330;
+
+const CHROMIUM_SOFTWARE_GL = [
+  "--use-gl=angle",
+  "--use-angle=swiftshader",
+  "--enable-unsafe-swiftshader",
+  "--disable-gpu-sandbox",
+];
+
+const FIREFOX_SOFTWARE_GL = {
+  "webgl.force-enabled": true,
+  "webgl.disabled": false,
+  "webgl.enable-webgl2": true,
+  "webgl.forbid-software": false,
+};
 
 export default defineConfig({
   testDir: "test/browser",
@@ -35,9 +57,18 @@ export default defineConfig({
   // Perceptual tolerance — do NOT demand bit-for-bit equality across GPU vendors.
   expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.02, threshold: 0.2 } },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"], launchOptions: { args: CHROMIUM_SOFTWARE_GL } },
+    },
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"], launchOptions: { firefoxUserPrefs: FIREFOX_SOFTWARE_GL } },
+    },
     { name: "webkit", use: { ...devices["Desktop Safari"] } },
-    { name: "mobile-chromium", use: { ...devices["Pixel 7"] } },
+    {
+      name: "mobile-chromium",
+      use: { ...devices["Pixel 7"], launchOptions: { args: CHROMIUM_SOFTWARE_GL } },
+    },
   ],
 });

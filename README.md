@@ -84,3 +84,11 @@ care about stay visible and editable; the machinery stays out of the way.**
 
 Same engine core under the hood. Notes formatted by one are fully readable by
 the other — moving up (or back) is never a migration of your writing.
+
+## Browser and visual tests in CI
+
+The Chromium renderer specs run on every push against software WebGL2
+(ANGLE/SwiftShader) and are a required check. Firefox, WebKit and the
+visual-regression baselines need a real GPU, so they run weekly and on demand in
+the advisory `Browser (full matrix)` workflow and must be run locally before a
+release — see [CONTRIBUTING.md](CONTRIBUTING.md#browser-and-visual-tests).
