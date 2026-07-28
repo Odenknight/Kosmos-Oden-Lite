@@ -7,6 +7,11 @@ changes, called out under **Compatibility**).
 
 ## [Unreleased]
 
+### Fixed
+
+- Added the existing vendored-core drift check to the normal `verify` command,
+  so release builds cannot bypass the declared GKOS-Engine parity contract.
+
 ## [1.0.6] — 2026-07-27
 
 Housekeeping only. **No behaviour changes** — no runtime source was touched
