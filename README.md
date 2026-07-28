@@ -1,24 +1,47 @@
-# Kosmos-Oden Lite (Vault Kosmos) — v1.0.6
+# Kosmos-Oden Lite — Frozen Core Edition (Vault Kosmos) — v1.0.6
 
 **A 3D cosmos for your notes, and note formatting that quietly makes them more
 useful — to you, and to AI.**
 
-Kosmos-Oden Lite is the final, polished form of the classic **Vault Kosmos**
-line: an Obsidian plugin that renders your vault as a navigable "Local Cluster
-of Galaxies" — folders become galaxies, notes become stars and planets, links
-become the gravity between them — and gives your notes clean, human-editable
-frontmatter (the **GKOS-Engine-Lite schema**: OKF+ Notes 2.2 with the optional
-Agent-Ready flat 2.3 profile) so both you and your AI tools can find, trust,
-and connect what you know.
+Kosmos-Oden Lite is the **Frozen Core Edition** and final, polished form of the
+classic **Vault Kosmos** line: an Obsidian plugin that renders your vault as a
+navigable "Local Cluster of Galaxies" — folders become galaxies, notes become
+stars and planets, links become the gravity between them — and gives your notes
+clean, human-editable frontmatter (the **GKOS-Engine-Lite schema**: OKF+ Notes
+2.2 with the optional Agent-Ready flat 2.3 profile) so both you and your AI
+tools can find, trust, and connect what you know.
+
+## What “Frozen Core Edition” means
+
+The core behavior, data model, plugin identity, and user-facing workflow of this
+edition are intentionally frozen. It is a stable product line, not a rolling
+mirror of the newest GKOS Engine release.
+
+- Existing vault behavior and note compatibility take priority over adopting new
+  engine features.
+- Maintenance is limited to bug fixes, security fixes, data-integrity repairs,
+  compatibility corrections, and release/documentation hygiene.
+- Relevant upstream fixes may be selectively backported after review, but a new
+  GKOS Engine version is not adopted automatically and current-engine parity is
+  not implied.
+- New capabilities, new governance semantics, and architectural expansion belong
+  in the main [Kosmos-Oden](https://github.com/Odenknight/Kosmos-Oden) project.
+- The exact vendored-core baseline and approved differences remain
+  machine-checked and documented; see [VERSIONING.md](VERSIONING.md).
+
+“Frozen” does **not** mean abandoned. It means the edition is maintained
+conservatively so users can depend on its established behavior without being
+forced onto the main product’s faster development track.
 
 It is intentionally **Lite**: for people with everyday vaults who want
 something simple yet effective — not for governing tens of thousands of
-documents. It is feature-complete and maintained for bug fixes. New feature
-development continues in the main [Kosmos-Oden](https://github.com/Odenknight/Kosmos-Oden)
-project, which builds the full GKOS Engine (governance sidecars, proposal and
-decision records, the standalone engine) on the same core. See
-[VERSIONING.md](VERSIONING.md) for what that means in practice: patches-only on
-the `1.0.x` line, and a vendored core kept at a declared engine parity tag.
+documents. It is feature-complete and maintained under the Frozen Core policy.
+New feature development continues in the main
+[Kosmos-Oden](https://github.com/Odenknight/Kosmos-Oden) project, which builds
+the full GKOS Engine (governance sidecars, proposal and decision records, the
+standalone engine) on the same lineage. See [VERSIONING.md](VERSIONING.md) for
+what that means in practice: patches-only on the `1.0.x` line, with a declared
+vendored-core baseline and reviewed backports rather than automatic parity.
 
 ## The originating story
 
@@ -77,15 +100,19 @@ care about stay visible and editable; the machinery stays out of the way.**
 
 ## Relationship to Kosmos-Oden (main)
 
-| | Kosmos-Oden Lite (this repo) | Kosmos-Oden (main) |
+| | Kosmos-Oden Lite — Frozen Core Edition | Kosmos-Oden (main) |
 |---|---|---|
 | Audience | Everyday vaults, individuals | Governed knowledge work, agentic systems |
 | Note formats | OKF+ Notes (2.2) + Agent-Ready flat 2.3 | Same, plus the full GKOS Engine roadmap (sidecars, proposals, decisions, Machine Dialect, standalone engine) |
+| Core policy | Frozen baseline; reviewed fixes and selective backports | Active engine and product evolution |
 | Viewer branding | **Vault Kosmos** (tribute) | Kosmos-Oden |
-| Future | Bug fixes only — stable by design | Active feature development |
+| Future | Stable `1.0.x` maintenance line; no automatic current-engine parity | Active feature development |
 
-Same engine core under the hood. Notes formatted by one are fully readable by
-the other — moving up (or back) is never a migration of your writing.
+The editions share a common lineage and compatible note formats. Notes formatted
+by one remain readable by the other; moving to the main edition does not require
+migrating the substance of your writing. Their implementation cores may differ
+because the Frozen Core Edition intentionally advances only through reviewed,
+compatibility-preserving backports.
 
 ## Browser and visual tests in CI
 
