@@ -30,7 +30,7 @@
     "test:renderer": "npm run test:browser && npm run test:visual",
     "package:release": "node scripts/package-release.mjs"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@playwright/test": "1.62.0",
     "@types/node": "26.1.1",
