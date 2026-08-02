@@ -2,7 +2,7 @@
   "name": "kosmos-oden-lite",
   "version": "1.0.6",
   "engineParity": "v1.0.7",
-  "description": "Kosmos-Oden Lite (Vault Kosmos, v1.0.0) — the classic cosmos view with GKOS-Engine-Lite note formatting: OKF+ Notes 2.2 plus Agent-Ready flat 2.3, read-only MCP Agent API, and Nextcloud WebDAV sync. Feature-complete; bug fixes only.",
+  "description": "Kosmos Research Studio Lite (KRS-Lite, Vault Kosmos v1.0.6) — the classic cosmos view with GKOS-Engine-Lite note formatting: GKX Notes 2.2 plus Agent-Ready flat 2.3, read-only MCP Agent API, and Nextcloud WebDAV sync. Feature-complete; bug fixes only.",
   "main": "main.js",
   "type": "module",
   "engines": {
