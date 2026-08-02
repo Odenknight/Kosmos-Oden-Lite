@@ -32,6 +32,8 @@ mirror of the newest GKOS Engine release.
   in the main [Kosmos-Oden](https://github.com/Odenknight/Kosmos-Oden) project.
 - The exact vendored-core baseline and approved differences remain
   machine-checked and documented; see [VERSIONING.md](VERSIONING.md).
+- The allowed change classes and excluded work are recorded in the
+  [maintenance policy](ROADMAP.md).
 
 “Frozen” does **not** mean abandoned. It means the edition is maintained
 conservatively so users can depend on its established behavior without being
