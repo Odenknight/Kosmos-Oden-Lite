@@ -547,7 +547,10 @@ function editableEpistemicState(value: unknown): string {
   if (state === "inferred" || state === "modeled" || state === "supported") return "verified_inference";
   if (state === "refuted") return "refuted";
   if (state === "retracted" || state === "superseded") return "deprecated";
-  if (state === "unknown" || state === "observation" || state === "reported" || state === "accepted") return "fact";
+  // Selective v1.2.0 data-integrity backport: only an explicitly accepted
+  // state may migrate to fact. Unasserted and contested states remain
+  // hypotheses instead of being silently promoted during 2.2 migration.
+  if (state === "accepted") return "fact";
   return "hypothesis";
 }
 

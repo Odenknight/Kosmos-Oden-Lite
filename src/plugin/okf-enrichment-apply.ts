@@ -97,7 +97,7 @@ export class OkfEnrichmentApplyPreviewModal extends Modal {
   constructor(app: App, private plan: OkfEnrichmentApplyPlan, private onApplied?: (result: OkfEnrichmentApplyResult) => void) { super(app); }
   onOpen(): void {
     const { contentEl, plan } = this; contentEl.empty();
-    contentEl.createEl("h2", { text: "Apply reviewed OKF+ enrichment — governed preview" });
+    contentEl.createEl("h2", { text: "Apply reviewed GKX enrichment — governed preview" });
     contentEl.createEl("p", { text: `${plan.totals.reviewed} suggestions reviewed: ${plan.totals.accepted} accepted, ${plan.totals.rejected} rejected, ${plan.totals.edited} edited. ${plan.totals.ready} notes are ready; ${plan.totals.blocked} are blocked; ${plan.totals.noChange} require no write.` });
     contentEl.createEl("p", { text: `Plan SHA-256: ${plan.planHash}`, cls: "setting-item-description" });
     contentEl.createEl("p", { text: "The plan contains hashes and decisions, not note bodies. Each ready note is rechecked, byte-backed up, and written only if it still exactly matches the reviewed source. Markdown body bytes remain unchanged." });

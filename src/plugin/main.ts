@@ -339,21 +339,21 @@ export default class VaultKosmosPlugin extends Plugin {
     this.addCommand({ id: "open-vault-kosmos", name: "Open Vault Kosmos", callback: () => void this.activate() });
     this.addCommand({
       id: "mark-notes-okf-plus",
-      name: "Scan and repair human-editable OKF+ formatting (back up and preview)",
+      name: "Scan and repair human-editable GKX formatting (back up and preview)",
       callback: () => void this.markNotesInOkf(),
     });
-    this.addCommand({ id: "propose-okf-plus-enrichment", name: "Re-scan editable OKF+ notes for label and relationship proposals", callback: () => void this.proposeOkfEnrichment() });
+    this.addCommand({ id: "propose-okf-plus-enrichment", name: "Re-scan editable GKX notes for label and relationship proposals", callback: () => void this.proposeOkfEnrichment() });
     this.addCommand({
       id: "upgrade-all-notes-okf-plus-2-2",
-      name: "Convert recoverable notes to editable OKF+ 2.2 (preview first)",
+      name: "Convert recoverable notes to editable GKX 2.2 (preview first)",
       callback: () => void this.markNotesInOkf("upgrade-all"),
     });
     this.addCommand({
       id: "upgrade-all-notes-okf-plus-2-3",
-      name: "Convert recoverable notes to native OKF+ 2.3 (preview first)",
+      name: "Convert recoverable notes to native GKX 2.3 (preview first)",
       callback: () => void this.markNotesInOkf("convert-to-23"),
     });
-    this.addCommand({ id: "export-graphiti-episodes", name: "Export Graphiti episodes (OKF+)", callback: () => void this.exportGraphitiEpisodes() });
+    this.addCommand({ id: "export-graphiti-episodes", name: "Export Graphiti episodes (GKX)", callback: () => void this.exportGraphitiEpisodes() });
     this.addCommand({ id: "sync-nextcloud-now", name: "Sync vault with Nextcloud now", callback: () => void this.runNextcloudSync(true) });
 
     // Don't react to the startup metadata-resolve storm; the view's initial load already
@@ -551,7 +551,7 @@ export default class VaultKosmosPlugin extends Plugin {
 
 /** Sample Graphiti ingestion script written next to the export. */
 const SAMPLE_INGEST_PY = `#!/usr/bin/env python3
-# Ingest an Obsidian vault (exported by Vault Kosmos v${KOSMOS_VERSION}, OKF+) into Graphiti.
+# Ingest an Obsidian vault (exported by Vault Kosmos v${KOSMOS_VERSION}, GKX) into Graphiti.
 # Graphiti: https://github.com/getzep/graphiti
 #
 #   pip install "graphiti-core[falkordb]==${GRAPHITI_CORE_VERSION}"   # tested pin; security floor is >=0.28.2
@@ -591,7 +591,7 @@ async def main(path: str) -> None:
     started = time.perf_counter()
     completed = 0
     try:
-        for e in episodes:  # chronological order preserves OKF+ knowledge chains
+        for e in episodes:  # chronological order preserves GKX knowledge chains
             body = json.loads(e["episode_body"])
             saga = body.get("saga") or {}
             await g.add_episode(
