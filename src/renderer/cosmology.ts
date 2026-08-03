@@ -340,7 +340,7 @@ export function buildCosmos(graph: any, opts: CosmosOptions = {}): KosmosGraph {
   graph.galaxies = galaxyIds.map((A) => ({ id: A, center: galaxyCenter.get(A) }));
   graph.galaxyCenter = galaxyCenter;
 
-  // OKF+ temporal layer: superseded notes render as ghosts; lineage joins the
+  // GKX temporal layer: superseded notes render as ghosts; lineage joins the
   // link set; chrono span for time-travel. Semantics come from the core (§4);
   // this pass only maps them onto visual state.
   let tmin = Infinity, tmax = -Infinity;

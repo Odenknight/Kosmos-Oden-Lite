@@ -329,7 +329,7 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
           : b === "star" && node.__starColor ? node.__starColor   // H-R spectral color
           : node.color
         );
-        if (node.__ghost) { const g = lin("#6b7280"); for (let k = 0; k < 3; k++) c[k] = c[k] * 0.55 + g[k] * 0.45; } // superseded (OKF+) => ghosted
+        if (node.__ghost) { const g = lin("#6b7280"); for (let k = 0; k < 3; k++) c[k] = c[k] * 0.55 + g[k] * 0.45; } // superseded (GKX) => ghosted
         node.__baseC = c;
         node.__vt = node.validAt ? Date.parse(node.validAt) : null;
         node.__it = (node.okf && node.okf.invalidAt) ? Date.parse(node.okf.invalidAt) : null;
@@ -1066,7 +1066,7 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
       const score = projection?.assessment?.scores?.overall;
       const scoreText = typeof score === "number" ? ` · documentation ${Math.round(score * 100)}%` : projection ? " · not assessable" : "";
       const governance = projection ? ` · ${projection.sourceVersion || "legacy"} · ${projection.effective?.sensitivity || "internal"} · ${projection.diagnostics?.length || 0} diagnostic${projection.diagnostics?.length === 1 ? "" : "s"}` : "";
-      meta.textContent = "OKF+ " + (n.okf.type || "note") + governance + scoreText + (dt ? (" · " + dt) : "") + (n.okf.head ? " · HEAD" : "") + (n.okf.invalidAt ? (" · superseded " + new Date(n.okf.invalidAt).toISOString().slice(0, 10)) : "");
+      meta.textContent = "GKX " + (n.okf.type || "note") + governance + scoreText + (dt ? (" · " + dt) : "") + (n.okf.head ? " · HEAD" : "") + (n.okf.invalidAt ? (" · superseded " + new Date(n.okf.invalidAt).toISOString().slice(0, 10)) : "");
       if (projection) meta.title = "Governance overlay: assessment measures documentation and support quality, not truth or authorization. Proposed values are not included in effective state.";
       box.appendChild(meta);
       const chips = document.createElement("div"); chips.className = "linkchips";
@@ -1131,7 +1131,7 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
   }
   function toggleChrono() {
     if (!G) return;
-    if (!G.__timeSpan) { showHint(LANG === "de" ? "Keine OKF+ Zeitstempel im Vault" : "No OKF+ timestamps in this vault"); return; }
+    if (!G.__timeSpan) { showHint(LANG === "de" ? "Keine GKX Zeitstempel im Vault" : "No GKX timestamps in this vault"); return; }
     const on = chronoBar && !chronoBar.classList.contains("show");
     if (chronoBar) chronoBar.classList.toggle("show", !!on);
     if (chronoBtn) chronoBtn.classList.toggle("on", !!on);

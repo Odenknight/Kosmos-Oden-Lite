@@ -22,12 +22,12 @@
       "fingerprint": "sha256:97e467e3405a4894f752769ce4894c9a"
     },
     "okf-migration.ts": {
-      "reason": "Doc-comment delta only: the timestamp-precedence comment points at src/core/timestamps.ts (Lite's vendored path) rather than src/timestamps.ts.",
-      "fingerprint": "sha256:e3b9e4597535490257423ddf199f2ae5"
+      "reason": "Frozen-core path comment plus selective GKOS-Engine v1.2.0 data-integrity backport: unasserted and contested states migrate to hypothesis; only accepted migrates to fact.",
+      "fingerprint": "sha256:8f063643e0777e04b16e4c9deb0e2a2a"
     },
     "okf23.ts": {
-      "reason": "Product identity: assessor id is tool:kosmos-oden with KOSMOS_VERSION rather than tool:gkos-engine with ENGINE_VERSION. Plus SENSITIVITY_LEVELS is exported so the plugin's default-sensitivity picker reads the one canonical vocabulary.",
-      "fingerprint": "sha256:4aba9ed40ced668b09805b64c5c3211c"
+      "reason": "Product identity and exported sensitivity vocabulary, plus selective GKOS-Engine v1.2.0 data-integrity backport preserving refines/blocks/documents relations and their inverse projections.",
+      "fingerprint": "sha256:6708bb6a55b6f101faed8c12e85d7966"
     },
     "types.ts": {
       "reason": "Product identity: OkfAssessment.assessor.id is typed as the literal \"tool:kosmos-oden\" to match okf23.ts.",

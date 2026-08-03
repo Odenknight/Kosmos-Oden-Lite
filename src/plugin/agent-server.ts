@@ -48,7 +48,7 @@ export interface AgentSettings {
   agentToken: string;
   agentRequireToken: boolean;
   agentBindMode: AgentBindMode;
-  /** Highest OKF+ sensitivity readable through the connector. */
+  /** Highest GKX sensitivity readable through the connector. */
   agentSensitivityCeiling: OkfSensitivity;
   /** Fail-closed default sensitivity applied to notes that declare NO sensitivity
    *  field. Threaded to every projection the plugin builds (as the engine's
@@ -600,7 +600,7 @@ export class KosmosAgentServer {
       version: KOSMOS_VERSION,
       readOnly: true,
       okfAuthority: "source notes + accepted semantic events; this API is a read projection",
-      okfProfile: "OKF+ v2.3 Validating Projection Profile (not full GKOS; no governed writer)",
+      okfProfile: "GKX v2.3 Validating Projection Profile (not full GKOS; no governed writer)",
       sensitivityCeiling: this.settings.agentSensitivityCeiling,
       notes: ns.length,
       areas: [...new Set(ns.map((n) => n.area))].sort(),
@@ -723,7 +723,7 @@ export class KosmosAgentServer {
     const found = await this.okfNode(sel);
     if (!found) return { error: "note not found" };
     const p = found.node.okf?.projection;
-    if (!p) return { error: "note has no OKF+ validating projection", path: found.node.path };
+    if (!p) return { error: "note has no GKX validating projection", path: found.node.path };
     return {
       profile: p.profile, conformanceClaim: p.conformanceClaim, mode: p.mode,
       source: { path: p.sourcePath, version: p.sourceVersion, contentHash: p.contentHash },
@@ -953,7 +953,7 @@ export class KosmosAgentServer {
     const sel = {
       path: { type: "string", description: "Vault-relative path, e.g. Ideas/Engine v2.md" },
       title: { type: "string", description: "Note title / basename / alias" },
-      uid: { type: "string", description: "Canonical OKF+ UID" },
+      uid: { type: "string", description: "Canonical GKX UID" },
     };
     const annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
     const outputSchema = { type: "object", additionalProperties: true };
@@ -962,21 +962,21 @@ export class KosmosAgentServer {
     });
     const selectionSchema = { type: "object", properties: sel, anyOf: [{ required: ["path"] }, { required: ["title"] }, { required: ["uid"] }], additionalProperties: false };
     return [
-      tool("vault_overview", "Vault overview", "Sensitivity-filtered OKF+ projection statistics and diagnostics. Source notes and accepted semantic events remain authoritative.", { type: "object", properties: {}, additionalProperties: false }),
+      tool("vault_overview", "Vault overview", "Sensitivity-filtered GKX projection statistics and diagnostics. Source notes and accepted semantic events remain authoritative.", { type: "object", properties: {}, additionalProperties: false }),
       tool("search_notes", "Search notes", "Lexical search over readable titles, aliases, source Markdown tags, and paths (no embeddings).", { type: "object", properties: { query: { type: "string" }, tag: { type: "string" }, area: { type: "string" }, limit: { type: "integer", minimum: 1, maximum: MAX_SEARCH_RESULTS } }, required: ["query"], additionalProperties: false }),
-      tool("get_note", "Get note", "Readable source note content, OKF+ metadata, resolved lineage projection, and links.", selectionSchema),
-      tool("get_lineage", "Get lineage", "Readable OKF+ supersession chain ordered oldest to newest.", selectionSchema),
+      tool("get_note", "Get note", "Readable source note content, GKX metadata, resolved lineage projection, and links.", selectionSchema),
+      tool("get_lineage", "Get lineage", "Readable GKX supersession chain ordered oldest to newest.", selectionSchema),
       tool("get_related", "Get related notes", "Readable semantic related_to neighbors, outgoing links, and backlinks.", selectionSchema),
       tool("graph_at_time", "Graph at time", "Point-in-time temporal-validity projection for readable notes.", { type: "object", properties: { time: { type: "string", description: "ISO 8601" }, limit: { type: "integer", minimum: 1, maximum: MAX_SEARCH_RESULTS } }, required: ["time"], additionalProperties: false }),
       tool("export_graphiti_episodes", "Export Graphiti episodes", "Paginated, chronological, non-authoritative Graphiti adapter with origin separation. Stable UUIDs prevent duplicate episode creation on re-ingest.", { type: "object", properties: { cursor: { type: "integer", minimum: 0 }, limit: { type: "integer", minimum: 1, maximum: MAX_EPISODE_PAGE } }, additionalProperties: false }),
       tool("graphiti_ingestion_status", "Graphiti ingestion status", "Reports export readiness and the mandatory upstream read-after-ingest check. Accepted never means searchable.", { type: "object", properties: {}, additionalProperties: false }),
-      tool("get_okf_note", "Get OKF+ note projection", "Origin-separated authored, derived, proposed, approved, and effective OKF+ v2.3 projection.", selectionSchema),
+      tool("get_okf_note", "Get GKX note projection", "Origin-separated authored, derived, proposed, approved, and effective GKX v2.3 projection.", selectionSchema),
       tool("get_assessment", "Get assessment", "Policy-bound deterministic documentation-quality assessment; never a truth or use authorization.", selectionSchema),
-      tool("get_diagnostics", "Get OKF+ diagnostics", "Stable structured validation diagnostics for one readable note.", selectionSchema),
+      tool("get_diagnostics", "Get GKX diagnostics", "Stable structured validation diagnostics for one readable note.", selectionSchema),
       tool("get_effective_labels", "Get effective labels", "Origin-separated labels plus the effective non-proposed projection.", selectionSchema),
       tool("get_evidence", "Get evidence", "Origin-separated supporting and contradicting evidence declarations.", selectionSchema),
       tool("get_relationships", "Get typed relationships", "Authored, derived, proposed, approved, and effective typed relationships.", selectionSchema),
-      tool("get_policy", "Get OKF+ policy", "Built-in deterministic OKF+ 2.3 assessment policy and trust state.", { type: "object", properties: {}, additionalProperties: false }),
+      tool("get_policy", "Get GKX policy", "Built-in deterministic GKX 2.3 assessment policy and trust state.", { type: "object", properties: {}, additionalProperties: false }),
       tool("validate_note", "Validate note", "Validate one note in memory without modifying source bytes.", selectionSchema),
       tool("assess_note", "Assess note", "Calculate/read one deterministic assessment in memory without modifying source bytes.", selectionSchema),
       tool("assess_vault", "Assess vault", "Bounded in-memory deterministic assessment summary; writes no notes or sidecars.", { type: "object", properties: { limit: { type: "integer", minimum: 1, maximum: 200 } }, additionalProperties: false }),
@@ -1103,7 +1103,7 @@ export class KosmosAgentServer {
           protocolVersion,
           capabilities: { tools: { listChanged: false } },
           serverInfo: { name: "vault-kosmos-oden", title: "Vault Kosmos", version: KOSMOS_VERSION },
-          instructions: "Read-only, sensitivity-filtered OKF+ v2.3 Validating Projection Profile. Authored, derived, proposed, approved, and effective values remain distinct. Scores measure documentation/support quality, not truth or authorization. Use get_okf_note/get_assessment/get_diagnostics for governance projections and get_lineage/graph_at_time for temporal views. Graphiti exports are non-authoritative projections. The server never modifies notes.",
+          instructions: "Read-only, sensitivity-filtered GKX v2.3 Validating Projection Profile. Authored, derived, proposed, approved, and effective values remain distinct. Scores measure documentation/support quality, not truth or authorization. Use get_okf_note/get_assessment/get_diagnostics for governance projections and get_lineage/graph_at_time for temporal views. Graphiti exports are non-authoritative projections. The server never modifies notes.",
         });
       }
       if (method === "ping") return ok({});

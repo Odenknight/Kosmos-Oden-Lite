@@ -11,8 +11,8 @@ clean, human-editable frontmatter (the **GKOS-Engine-Lite schema**: GKX Notes
 2.2 with the optional Agent-Ready flat 2.3 profile) so both you and your AI
 tools can find, trust, and connect what you know.
 
-GKX (Governed Knowledge Exchange) is the current name for the format previously
-published as OKF+. KRS-Lite keeps reading existing OKF+ 2.2/2.3 notes; the
+GKX (Governed Knowledge Exchange) is the current name for the format previously published as OKF+.
+KRS-Lite keeps reading existing OKF+ 2.2/2.3 notes; the
 rename does not require a vault migration.
 
 ## What “Frozen Core Edition” means
@@ -38,6 +38,11 @@ mirror of the newest GKOS Engine release.
 “Frozen” does **not** mean abandoned. It means the edition is maintained
 conservatively so users can depend on its established behavior without being
 forced onto the main product’s faster development track.
+
+This frozen, verified baseline is a controlled compatibility exception, not a
+second schema authority. KRS-Lite does not claim current-Engine parity; its
+exact baseline, selective data-integrity backports, and approved differences
+define the claim that its drift checks enforce.
 
 It is intentionally **Lite**: for people with everyday vaults who want
 something simple yet effective — not for governing tens of thousands of

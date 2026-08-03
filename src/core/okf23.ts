@@ -65,6 +65,9 @@ const RELATION_TYPES = [
   "quotes", "interprets", "tests", "replicates", "fails_to_replicate", "extends",
   "narrows", "generalizes", "implements", "governed_by", "reviewed_by", "approved_by",
   "supersedes", "superseded_by", "related_to", "part_of", "has_part",
+  // Selective v1.2.0 data-integrity backport: these valid relations were
+  // previously dropped by the 2.3 projection in the frozen baseline.
+  "refines", "blocks", "documents",
 ] as const;
 const INVERSES: Record<string, string> = {
   supports: "supported_by", contradicts: "contradicted_by", depends_on: "required_by",
@@ -74,6 +77,7 @@ const INVERSES: Record<string, string> = {
   generalizes: "specialized_by", implements: "implemented_by", governed_by: "governs",
   reviewed_by: "reviews", approved_by: "approves", supersedes: "superseded_by",
   superseded_by: "supersedes", related_to: "related_to", part_of: "has_part", has_part: "part_of",
+  refines: "refined_by", blocks: "blocked_by", documents: "documented_by",
 };
 const EPISTEMIC_STATES = new Set([
   "unknown", "observation", "reported", "inferred", "hypothesis", "modeled",
