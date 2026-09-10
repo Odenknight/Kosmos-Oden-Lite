@@ -1,9 +1,9 @@
-# Kosmos Research Studio Lite (KRS-Lite) — Frozen Core Edition (Vault Kosmos) — v1.0.6
+# Kosmos-Oden-Lite — Frozen Core Edition — v1.0.6
 
 **A 3D cosmos for your notes, and note formatting that quietly makes them more
 useful — to you, and to AI.**
 
-Kosmos Research Studio Lite (KRS-Lite) is the **Frozen Core Edition** and final, polished form of the
+Kosmos-Oden-Lite (aka Vault-Kosmos OdenKnight Lite Edition) is the **Frozen Core Edition** and final, polished form of the
 classic **Vault Kosmos** line: an Obsidian plugin that renders your vault as a
 navigable "Local Cluster of Galaxies" — folders become galaxies, notes become
 stars and planets, links become the gravity between them — and gives your notes
@@ -12,7 +12,7 @@ clean, human-editable frontmatter (the **GKOS-Engine-Lite schema**: GKX Notes
 tools can find, trust, and connect what you know.
 
 GKX (Governed Knowledge Exchange) is the current name for the format previously
-published as OKF+. KRS-Lite keeps reading existing OKF+ 2.2/2.3 notes; the
+published as OKF+. Vault-Kosmos keeps reading existing OKF+ 2.2/2.3 notes; the
 rename does not require a vault migration.
 
 ## What “Frozen Core Edition” means
@@ -77,6 +77,8 @@ care about stay visible and editable; the machinery stays out of the way.**
 
 - The full 3D cosmos: galaxies, stars, planets, moons, search, filters, focus,
   free flight, timeline growth, Chrono time-travel, minimap.
+- Redone to better align with astrophysics: a Local Cluster of galaxies,
+  stars, planets, moons, and asteroids.
 - **GKOS Note Formatting**: one previewed, backed-up action to give notes
   clean GKX 2.2 frontmatter (identity, type, timestamps, tags, lineage and
   relationship wikilinks) — and an optional Agent-Ready flat 2.3 upgrade for
@@ -96,7 +98,7 @@ care about stay visible and editable; the machinery stays out of the way.**
 - Original concept and inspiration: **Vault Kosmos** by
   [H4R7W16](https://github.com/H4R7W16/vault-kosmos). The viewer keeps the
   Vault Kosmos name in tribute.
-- Rebuild, formatting engine, and Lite edition: **Shaun "Oden" Marshall**
+- Rebuild of galaxy, formatting engine, and Lite edition: **Shaun "Oden" Marshall**
   ([Odenknight](https://github.com/Odenknight)).
 - Note-format profiles: **GKX** (Governed Knowledge Exchange; formerly OKF+) under the
   **GKOS** (Governed Knowledge Operations Standard) governance model —
@@ -106,12 +108,12 @@ care about stay visible and editable; the machinery stays out of the way.**
 
 ## Relationship to Kosmos Research Studio (main)
 
-| | KRS-Lite — Frozen Core Edition | KRS (main) |
+| | Kosmos-Oden-Lite — Frozen Core Edition | Kosmos-Oden |
 |---|---|---|
 | Audience | Everyday vaults, individuals | Governed knowledge work, agentic systems |
 | Note formats | GKX Notes (2.2) + Agent-Ready flat 2.3; reads legacy OKF+ | Same, plus the full GKOS Engine roadmap (sidecars, proposals, decisions, Machine Dialect, standalone engine) |
 | Core policy | Frozen baseline; reviewed fixes and selective backports | Active engine and product evolution |
-| Viewer branding | **Vault Kosmos** (tribute) | **Kosmos Research Studio (KRS)** |
+| Viewer branding | **Vault Kosmos** (tribute) | **Kosmos-Oden)** |
 | Future | Stable `1.0.x` maintenance line; no automatic current-engine parity | Active feature development |
 
 The editions share a common lineage and compatible note formats. Notes formatted
