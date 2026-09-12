@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   codeql:
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && 'ubuntu-latest' || fromJSON('["self-hosted","Linux","X64","r720-ci"]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: github/codeql-action/init@v4
@@ -27,7 +27,7 @@ jobs:
       - uses: github/codeql-action/analyze@v4
 
   provenance-and-sbom:
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && 'ubuntu-latest' || fromJSON('["self-hosted","Linux","X64","r720-ci"]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v7
