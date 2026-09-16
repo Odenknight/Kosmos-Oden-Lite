@@ -1,0 +1,42 @@
+{
+  "format": "dirty-snapshot-v2",
+  "qualification": false,
+  "remote": "https://github.com/Odenknight/Kosmos-Oden-Lite.git",
+  "visibility": {
+    "isPrivate": false,
+    "nameWithOwner": "Odenknight/Kosmos-Oden-Lite",
+    "url": "https://github.com/Odenknight/Kosmos-Oden-Lite"
+  },
+  "prior_manifest_sha256": "6c58a58b4cbdedc02c4b321e8aaf21780f1956751deef0f74ad8b041de7e78af",
+  "index_sha256": "18ffd64c9a28420d12cba3404b85d2136630cf3f63e6023cdce0bad90908cefd",
+  "archives": [
+    {
+      "path": "objects-001.tar.gz",
+      "sha256": "41fc9799995b69e823ecc45e1b2c0feffee2472f5260ff396036238836ec9527",
+      "bytes": 10343,
+      "objects": 4
+    }
+  ],
+  "objects": [
+    {
+      "sha256": "a8484156d3d0486ecdba1dca06a0ba4a11f727d88f5288168c536191b33e4696",
+      "bytes": 5108
+    },
+    {
+      "sha256": "c20d18ea7957f64d981047ef59fae1ef98803310d6aa8fe705497a862709730e",
+      "bytes": 20700
+    },
+    {
+      "sha256": "c335f9b6f002024473f6e14b11e802f6f9e0c77713e24b360472a113cbed0fab",
+      "bytes": 20700
+    },
+    {
+      "sha256": "e5e09d6ca1b8dd6303a0227fa62af92418bd3f454f92fac2730f94e243768a21",
+      "bytes": 4808
+    }
+  ],
+  "privacy_routed_out": 0,
+  "privacy_routed_in": 0,
+  "source_problems": [],
+  "publication_disposition": "READY_FOR_PUBLISHER_REVIEW_AFTER_INDEPENDENT_V2_VERIFICATION"
+}

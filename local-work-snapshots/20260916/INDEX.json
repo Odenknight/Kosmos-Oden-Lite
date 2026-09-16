@@ -1,0 +1,81 @@
+{
+  "format": "dirty-snapshot-v2",
+  "qualification": false,
+  "remote": "https://github.com/Odenknight/Kosmos-Oden-Lite.git",
+  "visibility": {
+    "isPrivate": false,
+    "nameWithOwner": "Odenknight/Kosmos-Oden-Lite",
+    "url": "https://github.com/Odenknight/Kosmos-Oden-Lite"
+  },
+  "source_manifest_sha256": "670a3427862d03dbba039237c49431921b468edeaadfca0fd9a6e0330db8f7c6",
+  "screening_sha256": "52b5b06b31dc361a4f573661669a9ca21b9ae1ba73541dc7afc5935a57e9a975",
+  "checkouts": [
+    {
+      "checkout_id": "7984f2aec1dd1dbda4ed6e1d69b02783e71359b7f9a8870eab5b8ea6b041fbc2",
+      "path": "C:\\Users\\FAC\\Documents\\_AI_builds_GPT\\Governance\\readme-audit\\Kosmos-Oden-Lite",
+      "parent_head": "dcb6c98c7d04c865a3edc6877462f258c4c900da",
+      "branch": "main",
+      "original_remote": "https://github.com/Odenknight/Kosmos-Oden-Lite.git",
+      "files": [
+        {
+          "path": "README.md",
+          "staged_status": null,
+          "worktree_status": "M",
+          "untracked": false,
+          "screening_flags": [],
+          "index": [
+            {
+              "mode": "100644",
+              "oid": "5ba84447891e1884b8dece9803e0cf5e1db6aa23",
+              "stage": 0,
+              "sha256": "e5e09d6ca1b8dd6303a0227fa62af92418bd3f454f92fac2730f94e243768a21",
+              "bytes": 4808
+            }
+          ],
+          "staged_deleted": false,
+          "working_deleted": false,
+          "working": {
+            "state": "PRESENT",
+            "sha256": "a8484156d3d0486ecdba1dca06a0ba4a11f727d88f5288168c536191b33e4696",
+            "bytes": 5108
+          }
+        }
+      ],
+      "prior_exclusions": []
+    },
+    {
+      "checkout_id": "ee1a75c4e119b3fbd8c1e08907766fc8dd11dafa2e5e7b06f4df4c162c11622f",
+      "path": "C:\\Users\\FAC\\Documents\\_AI_builds_GPT\\Kosmos-Oden-Lite",
+      "parent_head": "dcb6c98c7d04c865a3edc6877462f258c4c900da",
+      "branch": "main",
+      "original_remote": "https://github.com/Odenknight/Kosmos-Oden-Lite.git",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "staged_status": null,
+          "worktree_status": "M",
+          "untracked": false,
+          "screening_flags": [],
+          "index": [
+            {
+              "mode": "100644",
+              "oid": "dcf7cc1af2072013b1bb30ab72d076889b56fc1f",
+              "stage": 0,
+              "sha256": "c20d18ea7957f64d981047ef59fae1ef98803310d6aa8fe705497a862709730e",
+              "bytes": 20700
+            }
+          ],
+          "staged_deleted": false,
+          "working_deleted": false,
+          "working": {
+            "state": "PRESENT",
+            "sha256": "c335f9b6f002024473f6e14b11e802f6f9e0c77713e24b360472a113cbed0fab",
+            "bytes": 20700
+          }
+        }
+      ],
+      "prior_exclusions": []
+    }
+  ],
+  "privacy_routing_authority": "Root task instruction: preserve private evidence and all Kosmos coordination in private GKOS-Engine-Rust; no public export of unproven flagged bytes."
+}
