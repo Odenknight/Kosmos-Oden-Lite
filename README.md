@@ -1,22 +1,27 @@
-# Kosmos-Oden Lite (Vault Kosmos) — v1.0.0
+# Kosmos-Oden-Lite
 
-**A 3D cosmos for your notes, and note formatting that quietly makes them more
-useful — to you, and to AI.**
+> **Portfolio position** · Product: Kosmos-Oden-Lite · Repository: `Odenknight/Kosmos-Oden-Lite`
+> Tier: TF (dependency class: vendored) · GKX schema: GKX Notes 2.2 + flat 2.3
+> Engine dependency: frozen legacy — vendored/inlined frozen core; no current GKOS-Engine dependency or upgrade path
+> Lifecycle: Frozen · Relationships: original Obsidian plugin; predecessor of Kosmos-Oden (§3.1)
+> Authority for this block: GKOS-REGISTRY-001
 
-Kosmos-Oden Lite is the final, polished form of the classic **Vault Kosmos**
+Kosmos-Oden-Lite is the frozen original Obsidian-plugin line and predecessor
+of Kosmos-Oden. It retains its historical old renderer and GKX Notes 2.2 /
+flat 2.3 architecture. It receives documentation, security, and
+repository-maintenance corrections only.
+
+Kosmos-Oden-Lite is the final, polished form of the classic **Vault Kosmos**
 line: an Obsidian plugin that renders your vault as a navigable "Local Cluster
 of Galaxies" — folders become galaxies, notes become stars and planets, links
 become the gravity between them — and gives your notes clean, human-editable
-frontmatter (the **GKOS-Engine-Lite schema**: OKF+ Notes 2.2 with the optional
-Agent-Ready flat 2.3 profile) so both you and your AI tools can find, trust,
+frontmatter (GKX Notes 2.2 with the optional Agent-Ready flat 2.3 profile) so both you and your AI tools can find, trust,
 and connect what you know.
 
-It is intentionally **Lite**: for people with everyday vaults who want
-something simple yet effective — not for governing tens of thousands of
-documents. It is feature-complete and maintained for bug fixes. New feature
-development continues in the main [Kosmos-Oden](https://github.com/Odenknight/Kosmos-Oden)
-project, which builds the full GKOS Engine (governance sidecars, proposal and
-decision records, the standalone engine) on the same core.
+The suffix “Lite” does not describe a reduced build. This repository is the
+frozen original line. Its active continuation is
+[Kosmos-Oden](https://github.com/Odenknight/Kosmos-Oden), which consumes
+GKOS-Engine on the current GKX line.
 
 ## The originating story
 
@@ -64,20 +69,20 @@ care about stay visible and editable; the machinery stays out of the way.**
   Vault Kosmos name in tribute.
 - Rebuild, formatting engine, and Lite edition: **Shaun "Oden" Marshall**
   ([Odenknight](https://github.com/Odenknight)).
-- Note-format profiles: **OKF+** (Open Knowledge Format Plus) under the
-  **GKOS** (Governed Knowledge Operations Standard) governance model —
+- Note-format profiles: **GKX Notes 2.2** with the optional Agent-Ready flat
+  2.3 profile, defined by **GKOS** (Governed Knowledge Operations Standard) —
   see [gkos-standard](https://github.com/Odenknight/gkos-standard).
 - License: [MIT](LICENSE). Documentation and original graphics in the GKOS
   standard are CC BY 4.0 in their own repository.
 
 ## Relationship to Kosmos-Oden (main)
 
-| | Kosmos-Oden Lite (this repo) | Kosmos-Oden (main) |
+| | Kosmos-Oden-Lite (this repo) | Kosmos-Oden |
 |---|---|---|
-| Audience | Everyday vaults, individuals | Governed knowledge work, agentic systems |
-| Note formats | OKF+ Notes (2.2) + Agent-Ready flat 2.3 | Same, plus the full GKOS Engine roadmap (sidecars, proposals, decisions, Machine Dialect, standalone engine) |
+| Role | Frozen original Obsidian plugin | Active continuation |
+| Architecture | Vendored/inlined frozen core and old renderer; GKX Notes 2.2 + flat 2.3 | Consumes GKOS-Engine; current GKX 2.3 line |
 | Viewer branding | **Vault Kosmos** (tribute) | Kosmos-Oden |
-| Future | Bug fixes only — stable by design | Active feature development |
+| Lifecycle | Frozen — documentation, security, and repository-maintenance corrections only | Active development |
 
-Same engine core under the hood. Notes formatted by one are fully readable by
-the other — moving up (or back) is never a migration of your writing.
+Kosmos-Oden-Lite has no current GKOS-Engine dependency or upgrade path. The
+two products are related only by the documented succession above.
