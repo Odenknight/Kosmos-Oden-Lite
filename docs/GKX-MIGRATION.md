@@ -1,17 +1,17 @@
-# OKF/OKF+ Note Audit and Migration
+# GKX Note Audit and Migration
 
 ## Purpose
 
-**Mark notes in OKF+ format** is a user-triggered Obsidian workflow for safely
+**Mark notes in GKX format** is a user-triggered Obsidian workflow for safely
 onboarding existing Markdown notes. It scans every vault note except the
-processor-owned `.okf/**` sidecars, recognizes either:
+processor-owned `.gkx/**` sidecars, recognizes either:
 
-- native nested **OKF+ 2.3** and flat **OKF+ 2.2 compatibility** frontmatter; or
+- native nested **GKX 2.3** and flat **GKX 2.2 compatibility** frontmatter; or
 - Google's permissive **Open Knowledge Format 0.1 draft**, whose concept-note
   conformance requirement is parseable YAML frontmatter with a non-empty
   `type` field.
 
-Google OKF is an interoperability floor; OKF+ is the stricter identity,
+Google OKF is an interoperability floor; GKX is the stricter identity,
 governance, sensitivity, lineage, and typed-relationship extension used by
 Kosmos. Google's current primary specification is
 [GoogleCloudPlatform/knowledge-catalog/okf/SPEC.md](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md).
@@ -28,7 +28,7 @@ The beta.12 workflow offers three explicit modes:
   mechanically recoverable ordinary, Google OKF, reserved, or legacy note.
   It is an override of recoverable values, not an instruction to guess through
   ambiguity or identity conflicts.
-- **Convert all to native 2.3** proposes native nested OKF+ 2.3 metadata for
+- **Convert all to native 2.3** proposes native nested GKX 2.3 metadata for
   mechanically recoverable notes while preserving ordinary Obsidian `tags` and
   flat wikilink relationship fields as editable overlays.
 
@@ -42,11 +42,11 @@ The beta.12 workflow offers three explicit modes:
 5. The plugin rechecks every source. A note edited, renamed, or deleted after
    the scan is skipped.
 6. Before each edit, the original file bytes are copied to
-   `.okf/backup/<run-id>/<original-path>.bak` using binary I/O.
+   `.gkx/backup/<run-id>/<original-path>.bak` using binary I/O.
 7. Obsidian atomically processes the matching source. The human-authored body
    is unchanged; only frontmatter is added or normalized.
 8. The approved plan and result are stored under
-   `.okf/migrations/<run-id>/` without note bodies.
+   `.gkx/migrations/<run-id>/` without note bodies.
 
 The local backup helps recovery but is not independent: it lives in the same
 vault and may be synchronized with it. Keep an external snapshot as well.
@@ -55,12 +55,12 @@ vault and may be synchronized with it. Keep an external snapshot as well.
 
 | Result | Action |
 |---|---|
-| Native OKF+ 2.3 | Leave unchanged |
-| Valid OKF+ 2.2 note | Leave unchanged as the human-editable authoring format |
+| Native GKX 2.3 | Leave unchanged |
+| Valid GKX 2.2 note | Leave unchanged as the human-editable authoring format |
 | Beta.10 deterministic-migration 2.3 note | Propose a compact flat 2.2 repair |
 | Google OKF 0.1 draft | Leave unchanged |
 | Google `index.md` / `log.md` | Treat as reserved; leave unchanged |
-| Safe mechanical candidate | Propose editable OKF+ 2.2 in the dry run |
+| Safe mechanical candidate | Propose editable GKX 2.2 in the dry run |
 | Ambiguous or conflicting | Block and report for human review |
 
 In convert-all mode, the two Google rows become proposed flat 2.2 changes when
@@ -99,7 +99,7 @@ write plan.
 
 For a note without a safe existing value, onboarding emits compact Properties:
 
-- `okf_version: "2.2"`;
+- `gkx_version: "2.2"`;
 - a cryptographically generated, lowercase UUIDv4 `uid`;
 - `type: "semantic"`;
 - the filename stem as `title`;
@@ -139,7 +139,7 @@ per-run LAN/cloud consent, minimum-necessary bounded excerpts, no cloud
 fallback on on-device/LAN failure, no governance-authority fields in the model
 schema, and a pending
 review queue rather than automatic frontmatter writes. See
-[OKF+ Content-Assisted Enrichment](OKF-ENRICHMENT.md). The universal read-only
+[GKX Content-Assisted Enrichment](GKX-ENRICHMENT.md). The universal read-only
 MCP connector remains separate and does not grant a model write authority over
 this migration.
 
@@ -148,7 +148,7 @@ The enrichment action is a re-scan, not a one-time migration stage. Every time
 valid native 2.3 notes again. Unchanged notes may produce
 the same proposal, and duplicate queue records are suppressed by proposal ID.
 
-OKF processing can exclude custom glob-style paths, and an opt-in developer
+GKX processing can exclude custom glob-style paths, and an opt-in developer
 preset covers common agent instruction/control files. These rules do not hide
 notes from the cosmos or Agent API. Every excluded migration path and matching
 pattern appears in the preview.

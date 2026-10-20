@@ -1,11 +1,11 @@
-# Deferred: Standalone OKF+ 2.3 Engine and Agentic Service
+# Deferred: Standalone GKX 2.3 Engine and Agentic Service
 
 Status: **filed for a later development cycle**. This work is not part of the
-Vault Kosmos 0.6.5-beta.9 plugin release.
+Kosmos-Oden-Lite 0.6.5-beta.9 plugin release.
 
 ## Objective
 
-Extract the deterministic OKF+ reader, validator, projector, and assessor from
+Extract the deterministic GKX reader, validator, projector, and assessor from
 the Obsidian plugin into a standalone application/package. Make its governed
 read-only operations available through a local API and MCP. Keep any agentic
 reviewer as a separate, optional process that can submit proposals but cannot
@@ -66,7 +66,7 @@ cross-platform process management, local authentication, and update behavior.
   authority decision.
 - The Obsidian plugin remains usable when the optional agentic service is
   absent.
-- Compatibility and native OKF+ 2.3 fixtures pass in both embedded and
+- Compatibility and native GKX 2.3 fixtures pass in both embedded and
   standalone modes.
 
 ## First task when resumed

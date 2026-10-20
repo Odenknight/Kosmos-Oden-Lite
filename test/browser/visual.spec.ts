@@ -8,7 +8,7 @@ import { test, expect } from "@playwright/test";
  * with `playwright test --update-snapshots` on the reference machine.
  */
 const base = (extra: string) =>
-  `/vault-kosmos.html?capture=1&seed=1907&time=0&dpr=1&animation=off&${extra}`;
+  `/kosmos-oden-lite.html?capture=1&seed=1907&time=0&dpr=1&animation=off&${extra}`;
 
 const VIEWS: Array<{ name: string; q: string }> = [
   { name: "overview-high", q: "quality=high&camera=overview" },

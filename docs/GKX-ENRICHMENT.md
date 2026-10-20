@@ -1,12 +1,12 @@
-# OKF+ Content-Assisted Enrichment
+# GKX Content-Assisted Enrichment
 
 ## What this feature does
 
-For editable OKF+ 2.2 and valid native 2.3 notes, **Scan labels and links** can
+For editable GKX 2.2 and valid native 2.3 notes, **Scan labels and links** can
 create pending suggestions for descriptions, note types, user-selectable
 Obsidian tags, and explicitly evidenced relationship wikilinks. It never changes
 note frontmatter automatically. The proposal preview may be saved to
-`.okf/review-queue.jsonl`, or a human can explicitly review each suggestion
+`.gkx/review-queue.jsonl`, or a human can explicitly review each suggestion
 and build a governed apply plan.
 
 The deterministic pass always runs first. A second OpenAI-compatible
@@ -14,7 +14,7 @@ on-device, private-IP LAN, or cloud LLM pass is optional and disabled by
 default.
 
 This is explicitly a **scan / re-scan** operation. Migration does not mark a
-note as permanently processed. Each run reads every currently eligible OKF+
+note as permanently processed. Each run reads every currently eligible GKX
 2.2 or valid native 2.3 note within the configured caps. Unchanged notes can produce identical
 proposals; duplicate JSONL queue records are suppressed by content-derived
 proposal ID.
@@ -73,7 +73,7 @@ Provider retention, account, billing, and privacy policies still apply to a
 confirmed cloud run. A timeout stops waiting and prevents retry; the remote
 provider may still finish a request already received.
 
-## OKF processing exclusions
+## GKX processing exclusions
 
 Custom case-insensitive patterns support `*`, `**`, and `?`; a bare filename
 matches at any depth. An opt-in developer preset covers common agent control
@@ -142,16 +142,16 @@ relationship is true.
 Immediately before each write, the plugin verifies the plan hash and its
 in-memory content hashes, re-reads the live note, and skips it if even one byte
 has changed. It then creates a byte-exact copy under
-`.okf/backup/<run-id>/` and uses Obsidian's guarded note processor. Flat 2.2
+`.gkx/backup/<run-id>/` and uses Obsidian's guarded note processor. Flat 2.2
 Properties remain flat and directly editable; native 2.3 notes receive
 flat compatibility Properties for accepted relationship corrections. The
 Markdown body is preserved byte-for-byte. The decision plan and result audit are stored under
-`.okf/enrichment/<run-id>/`.
+`.gkx/enrichment/<run-id>/`.
 
 ## Blocked migration notes
 
 Migration-blocked notes do not enter ordinary enrichment because their
-frontmatter is not yet canonical OKF+ 2.2. The migration preview can ask the
+frontmatter is not yet canonical GKX 2.2. The migration preview can ask the
 configured on-device or explicitly approved LAN LLM for advisory triage. This
 is intentionally more limited than enrichment: bounded frontmatter and deterministic blocker codes
 are sent, with likely credential-key values redacted. The result must cite the

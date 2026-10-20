@@ -1,6 +1,6 @@
 {
   "$comment": [
-    "Intentional, reviewed deltas between this repo's vendored src/core/ and the GKOS Engine",
+    "Intentional, reviewed deltas between this repo's vendored src/core/ and the GKOS-Engine",
     "at the declared parity tag. scripts/check-core-drift.mjs fails CI on any difference not",
     "described here. Fingerprints are sha256 over the normalised unified diff (file headers and",
     "@@ line numbers stripped, semver literals collapsed to <SEMVER> so version bumps do not",
@@ -12,30 +12,95 @@
   "engineParity": "v1.0.7",
   "notVendored": {},
   "liteOnly": {},
+  "nameMapping": {
+    "$comment": [
+      "The GKX rename (owner decision 2026-10-19; mirrors GKOS-Engine 2.0.0) renamed okf/OKF/Okf",
+      "identifiers and OKF+ prose to gkx/GKX/Gkx and GKX. The parity tag predates it, so",
+      "check-core-drift.mjs applies these ordered substitutions to the engine's src/ file names",
+      "and contents before diffing. 'keep' spans name Google's external OKF specification and",
+      "stay verbatim. The policy-hash rule is the SHA-256 of the renamed canonical policy JSON",
+      "(identical to GKOS-Engine 2.0.0). Any other difference is still drift."
+    ],
+    "keep": [
+      "Google(?:'s)?(?: Cloud)?(?:'s)?(?: minimal)? OKF\\b",
+      "google-okf",
+      "knowledge-catalog(?:/blob/main)?/okf"
+    ],
+    "replace": [
+      [
+        "c2c476ca6f847bca20477d36ddda7a443d9fb4c5a9b1c3677a4347436deb0fb2",
+        "2c2d8ec1e6481cbd4476bcc544c4fd19be03d8f21e317e44d889ea46e940ec8b"
+      ],
+      [
+        "OKF-PLUS-MIGRATION",
+        "GKX-EDITABLE-FORMATTING"
+      ],
+      [
+        "OKF_PLUS_",
+        "GKX_"
+      ],
+      [
+        "OKF-PLUS-",
+        "GKX-"
+      ],
+      [
+        "okf-plus-",
+        "gkx-"
+      ],
+      [
+        "okf-plus",
+        "gkx"
+      ],
+      [
+        "OKF/OKF\\+",
+        "GKX"
+      ],
+      [
+        "OKF\\+",
+        "GKX"
+      ],
+      [
+        "okf",
+        "gkx"
+      ],
+      [
+        "OKF",
+        "GKX"
+      ],
+      [
+        "Okf",
+        "Gkx"
+      ]
+    ]
+  },
   "deltas": {
+    "demo.ts": {
+      "reason": "Product identity: the demo vault's project note is named after this product (Kosmos-Oden-Lite) instead of the former viewer name. Data otherwise identical.",
+      "fingerprint": "sha256:d8e9c18d6e7b9018d8415765ccf22ec6"
+    },
+    "gkx-migration.ts": {
+      "reason": "Doc-comment delta only: the timestamp-precedence comment points at src/core/timestamps.ts (Lite's vendored path) rather than src/timestamps.ts.",
+      "fingerprint": "sha256:28fb6461389cb308b73f9313f58f75c8"
+    },
+    "gkx23.ts": {
+      "reason": "Product identity: assessor id is tool:kosmos-oden with KOSMOS_VERSION rather than tool:gkos-engine with ENGINE_VERSION. Plus SENSITIVITY_LEVELS is exported so the plugin's default-sensitivity picker reads the one canonical vocabulary.",
+      "fingerprint": "sha256:b7ec34e0e18613338f0bdf43f13d895f"
+    },
     "graph.ts": {
       "reason": "Doc-comment delta only: Lite keeps the shorter pre-v1.0.6 doc comments on parseSourceFile and buildGraph. Code identical.",
-      "fingerprint": "sha256:40615adbf36c9e022b4e9901decca8b0"
+      "fingerprint": "sha256:1f954831338519e8ae89f84a4f2b372d"
     },
     "incremental.ts": {
-      "reason": "Import-order delta only: the type-only Okf23ProjectionOptions import sits after the ./paths import. Code identical.",
-      "fingerprint": "sha256:97e467e3405a4894f752769ce4894c9a"
-    },
-    "okf-migration.ts": {
-      "reason": "Doc-comment delta only: the timestamp-precedence comment points at src/core/timestamps.ts (Lite's vendored path) rather than src/timestamps.ts.",
-      "fingerprint": "sha256:e3b9e4597535490257423ddf199f2ae5"
-    },
-    "okf23.ts": {
-      "reason": "Product identity: assessor id is tool:kosmos-oden with KOSMOS_VERSION rather than tool:gkos-engine with ENGINE_VERSION. Plus SENSITIVITY_LEVELS is exported so the plugin's default-sensitivity picker reads the one canonical vocabulary.",
-      "fingerprint": "sha256:4aba9ed40ced668b09805b64c5c3211c"
+      "reason": "Import-order delta only: the type-only Gkx23ProjectionOptions import sits after the ./paths import. Code identical.",
+      "fingerprint": "sha256:5c76ce2947127a2f985e517a5d0cf119"
     },
     "types.ts": {
-      "reason": "Product identity: OkfAssessment.assessor.id is typed as the literal \"tool:kosmos-oden\" to match okf23.ts.",
-      "fingerprint": "sha256:5d69bdca04c8e85f9c97b0c55ac395b5"
+      "reason": "Product identity: GkxAssessment.assessor.id is typed as the literal \"tool:kosmos-oden\" to match gkx23.ts.",
+      "fingerprint": "sha256:781fbfb982170a8e92f432583d022dca"
     },
     "version.ts": {
-      "reason": "Product identity: Lite's own version constants (KOSMOS_VERSION / KOSMOS_NAME = vault-kosmos-oden) replace the engine's ENGINE_VERSION / ENGINE_NAME. KOSMOS_VERSION is this plugin's single source of truth (see scripts/check-versions.mjs); the semver literal is normalised out of the fingerprint so releases do not churn this entry.",
-      "fingerprint": "sha256:9b81bf8ed22805705715d5c951635e80"
+      "reason": "Product identity: Lite's own version constants (KOSMOS_VERSION / KOSMOS_NAME = kosmos-oden-lite) replace the engine's ENGINE_VERSION / ENGINE_NAME. KOSMOS_VERSION is this plugin's single source of truth (see scripts/check-versions.mjs); the semver literal is normalised out of the fingerprint so releases do not churn this entry.",
+      "fingerprint": "sha256:4e825be9eeb7bd0ba16c0ab66f8901ca"
     }
   }
 }

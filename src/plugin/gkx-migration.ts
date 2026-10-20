@@ -1,19 +1,19 @@
-/** Obsidian host for the safety-first OKF+ audit/backup/apply workflow. */
+/** Obsidian host for the safety-first GKX audit/backup/apply workflow. */
 import { App, Modal, Notice, Setting, TFile, normalizePath } from "obsidian";
-import { matchedOkfExclusion } from "../core/okf-exclusions";
+import { matchedGkxExclusion } from "../core/gkx-exclusions";
 import {
-  createOkfMigrationPlan,
-  publicOkfMigrationPlan,
-  verifyOkfMigrationPlan,
-  type OkfMigrationEntry,
-  type OkfMigrationMode,
-  type OkfMigrationPlan,
-  type OkfMigrationSource,
-} from "../core/okf-migration";
+  createGkxMigrationPlan,
+  publicGkxMigrationPlan,
+  verifyGkxMigrationPlan,
+  type GkxMigrationEntry,
+  type GkxMigrationMode,
+  type GkxMigrationPlan,
+  type GkxMigrationSource,
+} from "../core/gkx-migration";
 import type { AgentSettings } from "./agent-server";
-import { openOkfBlockedReview } from "./okf-blocked-review";
+import { openGkxBlockedReview } from "./gkx-blocked-review";
 
-export interface OkfMigrationApplyResult {
+export interface GkxMigrationApplyResult {
   runId: string;
   planHash: string;
   applied: string[];
@@ -24,7 +24,7 @@ export interface OkfMigrationApplyResult {
   planPath: string;
   resultPath: string;
   completedAt: string;
-  mode: OkfMigrationMode;
+  mode: GkxMigrationMode;
 }
 
 async function ensureFolder(app: App, path: string): Promise<void> {
@@ -38,15 +38,15 @@ async function ensureFolder(app: App, path: string): Promise<void> {
   }
 }
 
-export interface OkfMigrationScanResult { plan: OkfMigrationPlan; excluded: Array<{ path: string; pattern: string }> }
+export interface GkxMigrationScanResult { plan: GkxMigrationPlan; excluded: Array<{ path: string; pattern: string }> }
 
-export async function scanVaultForOkf(app: App, mode: OkfMigrationMode = "safe-onboarding", settings?: AgentSettings): Promise<OkfMigrationScanResult> {
+export async function scanVaultForGkx(app: App, mode: GkxMigrationMode = "safe-onboarding", settings?: AgentSettings): Promise<GkxMigrationScanResult> {
   const files = app.vault.getMarkdownFiles()
-    .filter((f) => !f.path.toLowerCase().startsWith(".okf/"));
-  const sources: OkfMigrationSource[] = [];
+    .filter((f) => !f.path.toLowerCase().startsWith(".gkx/"));
+  const sources: GkxMigrationSource[] = [];
   const excluded: Array<{ path: string; pattern: string }> = [];
   for (const file of files) {
-    const pattern = matchedOkfExclusion(file.path, settings?.okfExcludePatterns ?? [], settings?.okfDeveloperExclusions === true);
+    const pattern = matchedGkxExclusion(file.path, settings?.gkxExcludePatterns ?? [], settings?.gkxDeveloperExclusions === true);
     if (pattern) { excluded.push({ path: file.path, pattern }); continue; }
     sources.push({
       path: file.path,
@@ -55,19 +55,19 @@ export async function scanVaultForOkf(app: App, mode: OkfMigrationMode = "safe-o
       modifiedTime: file.stat.mtime,
     });
   }
-  return { plan: await createOkfMigrationPlan(sources, { mode }), excluded };
+  return { plan: await createGkxMigrationPlan(sources, { mode }), excluded };
 }
 
-function persistedResult(result: OkfMigrationApplyResult): string {
+function persistedResult(result: GkxMigrationApplyResult): string {
   return JSON.stringify(result, null, 2) + "\n";
 }
 
 /** Save the content-free, hash-bound dry-run for review without editing notes. */
-export async function saveOkfMigrationPlan(app: App, plan: OkfMigrationPlan): Promise<string> {
-  const migrationRoot = normalizePath(`.okf/migrations/${plan.runId}`);
+export async function saveGkxMigrationPlan(app: App, plan: GkxMigrationPlan): Promise<string> {
+  const migrationRoot = normalizePath(`.gkx/migrations/${plan.runId}`);
   const planPath = `${migrationRoot}/plan.json`;
   await ensureFolder(app, migrationRoot);
-  const serialized = JSON.stringify(publicOkfMigrationPlan(plan), null, 2) + "\n";
+  const serialized = JSON.stringify(publicGkxMigrationPlan(plan), null, 2) + "\n";
   if (await app.vault.adapter.exists(planPath)) {
     const existing = await app.vault.adapter.read(planPath);
     if (existing !== serialized) throw new Error(`a different audit already exists at ${planPath}`);
@@ -82,16 +82,16 @@ export async function saveOkfMigrationPlan(app: App, plan: OkfMigrationPlan): Pr
  * again, then copied with readBinary/writeBinary before the atomic Vault.process
  * call. A concurrently edited note is skipped, never overwritten.
  */
-export async function applyOkfMigrationPlan(app: App, plan: OkfMigrationPlan): Promise<OkfMigrationApplyResult> {
-  if (!(await verifyOkfMigrationPlan(plan))) throw new Error("approved OKF+ plan or in-memory note contents changed after preview; run a new scan");
-  const migrationRoot = normalizePath(`.okf/migrations/${plan.runId}`);
-  const backupRoot = normalizePath(`.okf/backup/${plan.runId}`);
+export async function applyGkxMigrationPlan(app: App, plan: GkxMigrationPlan): Promise<GkxMigrationApplyResult> {
+  if (!(await verifyGkxMigrationPlan(plan))) throw new Error("approved GKX plan or in-memory note contents changed after preview; run a new scan");
+  const migrationRoot = normalizePath(`.gkx/migrations/${plan.runId}`);
+  const backupRoot = normalizePath(`.gkx/backup/${plan.runId}`);
   const planPath = `${migrationRoot}/plan.json`;
   const resultPath = `${migrationRoot}/result.json`;
   await ensureFolder(app, backupRoot);
-  await saveOkfMigrationPlan(app, plan);
+  await saveGkxMigrationPlan(app, plan);
 
-  const result: OkfMigrationApplyResult = {
+  const result: GkxMigrationApplyResult = {
     runId: plan.runId,
     planHash: plan.planHash,
     applied: [],
@@ -105,7 +105,7 @@ export async function applyOkfMigrationPlan(app: App, plan: OkfMigrationPlan): P
     mode: plan.mode,
   };
 
-  for (const entry of plan.entries.filter((e) => e.status === "needs-okf-plus")) {
+  for (const entry of plan.entries.filter((e) => e.status === "needs-gkx")) {
     try {
       const abstract = app.vault.getAbstractFileByPath(entry.path);
       if (!(abstract instanceof TFile)) { result.skippedMissing.push(entry.path); continue; }
@@ -157,12 +157,12 @@ function confirmation(parent: HTMLElement, text: string, onChange: (checked: boo
   return checkbox;
 }
 
-export class OkfMigrationPreviewModal extends Modal {
-  private plan: OkfMigrationPlan;
-  private onApply: (plan: OkfMigrationPlan) => Promise<void>;
+export class GkxMigrationPreviewModal extends Modal {
+  private plan: GkxMigrationPlan;
+  private onApply: (plan: GkxMigrationPlan) => Promise<void>;
   private applying = false;
 
-  constructor(app: App, plan: OkfMigrationPlan, onApply: (plan: OkfMigrationPlan) => Promise<void>, private settings?: AgentSettings, private excluded: Array<{ path: string; pattern: string }> = []) {
+  constructor(app: App, plan: GkxMigrationPlan, onApply: (plan: GkxMigrationPlan) => Promise<void>, private settings?: AgentSettings, private excluded: Array<{ path: string; pattern: string }> = []) {
     super(app); this.plan = plan; this.onApply = onApply;
   }
 
@@ -171,38 +171,38 @@ export class OkfMigrationPreviewModal extends Modal {
     contentEl.empty();
     const upgradeAll = plan.mode === "upgrade-all";
     const convertTo23 = plan.mode === "convert-to-23";
-    contentEl.createEl("h2", { text: convertTo23 ? "Convert recoverable notes to flat editable OKF+ 2.3 — preview" : upgradeAll ? "Convert recoverable notes to editable OKF+ 2.2 — preview" : "Repair human-editable OKF+ metadata — preview" });
+    contentEl.createEl("h2", { text: convertTo23 ? "Convert recoverable notes to flat editable GKX 2.3 — preview" : upgradeAll ? "Convert recoverable notes to editable GKX 2.2 — preview" : "Repair human-editable GKX metadata — preview" });
     contentEl.createEl("p", { text: `Scanned ${plan.totals.notes} notes. This dry run proposes ${plan.totals.changes} note changes; nothing has been changed yet.` });
 
     const summary = contentEl.createEl("ul");
-    summary.createEl("li", { text: `${plan.totals["okf-plus-2.2"]} already use human-editable OKF+ 2.2 Properties` });
-    summary.createEl("li", { text: `${plan.totals["okf-plus-2.3"]} already conform to native OKF+ 2.3` });
+    summary.createEl("li", { text: `${plan.totals["gkx-2.2"]} already use human-editable GKX 2.2 Properties` });
+    summary.createEl("li", { text: `${plan.totals["gkx-2.3"]} already conform to native GKX 2.3` });
     summary.createEl("li", { text: `${plan.totals["google-okf-0.1"]} conform to Google's OKF 0.1 draft${upgradeAll ? "" : " and will be left unchanged"}` });
     summary.createEl("li", { text: `${plan.totals["google-reserved"]} reserved index.md/log.md files${upgradeAll ? " are included when mechanically recoverable" : " will be left unchanged"}` });
-    summary.createEl("li", { text: `${plan.totals["needs-okf-plus"]} can be safely repaired or converted to ${convertTo23 ? "flat editable OKF+ 2.3" : "editable OKF+ 2.2"}` });
+    summary.createEl("li", { text: `${plan.totals["needs-gkx"]} can be safely repaired or converted to ${convertTo23 ? "flat editable GKX 2.3" : "editable GKX 2.2"}` });
     summary.createEl("li", { text: `${plan.totals.blocked} need manual review and will not be changed` });
-    summary.createEl("li", { text: `${this.excluded.length} excluded by OKF processing rules` });
+    summary.createEl("li", { text: `${this.excluded.length} excluded by GKX processing rules` });
     if (this.excluded.length) {
-      const details = contentEl.createEl("details"); details.createEl("summary", { text: `Excluded from this OKF scan (${this.excluded.length})` });
+      const details = contentEl.createEl("details"); details.createEl("summary", { text: `Excluded from this GKX scan (${this.excluded.length})` });
       const list = details.createEl("ul");
       for (const item of this.excluded.slice(0, 100)) list.createEl("li", { text: `${item.path} — ${item.pattern}` });
       if (this.excluded.length > 100) list.createEl("li", { text: `…and ${this.excluded.length - 100} more.` });
     }
 
-    warningBox(contentEl, "Back up the vault before continuing.", "Bulk metadata changes propagate through Obsidian Sync, Nextcloud, Dropbox, OneDrive, and Git. Sync is not a backup: it can synchronize an unwanted change. Make a separate, restorable snapshot first. Vault Kosmos also creates a byte-exact local backup of every changed file under .okf/backup/<run-id>, but that is a recovery aid—not a substitute for an independent backup.");
+    warningBox(contentEl, "Back up the vault before continuing.", "Bulk metadata changes propagate through Obsidian Sync, Nextcloud, Dropbox, OneDrive, and Git. Sync is not a backup: it can synchronize an unwanted change. Make a separate, restorable snapshot first. Kosmos-Oden-Lite also creates a byte-exact local backup of every changed file under .gkx/backup/<run-id>, but that is a recovery aid—not a substitute for an independent backup.");
     warningBox(contentEl, "Repair and conversion are deterministic; model enrichment is a separate re-scan.", convertTo23 ? "This screen does not call any model or send note content anywhere. Editable 2.3 output keeps every property flat — scalars plus quoted-wikilink lists — so Obsidian Properties, humans, and agents can edit tags and relationships without touching nested YAML. No nested governance blocks are written into notes." : "This screen does not call any model or send note content anywhere. It restores flat Obsidian Properties for tags and relationship wikilinks. Only notes carrying the beta.10 deterministic-migration marker are flattened automatically; genuinely authored native 2.3 notes remain unchanged.");
     warningBox(contentEl, "Review sensitivity after migration.", "The default label is internal; it is not a content-based privacy classification. Review notes that may contain confidential data or protected health information before enabling cloud agents or raising connector access. Existing invalid governance values, duplicate UIDs, duplicate keys, and nested/ambiguous YAML are blocked instead of overwritten.");
-    if (upgradeAll || convertTo23) warningBox(contentEl, "Convert-all is a governed override, not a force switch.", convertTo23 ? "Recoverable legacy values are mapped to conservative, flat editable OKF+ 2.3 Properties and their overridden originals are retained in the hash-bound migration plan. Unsafe relationship targets, ambiguous YAML, and duplicate UIDs remain blocked. Confidence measures mechanical migration safety only." : "Recoverable legacy values are mapped to conservative, flat OKF+ 2.2 Properties and their overridden originals are retained in the hash-bound migration plan. Unsafe relationship targets, ambiguous YAML, and duplicate UIDs remain blocked. Confidence measures mechanical migration safety only.");
+    if (upgradeAll || convertTo23) warningBox(contentEl, "Convert-all is a governed override, not a force switch.", convertTo23 ? "Recoverable legacy values are mapped to conservative, flat editable GKX 2.3 Properties and their overridden originals are retained in the hash-bound migration plan. Unsafe relationship targets, ambiguous YAML, and duplicate UIDs remain blocked. Confidence measures mechanical migration safety only." : "Recoverable legacy values are mapped to conservative, flat GKX 2.2 Properties and their overridden originals are retained in the hash-bound migration plan. Unsafe relationship targets, ambiguous YAML, and duplicate UIDs remain blocked. Confidence measures mechanical migration safety only.");
 
     contentEl.createEl("p", { text: `Plan SHA-256: ${plan.planHash}`, cls: "setting-item-description" });
     contentEl.createEl("p", { text: "When applied, the human-authored Markdown body remains byte-for-byte unchanged. Only frontmatter is added or normalized, and a note edited after this scan is skipped.", cls: "setting-item-description" });
 
-    const changed = plan.entries.filter((e) => e.status === "needs-okf-plus");
+    const changed = plan.entries.filter((e) => e.status === "needs-gkx");
     if (changed.length) this.renderEntries(contentEl, "Proposed changes", changed);
     const blocked = plan.entries.filter((e) => e.status === "blocked");
     if (blocked.length) this.renderEntries(contentEl, "Blocked for review", blocked);
     if (blocked.length) {
-      const advisoryProvider = this.settings?.okfEnrichmentProvider;
+      const advisoryProvider = this.settings?.gkxEnrichmentProvider;
       const advisoryConfigured = advisoryProvider === "local" || advisoryProvider === "lan";
       new Setting(contentEl)
         .setName("On-device/LAN advisory review of blocked notes")
@@ -210,15 +210,15 @@ export class OkfMigrationPreviewModal extends Modal {
           ? `Sends bounded frontmatter with likely credential-key values redacted, plus deterministic blocker codes, to your configured ${advisoryProvider === "lan" ? "private-IP LAN" : "loopback"} model. LAN requires a fresh disclosure confirmation. The model returns explanations, manual steps, and questions only—never YAML, an executable patch, or a note write.`
           : "Choose On-device LLM or LAN LLM under Content-assisted enrichment first. Cloud review is prohibited because blocked notes may have missing or invalid sensitivity labels.")
         .addButton((button) => button
-          .setButtonText(advisoryConfigured ? `Review ${Math.min(blocked.length, this.settings!.okfEnrichmentMaxNotes)} blocked notes` : "On-device or LAN LLM required")
+          .setButtonText(advisoryConfigured ? `Review ${Math.min(blocked.length, this.settings!.gkxEnrichmentMaxNotes)} blocked notes` : "On-device or LAN LLM required")
           .setDisabled(!advisoryConfigured)
-          .onClick(async () => { if (this.settings) await openOkfBlockedReview(this.app, plan, this.settings); }));
+          .onClick(async () => { if (this.settings) await openGkxBlockedReview(this.app, plan, this.settings); }));
     }
 
     if (!plan.totals.changes) {
       new Setting(contentEl)
         .addButton((b) => b.setButtonText("Save audit report").onClick(async () => {
-          try { const path = await saveOkfMigrationPlan(this.app, plan); new Notice(`Vault Kosmos: audit saved to ${path}`); }
+          try { const path = await saveGkxMigrationPlan(this.app, plan); new Notice(`Kosmos-Oden-Lite: audit saved to ${path}`); }
           catch (error: any) { new Notice(`Could not save audit: ${String(error?.message || error)}`, 10000); }
         }))
         .addButton((b) => b.setButtonText("Close").setCta().onClick(() => this.close()));
@@ -230,12 +230,12 @@ export class OkfMigrationPreviewModal extends Modal {
     const refresh = () => { if (applyButton) applyButton.disabled = !(backupConfirmed && policyConfirmed && overrideConfirmed) || this.applying; };
     confirmation(contentEl, "I have made a separate, restorable backup or snapshot of this vault; I understand that cloud sync alone is not a backup.", (v) => { backupConfirmed = v; refresh(); });
     confirmation(contentEl, "I understand the conservative defaults are not an AI privacy review, and I will review confidential/PHI sensitivity before cloud use.", (v) => { policyConfirmed = v; refresh(); });
-    if (upgradeAll || convertTo23) confirmation(contentEl, convertTo23 ? "I approve converting recoverable notes to flat editable OKF+ 2.3; original overridden values will remain in the migration plan and byte-exact backup." : "I approve converting recoverable legacy fields to conservative, human-editable OKF+ 2.2 Properties; original overridden values will remain in the migration plan and byte-exact backup.", (v) => { overrideConfirmed = v; refresh(); });
+    if (upgradeAll || convertTo23) confirmation(contentEl, convertTo23 ? "I approve converting recoverable notes to flat editable GKX 2.3; original overridden values will remain in the migration plan and byte-exact backup." : "I approve converting recoverable legacy fields to conservative, human-editable GKX 2.2 Properties; original overridden values will remain in the migration plan and byte-exact backup.", (v) => { overrideConfirmed = v; refresh(); });
 
     new Setting(contentEl)
       .addButton((b) => b.setButtonText("Cancel").onClick(() => this.close()))
       .addButton((b) => b.setButtonText("Save audit only").onClick(async () => {
-        try { const path = await saveOkfMigrationPlan(this.app, plan); new Notice(`Vault Kosmos: audit saved to ${path}`); }
+        try { const path = await saveGkxMigrationPlan(this.app, plan); new Notice(`Kosmos-Oden-Lite: audit saved to ${path}`); }
         catch (error: any) { new Notice(`Could not save audit: ${String(error?.message || error)}`, 10000); }
       }))
       .addButton((b) => {
@@ -256,7 +256,7 @@ export class OkfMigrationPreviewModal extends Modal {
       });
   }
 
-  private renderEntries(parent: HTMLElement, title: string, entries: OkfMigrationEntry[]): void {
+  private renderEntries(parent: HTMLElement, title: string, entries: GkxMigrationEntry[]): void {
     const details = parent.createEl("details");
     details.createEl("summary", { text: `${title} (${entries.length})` });
     const list = details.createEl("ul");
@@ -269,33 +269,33 @@ export class OkfMigrationPreviewModal extends Modal {
   }
 }
 
-export async function openOkfMigrationWorkflow(
+export async function openGkxMigrationWorkflow(
   app: App,
-  mode: OkfMigrationMode = "safe-onboarding",
-  onApplied?: (result: OkfMigrationApplyResult) => void,
+  mode: GkxMigrationMode = "safe-onboarding",
+  onApplied?: (result: GkxMigrationApplyResult) => void,
   settings?: AgentSettings,
 ): Promise<void> {
-  const scanning = new Notice("Vault Kosmos: scanning notes for OKF/OKF+ frontmatter…", 0);
+  const scanning = new Notice("Kosmos-Oden-Lite: scanning notes for GKX frontmatter…", 0);
   try {
-    const scan = await scanVaultForOkf(app, mode, settings);
+    const scan = await scanVaultForGkx(app, mode, settings);
     const plan = scan.plan;
     scanning.hide();
-    new OkfMigrationPreviewModal(app, plan, async (approved) => {
-      const running = new Notice(`Vault Kosmos: backing up and applying ${approved.totals.changes} OKF+ changes…`, 0);
+    new GkxMigrationPreviewModal(app, plan, async (approved) => {
+      const running = new Notice(`Kosmos-Oden-Lite: backing up and applying ${approved.totals.changes} GKX changes…`, 0);
       try {
-        const result = await applyOkfMigrationPlan(app, approved);
+        const result = await applyGkxMigrationPlan(app, approved);
         running.hide();
         onApplied?.(result);
         const skipped = result.skippedChanged.length + result.skippedMissing.length;
-        new Notice(`Vault Kosmos: ${result.applied.length} notes updated; ${skipped} changed/missing notes skipped; ${result.failed.length} failed. Audit: ${result.resultPath}`, 12000);
+        new Notice(`Kosmos-Oden-Lite: ${result.applied.length} notes updated; ${skipped} changed/missing notes skipped; ${result.failed.length} failed. Audit: ${result.resultPath}`, 12000);
       } catch (error: any) {
         running.hide();
-        new Notice(`Vault Kosmos OKF+ migration stopped: ${String(error?.message || error)}. No unbacked note is intentionally written.`, 15000);
+        new Notice(`Kosmos-Oden-Lite GKX migration stopped: ${String(error?.message || error)}. No unbacked note is intentionally written.`, 15000);
         throw error;
       }
     }, settings, scan.excluded).open();
   } catch (error: any) {
     scanning.hide();
-    new Notice(`Vault Kosmos could not scan OKF+ frontmatter: ${String(error?.message || error)}`, 15000);
+    new Notice(`Kosmos-Oden-Lite could not scan GKX frontmatter: ${String(error?.message || error)}`, 15000);
   }
 }

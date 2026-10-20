@@ -6,7 +6,7 @@
 
 - [ ] `npm run verify` passes locally (typecheck, build, tests, version/artifact/invariant checks).
 - [ ] New behavior has tests; fixed defects have a regression test.
-- [ ] Generated artifacts rebuilt and committed (`main.js`, `vault-kosmos.html`, `dist/`), so the reproducibility job matches.
+- [ ] Generated artifacts rebuilt and committed (`main.js`, `kosmos-oden-lite.html`, `dist/`), so the reproducibility job matches.
 - [ ] Graph semantics live only in `src/core/` (no per-surface forks).
 - [ ] Docs updated; README claims still match what the code proves.
 - [ ] `kosmos-invariants.yml` still holds (security defaults, read-only API, sandbox, no `"latest"` deps).

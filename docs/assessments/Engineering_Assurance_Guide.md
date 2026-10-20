@@ -1,8 +1,8 @@
-# Vault Kosmos Engineering Assurance Guide
+# Kosmos-Oden-Lite Engineering Assurance Guide
 
 ## Build Provenance, Reproducibility, Security Hardening, and Automated Verification
 
-**Project:** Vault Kosmos / Kosmos-Oden  
+**Project:** Kosmos-Oden-Lite / Kosmos-Oden  
 **Repository version reviewed:** `v0.5.1`  
 **Review date:** July 11, 2026  
 **Audience:** Maintainers, contributors, release engineers, security reviewers, code agents, and autonomous maintenance agents
@@ -11,7 +11,7 @@
 
 # 1. Executive Summary
 
-Vault Kosmos is not only a visual Obsidian plugin. It also:
+Kosmos-Oden-Lite is not only a visual Obsidian plugin. It also:
 
 - reads a user's local knowledge vault;
 - constructs a temporal and semantic graph;
@@ -43,7 +43,7 @@ These disciplines are important for human reviewers and even more important for 
 
 ---
 
-# 2. Why These Controls Matter for Vault Kosmos
+# 2. Why These Controls Matter for Kosmos-Oden-Lite
 
 ## 2.1 The plugin handles sensitive local information
 
@@ -197,7 +197,7 @@ Example `BUILD-INFO.json`:
 ```json
 {
   "schemaVersion": 1,
-  "project": "vault-kosmos",
+  "project": "kosmos-oden-lite",
   "version": "0.5.1",
   "repository": "https://github.com/Odenknight/Kosmos-Oden",
   "gitCommit": "FULL_COMMIT_SHA",
@@ -288,7 +288,7 @@ Common causes include:
 - mutable external assets;
 - development versus production configuration differences.
 
-## 4.3 Reproducibility requirements for Vault Kosmos
+## 4.3 Reproducibility requirements for Kosmos-Oden-Lite
 
 ### Pin dependencies
 
@@ -391,7 +391,7 @@ Hardening does not assume the system is currently malicious or broken. It recogn
 
 ## 5.2 Core security objectives
 
-For Vault Kosmos, the primary objectives are:
+For Kosmos-Oden-Lite, the primary objectives are:
 
 ### Confidentiality
 
@@ -768,7 +768,7 @@ Agents benefit from a machine-readable policy file:
 schema: 1
 
 project:
-  name: vault-kosmos
+  name: kosmos-oden-lite
 
 release:
   required_files:
@@ -995,7 +995,7 @@ This milestone closes the largest source-to-release trust gaps while preserving 
 
 # 12. Final Rationale
 
-Build provenance, reproducibility, security hardening, and automated verification are sometimes treated as enterprise bureaucracy. For Vault Kosmos, they are practical safeguards.
+Build provenance, reproducibility, security hardening, and automated verification are sometimes treated as enterprise bureaucracy. For Kosmos-Oden-Lite, they are practical safeguards.
 
 The plugin combines:
 

@@ -10,7 +10,7 @@ test.describe("context loss", () => {
   test.skip(({ browserName }) => browserName !== "chromium", "lose_context is reliable on Chromium");
 
   test("loses and restores the WebGL2 context without a frozen canvas", async ({ page }) => {
-    await page.goto("/vault-kosmos.html?capture=1&seed=1907&time=0&dpr=1&quality=high&camera=overview");
+    await page.goto("/kosmos-oden-lite.html?capture=1&seed=1907&time=0&dpr=1&quality=high&camera=overview");
     await page.waitForFunction(() => (window as any).__kosmosRenderStats?.frames > 0, null, { timeout: 15_000 });
 
     // Force context loss via the debug extension on the live canvas.

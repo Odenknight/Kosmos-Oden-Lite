@@ -1,94 +1,94 @@
 /**
- * Safety-first, human-editable OKF+ note onboarding and repair.
+ * Safety-first, human-editable GKX note onboarding and repair.
  *
  * This module is deliberately deterministic and LLM-free. It audits strict,
- * legacy flat frontmatter; keeps OKF+ 2.2 as the Obsidian Properties authoring
- * surface, reads native OKF+ 2.3, repairs beta.10-generated 2.3 notes, and
+ * legacy flat frontmatter; keeps GKX 2.2 as the Obsidian Properties authoring
+ * surface, reads native GKX 2.3, repairs beta.10-generated 2.3 notes, and
  * accepts Google's minimal OKF v0.1;
- * and proposes OKF+ only for notes that satisfy the mechanical safety gate.
+ * and proposes GKX only for notes that satisfy the mechanical safety gate.
  * Ambiguous YAML and invalid explicit governance values are never guessed.
  */
-import type { OkfSensitivity } from "./types";
-import { buildOkf23Projection, parseOkf23Frontmatter } from "./okf23";
+import type { GkxSensitivity } from "./types";
+import { buildGkx23Projection, parseGkx23Frontmatter } from "./gkx23";
 import { codeUnitCompare } from "./paths";
-import { isValidOkfTimestamp } from "./timestamps";
+import { isValidGkxTimestamp } from "./timestamps";
 
-export type OkfAuditStatus =
-  | "okf-plus-2.2"
-  | "okf-plus-2.3"
+export type GkxAuditStatus =
+  | "gkx-2.2"
+  | "gkx-2.3"
   | "google-okf-0.1"
   | "google-reserved"
-  | "needs-okf-plus"
+  | "needs-gkx"
   | "blocked";
 
-export type OkfMigrationMode = "safe-onboarding" | "upgrade-all" | "convert-to-23";
+export type GkxMigrationMode = "safe-onboarding" | "upgrade-all" | "convert-to-23";
 
-export interface OkfMigrationSource {
+export interface GkxMigrationSource {
   path: string;
   content: string;
   createdTime?: number;
   modifiedTime?: number;
 }
 
-export interface OkfMigrationFinding {
+export interface GkxMigrationFinding {
   code: string;
   message: string;
 }
 
-export interface OkfMigrationReview {
+export interface GkxMigrationReview {
   required: boolean;
   /** Deterministic confidence that the proposed metadata rewrite is mechanically safe. */
   confidence: number;
   basis: "deterministic-migration-safety";
-  reasons: OkfMigrationFinding[];
+  reasons: GkxMigrationFinding[];
 }
 
-export interface OkfMigrationSalvage {
+export interface GkxMigrationSalvage {
   field: string;
   originalValue: string | string[];
   reason: string;
 }
 
-export interface OkfMigrationDefaults {
+export interface GkxMigrationDefaults {
   type: "episodic" | "semantic" | "procedural";
   epistemicState: "hypothesis";
   scope: "node";
-  sensitivity: OkfSensitivity;
+  sensitivity: GkxSensitivity;
 }
 
-export const DEFAULT_OKF_MIGRATION_DEFAULTS: OkfMigrationDefaults = {
+export const DEFAULT_GKX_MIGRATION_DEFAULTS: GkxMigrationDefaults = {
   type: "semantic",
   epistemicState: "hypothesis",
   scope: "node",
   sensitivity: "internal",
 };
 
-export interface OkfMigrationEntry {
+export interface GkxMigrationEntry {
   path: string;
-  status: OkfAuditStatus;
-  standard: "OKF+ 2.3" | "OKF+ 2.2" | "Google OKF 0.1 draft" | "Google OKF reserved" | "none";
-  findings: OkfMigrationFinding[];
-  review: OkfMigrationReview;
+  status: GkxAuditStatus;
+  standard: "GKX 2.3" | "GKX 2.2" | "Google OKF 0.1 draft" | "Google OKF reserved" | "none";
+  findings: GkxMigrationFinding[];
+  review: GkxMigrationReview;
   /** Original governed values replaced by upgrade-all; persisted in the bound plan. */
-  salvage?: OkfMigrationSalvage[];
+  salvage?: GkxMigrationSalvage[];
   originalHash: string;
   proposedHash?: string;
   uid?: string;
-  /** In-memory only. publicOkfMigrationPlan() removes note contents. */
+  /** In-memory only. publicGkxMigrationPlan() removes note contents. */
   originalContent: string;
   /** In-memory only. The human-authored body is copied byte-for-byte. */
   proposedContent?: string;
 }
 
-export interface OkfMigrationPlan {
-  schema: "okf-plus-migration-plan/4";
+export interface GkxMigrationPlan {
+  schema: "gkx-migration-plan/4";
   runId: string;
   createdAt: string;
   planHash: string;
-  mode: OkfMigrationMode;
-  defaults: OkfMigrationDefaults;
-  totals: Record<OkfAuditStatus | "notes" | "changes", number>;
-  entries: OkfMigrationEntry[];
+  mode: GkxMigrationMode;
+  defaults: GkxMigrationDefaults;
+  totals: Record<GkxAuditStatus | "notes" | "changes", number>;
+  entries: GkxMigrationEntry[];
 }
 
 interface ParsedField {
@@ -111,11 +111,11 @@ interface StrictFrontmatter {
   fields: ParsedField[];
   byKey: Map<string, ParsedField>;
   looseLines: string[];
-  problems: OkfMigrationFinding[];
+  problems: GkxMigrationFinding[];
 }
 
 const CANONICAL_KEYS = [
-  "okf_version", "uid", "type", "title", "description", "resource",
+  "gkx_version", "uid", "type", "title", "description", "resource",
   "timestamp", "epistemic_state", "scope", "scope_id", "sensitivity",
   "tags", "supersedes", "superseded_by", "forked_from", "forked_to",
   "depends_on", "derives_from", "contradicts", "refines", "implements",
@@ -230,7 +230,7 @@ function strictFrontmatter(raw: string): StrictFrontmatter {
   const chunks: Array<{ key: string; lines: string[] }> = [];
   const looseLines: string[] = [];
   let current: { key: string; lines: string[] } | null = null;
-  const problems: OkfMigrationFinding[] = [];
+  const problems: GkxMigrationFinding[] = [];
   for (const line of lines) {
     const top = /^([A-Za-z0-9_-]+):(?:\s*(.*))?$/.exec(line);
     if (top) {
@@ -315,7 +315,7 @@ const list = (fm: StrictFrontmatter, key: string): string[] | undefined => {
 const nonempty = (v: unknown): v is string => typeof v === "string" && v.trim().length > 0;
 // The single shared timestamp validator now lives in ./timestamps (imported
 // above) so the stamper, projection, and migration paths cannot drift.
-const validTimestamp = isValidOkfTimestamp;
+const validTimestamp = isValidGkxTimestamp;
 const safeWikiTargets = (field: ParsedField | undefined): boolean => {
   if (!field || field.kind !== "list") return false;
   if (!(field.values?.length)) return true;
@@ -327,13 +327,13 @@ const canonicalWikiList = (field: ParsedField | undefined): boolean => {
   return field.listStyle === "block" && (field.rawItems ?? []).every((item) => /^"\[\[[^\]\r\n]{1,180}\]\]"$/.test(item));
 };
 
-function okfValidation(fm: StrictFrontmatter): OkfMigrationFinding[] {
-  const f: OkfMigrationFinding[] = [];
+function gkxValidation(fm: StrictFrontmatter): GkxMigrationFinding[] {
+  const f: GkxMigrationFinding[] = [];
   const requireString = (key: string) => { if (!nonempty(scalar(fm, key))) f.push({ code: `missing-${key}`, message: `${key} must be a non-empty string.` }); };
-  requireString("okf_version"); requireString("uid"); requireString("type"); requireString("title");
+  requireString("gkx_version"); requireString("uid"); requireString("type"); requireString("title");
   requireString("description"); requireString("timestamp"); requireString("epistemic_state");
   requireString("scope"); requireString("sensitivity");
-  if (scalar(fm, "okf_version") !== "2.2") f.push({ code: "invalid-okf-version", message: `okf_version must be exactly "2.2".` });
+  if (scalar(fm, "gkx_version") !== "2.2") f.push({ code: "invalid-gkx-version", message: `gkx_version must be exactly "2.2".` });
   if (!UUID_V4.test(scalar(fm, "uid") ?? "")) f.push({ code: "invalid-uid", message: "uid must be a lowercase UUIDv4." });
   if (!TYPES.has(scalar(fm, "type") ?? "")) f.push({ code: "invalid-type", message: "type must be episodic, semantic, or procedural." });
   if (!validTimestamp(scalar(fm, "timestamp"))) f.push({ code: "invalid-timestamp", message: "timestamp must be an ISO-8601 value in UTC (…Z) or with a numeric ±HH:MM offset." });
@@ -350,20 +350,20 @@ function okfValidation(fm: StrictFrontmatter): OkfMigrationFinding[] {
   for (const field of fm.fields) {
     const rank = ranks.get(field.key as any);
     if (rank == null) { sawUnknown = true; continue; }
-    if (sawUnknown || rank < last) { f.push({ code: "noncanonical-key-order", message: "Recognized OKF+ fields are not in canonical order." }); break; }
+    if (sawUnknown || rank < last) { f.push({ code: "noncanonical-key-order", message: "Recognized GKX fields are not in canonical order." }); break; }
     last = rank;
   }
   return f;
 }
 
-function invalidExplicitGovernance(fm: StrictFrontmatter): OkfMigrationFinding[] {
-  const out: OkfMigrationFinding[] = [];
+function invalidExplicitGovernance(fm: StrictFrontmatter): GkxMigrationFinding[] {
+  const out: GkxMigrationFinding[] = [];
   const checkEnum = (key: string, allowed: Set<string>) => {
     if (!fm.byKey.has(key)) return;
     const v = scalar(fm, key);
     if (!v || !allowed.has(v)) out.push({ code: `invalid-explicit-${key}`, message: `Existing ${key} is invalid and requires human review; it will not be overwritten.` });
   };
-  if (fm.byKey.has("okf_version") && scalar(fm, "okf_version") !== "2.2") out.push({ code: "different-okf-version", message: "A different explicit okf_version requires compatibility review." });
+  if (fm.byKey.has("gkx_version") && scalar(fm, "gkx_version") !== "2.2") out.push({ code: "different-gkx-version", message: "A different explicit gkx_version requires compatibility review." });
   if (fm.byKey.has("uid") && !UUID_V4.test(scalar(fm, "uid") ?? "")) out.push({ code: "invalid-explicit-uid", message: "Existing uid is not a lowercase UUIDv4 and will not be replaced automatically." });
   checkEnum("type", TYPES); checkEnum("epistemic_state", EPISTEMIC); checkEnum("scope", SCOPES); checkEnum("sensitivity", SENSITIVITIES);
   if (fm.byKey.has("timestamp") && !validTimestamp(scalar(fm, "timestamp"))) out.push({ code: "invalid-explicit-timestamp", message: "Existing timestamp is invalid and will not be replaced automatically." });
@@ -373,10 +373,10 @@ function invalidExplicitGovernance(fm: StrictFrontmatter): OkfMigrationFinding[]
   return out;
 }
 
-function migrationReview(entry: Pick<OkfMigrationEntry, "status" | "findings">): OkfMigrationReview {
+function migrationReview(entry: Pick<GkxMigrationEntry, "status" | "findings">): GkxMigrationReview {
   const codes = new Set(entry.findings.map((finding) => finding.code));
   let confidence = 1;
-  if (entry.status === "needs-okf-plus") {
+  if (entry.status === "needs-gkx") {
     confidence = [...codes].some((code) => code.startsWith("override-")) ? 0.78
       : [...codes].some((code) => code.startsWith("upgrade-")) ? 0.9
         : codes.has("missing-frontmatter") ? 0.97
@@ -395,7 +395,7 @@ function migrationReview(entry: Pick<OkfMigrationEntry, "status" | "findings">):
   };
 }
 
-function assessed(entry: Omit<OkfMigrationEntry, "review">): OkfMigrationEntry {
+function assessed(entry: Omit<GkxMigrationEntry, "review">): GkxMigrationEntry {
   return { ...entry, review: migrationReview(entry) };
 }
 
@@ -406,21 +406,21 @@ function originalFieldValue(fm: StrictFrontmatter, key: string): string | string
 }
 
 function upgradeOverrides(fm: StrictFrontmatter): {
-  findings: OkfMigrationFinding[];
-  salvage: OkfMigrationSalvage[];
-  blockers: OkfMigrationFinding[];
+  findings: GkxMigrationFinding[];
+  salvage: GkxMigrationSalvage[];
+  blockers: GkxMigrationFinding[];
 } {
-  const findings: OkfMigrationFinding[] = [];
-  const salvage: OkfMigrationSalvage[] = [];
-  const blockers: OkfMigrationFinding[] = [];
+  const findings: GkxMigrationFinding[] = [];
+  const salvage: GkxMigrationSalvage[] = [];
+  const blockers: GkxMigrationFinding[] = [];
   const replace = (field: string, code: string, reason: string) => {
     const originalValue = originalFieldValue(fm, field);
     if (originalValue == null) return;
     findings.push({ code, message: reason });
     salvage.push({ field, originalValue, reason });
   };
-  if (fm.byKey.has("okf_version") && scalar(fm, "okf_version") !== "2.2") {
-    replace("okf_version", "override-okf-version", "Existing okf_version will be normalized to the human-editable 2.2 authoring format; the original value is retained in migration salvage.");
+  if (fm.byKey.has("gkx_version") && scalar(fm, "gkx_version") !== "2.2") {
+    replace("gkx_version", "override-gkx-version", "Existing gkx_version will be normalized to the human-editable 2.2 authoring format; the original value is retained in migration salvage.");
   }
   if (fm.byKey.has("uid") && !UUID_V4.test(scalar(fm, "uid") ?? "")) {
     replace("uid", "override-invalid-uid", "Invalid legacy uid will be replaced with a new lowercase UUIDv4; the original value is retained in migration salvage.");
@@ -466,7 +466,7 @@ function yaml23Scalar(value: unknown): string {
   return JSON.stringify(String(value));
 }
 
-/** Serialize the bounded data model accepted by parseOkf23Frontmatter. */
+/** Serialize the bounded data model accepted by parseGkx23Frontmatter. */
 function emitYaml23Value(lines: string[], key: string | null, value: unknown, indent: number): void {
   const pad = " ".repeat(indent);
   const prefix = key == null ? `${pad}-` : `${pad}${key}:`;
@@ -493,7 +493,7 @@ function emitYaml23Value(lines: string[], key: string | null, value: unknown, in
   lines.push(`${prefix} ${yaml23Scalar(value)}`);
 }
 
-function serializeOkf23(data: Record<string, unknown>, fm: StrictFrontmatter): string {
+function serializeGkx23(data: Record<string, unknown>, fm: StrictFrontmatter): string {
   const lines = ["---"];
   for (const [key, value] of Object.entries(data)) emitYaml23Value(lines, key, value, 0);
   const comments = new Set<string>();
@@ -511,9 +511,9 @@ function serializeOkf23(data: Record<string, unknown>, fm: StrictFrontmatter): s
 }
 
 const NATIVE23_STRUCTURAL_FIELDS = new Set([
-  "okf_version", "uid", "title", "type", "created_at", "updated_at", "description", "resource", "tags",
+  "gkx_version", "uid", "title", "type", "created_at", "updated_at", "description", "resource", "tags",
   "authorship", "epistemic", "sensitivity", "provenance", "relationships", "evidence", "lineage",
-  "review", "assessment", "authorization", "labels", "x-okf22-compatibility",
+  "review", "assessment", "authorization", "labels", "x-gkx22-compatibility",
   "epistemic_state", "authorship_origin", "scope", "scope_id",
   ...LINEAGE_KEYS, ...RELATION_KEYS,
 ]);
@@ -564,11 +564,11 @@ function repairableGenerated23Issues(issues: Array<{ line: number; message: stri
 
 /**
  * Bounded repair for the duplicate-timestamp state that broke real users: a
- * flat OKF+ 2.3 note whose ONLY YAML defect is duplicated top-level
+ * flat GKX 2.3 note whose ONLY YAML defect is duplicated top-level
  * created_at/updated_at keys (the converter's own emitted pair colliding with
  * the auto-timestamp stamper's pre-existing pair). This handles the
  * MARKER-LESS flat-profile note — no beta.10 deterministic-migration marker —
- * so it is distinct from the flatten repair in proposedEditableOkf22.
+ * so it is distinct from the flatten repair in proposedEditableGkx22.
  *
  * It keeps the FIRST created_at value and the NEWEST valid updated_at value,
  * drops the duplicate lines, and changes NOTHING else: the note is already
@@ -577,7 +577,7 @@ function repairableGenerated23Issues(issues: Array<{ line: number; message: stri
  * them guesses nothing. Returns null (caller falls back to blocked) if the
  * defect is not exactly this shape or the result would not parse cleanly.
  */
-function proposedDedupeTimestamps23(source: OkfMigrationSource): string | null {
+function proposedDedupeTimestamps23(source: GkxMigrationSource): string | null {
   const raw = source.content;
   const bom = raw.charCodeAt(0) === 0xfeff ? "﻿" : "";
   const text = bom ? raw.slice(1) : raw;
@@ -616,27 +616,27 @@ function proposedDedupeTimestamps23(source: OkfMigrationSource): string | null {
   const proposed = bom + "---" + eol + out.join(eol) + eol + rest;
   // Mechanical safety: the result must parse as clean flat 2.3 and the body
   // bytes must be untouched, or we refuse and let the note stay blocked.
-  const checked = parseOkf23Frontmatter(proposed);
-  if (checked.issues.length || checked.data.okf_version !== "2.3") return null;
+  const checked = parseGkx23Frontmatter(proposed);
+  if (checked.issues.length || checked.data.gkx_version !== "2.3") return null;
   if (strictFrontmatter(proposed).body !== strictFrontmatter(raw).body) return null;
   return proposed;
 }
 
 /**
  * Flatten metadata produced by the faulty beta.10 writer back to the compact,
- * human-editable OKF+ 2.2 Properties surface. This is intentionally limited to
+ * human-editable GKX 2.2 Properties surface. This is intentionally limited to
  * notes carrying the deterministic-migration marker; native authored 2.3 notes
  * are never flattened automatically.
  */
-function proposedEditableOkf22(
+function proposedEditableGkx22(
   data: Record<string, unknown>,
-  source: OkfMigrationSource,
+  source: GkxMigrationSource,
   generatedUid: string,
   createdAt: string,
-  defaults: OkfMigrationDefaults,
+  defaults: GkxMigrationDefaults,
 ): string {
   const fm = strictFrontmatter(source.content);
-  if (fm.state !== "valid") throw new Error("generated OKF+ 2.3 frontmatter is not safely bounded");
+  if (fm.state !== "valid") throw new Error("generated GKX 2.3 frontmatter is not safely bounded");
   const eol = fm.eol;
   const uidValue = nativeText(data.uid);
   const uid = uidValue && VALID_UID.test(uidValue) ? uidValue : generatedUid;
@@ -646,12 +646,12 @@ function proposedEditableOkf22(
     ?? (Number.isFinite(source.createdTime) && (source.createdTime ?? 0) > 0 ? new Date(source.createdTime!).toISOString() : createdAt);
   const epistemic = editableEpistemicState(nativeRecord(data.epistemic).state ?? data.epistemic_state);
   const sensitivityValue = nativeText(nativeRecord(data.sensitivity).level) ?? nativeText(data.sensitivity);
-  const compatibility = nativeRecord(data["x-okf22-compatibility"]);
+  const compatibility = nativeRecord(data["x-gkx22-compatibility"]);
   const scopeValue = nativeText(compatibility.scope) ?? nativeText(data.scope);
   const tags = nativeList(data.tags).map(nativeText).filter((value): value is string => Boolean(value));
   const lines = [
     "---",
-    `okf_version: "2.2"`,
+    `gkx_version: "2.2"`,
     `uid: ${yamlQuote(uid)}`,
     `type: ${yamlQuote(type && TYPES.has(type) ? type : defaults.type)}`,
     `title: ${yamlQuote(title)}`,
@@ -694,13 +694,13 @@ function proposedEditableOkf22(
   return fm.bom + lines.join(eol) + eol + fm.body;
 }
 
-function proposedOkf(
+function proposedGkx(
   fm: StrictFrontmatter,
-  source: OkfMigrationSource,
+  source: GkxMigrationSource,
   uid: string,
   createdAt: string,
-  defaults: OkfMigrationDefaults,
-  salvage: OkfMigrationSalvage[] = [],
+  defaults: GkxMigrationDefaults,
+  salvage: GkxMigrationSalvage[] = [],
 ): string {
   const eol = fm.eol;
   const title = scalar(fm, "title") || fileTitle(source.path);
@@ -728,7 +728,7 @@ function proposedOkf(
       : created;
   const lines: string[] = [
     "---",
-    `okf_version: "2.2"`,
+    `gkx_version: "2.2"`,
     `uid: ${yamlQuote(actualUid)}`,
     `type: ${yamlQuote(existingType && TYPES.has(existingType) ? existingType : defaults.type)}`,
     `title: ${yamlQuote(title)}`,
@@ -757,18 +757,18 @@ function proposedOkf(
 }
 
 /**
- * Convert to the flat, human-editable OKF+ 2.3 profile. The frontmatter stays
+ * Convert to the flat, human-editable GKX 2.3 profile. The frontmatter stays
  * an Obsidian-Properties-safe surface exactly like 2.2 — scalars plus flat
- * quoted-wikilink lists — while declaring okf_version 2.3 so the validating
+ * quoted-wikilink lists — while declaring gkx_version 2.3 so the validating
  * projection applies 2.3 semantics with in-memory governance defaults.
  */
-function proposedNativeOkf23(
+function proposedNativeGkx23(
   fm: StrictFrontmatter,
-  source: OkfMigrationSource,
+  source: GkxMigrationSource,
   uid: string,
   createdAt: string,
-  defaults: OkfMigrationDefaults,
-  salvage: OkfMigrationSalvage[] = [],
+  defaults: GkxMigrationDefaults,
+  salvage: GkxMigrationSalvage[] = [],
 ): string {
   const eol = fm.eol;
   const title = scalar(fm, "title") || fileTitle(source.path);
@@ -817,16 +817,16 @@ function proposedNativeOkf23(
     if (values.length) lineage.set(key, values);
   }
 
-  // Flat editable OKF+ 2.3 profile: every emitted key is a scalar or a flat
+  // Flat editable GKX 2.3 profile: every emitted key is a scalar or a flat
   // string list, so Obsidian Properties can render and edit all of them.
   // Governance blocks (authorship, provenance, review, assessment, labels…)
   // are intentionally NOT written into the note; the validating projection
   // supplies spec-permitted in-memory defaults, and future governed values
-  // belong in .okf/ sidecars — never in nested note YAML that the Properties
+  // belong in .gkx/ sidecars — never in nested note YAML that the Properties
   // UI would corrupt on edit.
   const lines: string[] = [
     "---",
-    `okf_version: "2.3"`,
+    `gkx_version: "2.3"`,
     `uid: ${yamlQuote(actualUid)}`,
     `title: ${yamlQuote(title)}`,
     `type: ${yamlQuote(existingType && TYPES.has(existingType) ? existingType : defaults.type)}`,
@@ -859,7 +859,7 @@ function proposedNativeOkf23(
   return fm.bom + lines.join(eol) + eol + fm.body;
 }
 
-export interface OkfEnrichmentFrontmatterUpdates {
+export interface GkxEnrichmentFrontmatterUpdates {
   description?: string;
   type?: "episodic" | "semantic" | "procedural";
   tags?: string[];
@@ -872,14 +872,14 @@ export interface OkfEnrichmentFrontmatterUpdates {
  * and canonical writer as migration. Scalars replace only when supplied;
  * collections merge and deduplicate. The Markdown body is preserved exactly.
  */
-export function applyOkfEnrichmentFrontmatter(
-  source: OkfMigrationSource,
-  updates: OkfEnrichmentFrontmatterUpdates,
+export function applyGkxEnrichmentFrontmatter(
+  source: GkxMigrationSource,
+  updates: GkxEnrichmentFrontmatterUpdates,
 ): string {
-  const native = parseOkf23Frontmatter(source.content);
-  if (native.data.okf_version === "2.3" && !native.issues.length) {
+  const native = parseGkx23Frontmatter(source.content);
+  if (native.data.gkx_version === "2.3" && !native.issues.length) {
     const fm23 = strictFrontmatter(source.content);
-    if (fm23.state !== "valid") throw new Error("native OKF+ 2.3 frontmatter is not safely bounded");
+    if (fm23.state !== "valid") throw new Error("native GKX 2.3 frontmatter is not safely bounded");
     const data = JSON.parse(JSON.stringify(native.data)) as Record<string, unknown>;
     if (updates.description != null) {
       const value = updates.description.trim();
@@ -902,16 +902,16 @@ export function applyOkfEnrichmentFrontmatter(
       const existing = editableWikiTargets(data[key], relationships[key]);
       data[key] = [...new Set([...existing, ...updates[key]!])];
     }
-    const proposed = serializeOkf23(data, fm23);
-    const checked = parseOkf23Frontmatter(proposed);
-    if (checked.issues.length) throw new Error(`proposed enrichment is not valid OKF+ 2.3: ${checked.issues.map((issue) => issue.message).join(", ")}`);
+    const proposed = serializeGkx23(data, fm23);
+    const checked = parseGkx23Frontmatter(proposed);
+    if (checked.issues.length) throw new Error(`proposed enrichment is not valid GKX 2.3: ${checked.issues.map((issue) => issue.message).join(", ")}`);
     if (strictFrontmatter(proposed).body !== fm23.body) throw new Error("proposed enrichment changed Markdown body bytes");
     return proposed;
   }
   const fm = strictFrontmatter(source.content);
-  if (fm.state !== "valid" || fm.problems.length) throw new Error("note frontmatter is not safely parseable by the flat OKF+ grammar");
-  const validation = okfValidation(fm);
-  if (validation.length) throw new Error(`note is not valid human-editable OKF+ 2.2 input: ${validation.map((finding) => finding.code).join(", ")}`);
+  if (fm.state !== "valid" || fm.problems.length) throw new Error("note frontmatter is not safely parseable by the flat GKX grammar");
+  const validation = gkxValidation(fm);
+  if (validation.length) throw new Error(`note is not valid human-editable GKX 2.2 input: ${validation.map((finding) => finding.code).join(", ")}`);
 
   const setScalar = (key: "description" | "type", value: string) => {
     const field = fm.byKey.get(key);
@@ -947,10 +947,10 @@ export function applyOkfEnrichmentFrontmatter(
     mergeList(key, updates[key]!);
   }
 
-  const proposed = proposedOkf(fm, source, scalar(fm, "uid")!, new Date().toISOString(), DEFAULT_OKF_MIGRATION_DEFAULTS);
+  const proposed = proposedGkx(fm, source, scalar(fm, "uid")!, new Date().toISOString(), DEFAULT_GKX_MIGRATION_DEFAULTS);
   const checked = strictFrontmatter(proposed);
-  const after = checked.state === "valid" && !checked.problems.length ? okfValidation(checked) : checked.problems;
-  if (after.length) throw new Error(`proposed enrichment is not canonical OKF+ 2.2: ${after.map((finding) => finding.code).join(", ")}`);
+  const after = checked.state === "valid" && !checked.problems.length ? gkxValidation(checked) : checked.problems;
+  if (after.length) throw new Error(`proposed enrichment is not canonical GKX 2.2: ${after.map((finding) => finding.code).join(", ")}`);
   if (checked.body !== fm.body) throw new Error("proposed enrichment changed Markdown body bytes");
   return proposed;
 }
@@ -963,9 +963,9 @@ function migrationUid(fm: StrictFrontmatter, generate: () => string, allowLegacy
   return generate();
 }
 
-export function makeOkfUuidV4(): string {
+export function makeGkxUuidV4(): string {
   const c: any = (globalThis as any).crypto;
-  if (!c || typeof c.getRandomValues !== "function") throw new Error("OKF+ migration requires crypto.getRandomValues; refusing insecure UID generation.");
+  if (!c || typeof c.getRandomValues !== "function") throw new Error("GKX migration requires crypto.getRandomValues; refusing insecure UID generation.");
   const b = new Uint8Array(16); c.getRandomValues(b);
   b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
   const h = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
@@ -974,12 +974,12 @@ export function makeOkfUuidV4(): string {
 
 export async function sha256Text(text: string): Promise<string> {
   const subtle = (globalThis as any).crypto?.subtle;
-  if (!subtle) throw new Error("OKF+ migration requires WebCrypto SHA-256 for plan binding.");
+  if (!subtle) throw new Error("GKX migration requires WebCrypto SHA-256 for plan binding.");
   const digest = await subtle.digest("SHA-256", new TextEncoder().encode(text));
   return [...new Uint8Array(digest)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 
-function planMaterial(plan: Omit<OkfMigrationPlan, "planHash"> | OkfMigrationPlan): unknown {
+function planMaterial(plan: Omit<GkxMigrationPlan, "planHash"> | GkxMigrationPlan): unknown {
   return {
     schema: plan.schema, runId: plan.runId, createdAt: plan.createdAt,
     mode: plan.mode, defaults: plan.defaults, totals: plan.totals,
@@ -992,7 +992,7 @@ function planMaterial(plan: Omit<OkfMigrationPlan, "planHash"> | OkfMigrationPla
 }
 
 /** Recompute the approval hash and the in-memory content hashes before write. */
-export async function verifyOkfMigrationPlan(plan: OkfMigrationPlan): Promise<boolean> {
+export async function verifyGkxMigrationPlan(plan: GkxMigrationPlan): Promise<boolean> {
   if (await sha256Text(JSON.stringify(planMaterial(plan))) !== plan.planHash) return false;
   for (const entry of plan.entries) {
     if (await sha256Text(entry.originalContent) !== entry.originalHash) return false;
@@ -1003,25 +1003,25 @@ export async function verifyOkfMigrationPlan(plan: OkfMigrationPlan): Promise<bo
 
 interface AuditOptions {
   createdAt: string;
-  defaults: OkfMigrationDefaults;
+  defaults: GkxMigrationDefaults;
   uuid: () => string;
-  mode: OkfMigrationMode;
+  mode: GkxMigrationMode;
 }
 
-async function auditOne(source: OkfMigrationSource, opts: AuditOptions): Promise<OkfMigrationEntry> {
+async function auditOne(source: GkxMigrationSource, opts: AuditOptions): Promise<GkxMigrationEntry> {
   const originalHash = await sha256Text(source.content);
-  const native = parseOkf23Frontmatter(source.content);
-  if (native.data.okf_version === "2.3") {
+  const native = parseGkx23Frontmatter(source.content);
+  if (native.data.gkx_version === "2.3") {
     if (deterministicMigration23(native.data) && repairableGenerated23Issues(native.issues)) {
       const uid = nativeText(native.data.uid) ?? opts.uuid();
-      const proposedContent = proposedEditableOkf22(native.data, source, uid, opts.createdAt, opts.defaults);
+      const proposedContent = proposedEditableGkx22(native.data, source, uid, opts.createdAt, opts.defaults);
       return assessed({
         path: source.path,
-        status: "needs-okf-plus",
-        standard: "OKF+ 2.3",
+        status: "needs-gkx",
+        standard: "GKX 2.3",
         findings: [{
-          code: "repair-generated-okf-2.3",
-          message: "Metadata written by the beta.10 deterministic 2.3 migrator will be flattened to the human-editable OKF+ 2.2 Properties format; duplicate timestamps and generated governance boilerplate are removed.",
+          code: "repair-generated-gkx-2.3",
+          message: "Metadata written by the beta.10 deterministic 2.3 migrator will be flattened to the human-editable GKX 2.2 Properties format; duplicate timestamps and generated governance boilerplate are removed.",
         }],
         originalHash,
         proposedHash: await sha256Text(proposedContent),
@@ -1042,8 +1042,8 @@ async function auditOne(source: OkfMigrationSource, opts: AuditOptions): Promise
       if (proposedContent) {
         return assessed({
           path: source.path,
-          status: "needs-okf-plus",
-          standard: "OKF+ 2.3",
+          status: "needs-gkx",
+          standard: "GKX 2.3",
           findings: [{
             code: "repair-duplicate-timestamps",
             message: "Duplicate machine-maintained created_at/updated_at keys (auto-timestamp stamper colliding with the 2.3 converter) will be deduplicated: the first created_at and the newest updated_at are kept, the duplicate lines are dropped, and nothing else in the note changes.",
@@ -1056,20 +1056,20 @@ async function auditOne(source: OkfMigrationSource, opts: AuditOptions): Promise
         });
       }
     }
-    const projection = buildOkf23Projection(source.content, source.path, `sha256:${originalHash}`, null);
-    const findings: OkfMigrationFinding[] = [
-      ...native.issues.map((issue) => ({ code: "invalid-okf-2.3-yaml", message: `${issue.message} (line ${issue.line})` })),
+    const projection = buildGkx23Projection(source.content, source.path, `sha256:${originalHash}`, null);
+    const findings: GkxMigrationFinding[] = [
+      ...native.issues.map((issue) => ({ code: "invalid-gkx-2.3-yaml", message: `${issue.message} (line ${issue.line})` })),
       ...(projection?.diagnostics ?? [])
-        .filter((item) => (item.severity === "error" || item.severity === "critical") && (item.code.startsWith("OKF-SCHEMA-") || item.code.startsWith("OKF-IDENTITY-")))
+        .filter((item) => (item.severity === "error" || item.severity === "critical") && (item.code.startsWith("GKX-SCHEMA-") || item.code.startsWith("GKX-IDENTITY-")))
         .map((item) => ({ code: item.code, message: item.message })),
     ];
-    if (findings.length) return assessed({ path: source.path, status: "blocked", standard: "OKF+ 2.3", findings, originalHash, originalContent: source.content, uid: typeof native.data.uid === "string" ? native.data.uid : undefined });
-    return assessed({ path: source.path, status: "okf-plus-2.3", standard: "OKF+ 2.3", findings: [], originalHash, originalContent: source.content, uid: typeof native.data.uid === "string" ? native.data.uid : undefined });
+    if (findings.length) return assessed({ path: source.path, status: "blocked", standard: "GKX 2.3", findings, originalHash, originalContent: source.content, uid: typeof native.data.uid === "string" ? native.data.uid : undefined });
+    return assessed({ path: source.path, status: "gkx-2.3", standard: "GKX 2.3", findings: [], originalHash, originalContent: source.content, uid: typeof native.data.uid === "string" ? native.data.uid : undefined });
   }
   const fm = strictFrontmatter(source.content);
   const name = source.path.split("/").pop()?.toLowerCase();
-  if ((name === "index.md" || name === "log.md") && !source.path.toLowerCase().startsWith(".okf/")) {
-    const rootVersionDeclaration = source.path.toLowerCase() === "index.md" && fm.state === "valid" && scalar(fm, "okf_version") === "0.1";
+  if ((name === "index.md" || name === "log.md") && !source.path.toLowerCase().startsWith(".gkx/")) {
+    const rootVersionDeclaration = source.path.toLowerCase() === "index.md" && fm.state === "valid" && scalar(fm, "gkx_version") === "0.1";
     if (fm.state === "unterminated" || fm.problems.length) {
       return assessed({ path: source.path, status: "blocked", standard: "Google OKF reserved", findings: fm.problems, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
     }
@@ -1078,10 +1078,10 @@ async function auditOne(source: OkfMigrationSource, opts: AuditOptions): Promise
       if (override.blockers.length) return assessed({ path: source.path, status: "blocked", standard: "Google OKF reserved", findings: override.blockers, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
       const uid = migrationUid(fm, opts.uuid, true);
       const proposedContent = opts.mode === "convert-to-23"
-        ? proposedNativeOkf23(fm, source, uid, opts.createdAt, opts.defaults, override.salvage)
-        : proposedOkf(fm, source, uid, opts.createdAt, opts.defaults, override.salvage);
+        ? proposedNativeGkx23(fm, source, uid, opts.createdAt, opts.defaults, override.salvage)
+        : proposedGkx(fm, source, uid, opts.createdAt, opts.defaults, override.salvage);
       const findings = [{ code: "upgrade-google-reserved", message: `${name} is reserved by Google OKF but is included by the explicit conversion mode.` }, ...override.findings];
-      return assessed({ path: source.path, status: "needs-okf-plus", standard: "Google OKF reserved", findings, salvage: override.salvage, originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
+      return assessed({ path: source.path, status: "needs-gkx", standard: "Google OKF reserved", findings, salvage: override.salvage, originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
     }
     const findings = fm.state === "none" || rootVersionDeclaration
       ? [{ code: "google-reserved", message: `${name} is a Google OKF reserved document and is not converted.` }]
@@ -1091,15 +1091,15 @@ async function auditOne(source: OkfMigrationSource, opts: AuditOptions): Promise
   if (fm.state === "unterminated" || fm.problems.length) {
     return assessed({ path: source.path, status: "blocked", standard: "none", findings: fm.problems, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
   }
-  if (fm.state === "valid" && scalar(fm, "okf_version") === "2.2") {
-    const validation = okfValidation(fm);
+  if (fm.state === "valid" && scalar(fm, "gkx_version") === "2.2") {
+    const validation = gkxValidation(fm);
     if (!validation.length) {
       const uid = migrationUid(fm, opts.uuid);
       if (opts.mode === "convert-to-23") {
-        const proposedContent = proposedNativeOkf23(fm, source, uid, opts.createdAt, opts.defaults);
-        return assessed({ path: source.path, status: "needs-okf-plus", standard: "OKF+ 2.2", findings: [{ code: "convert-okf-2.2-to-2.3", message: "Valid editable OKF+ 2.2 frontmatter will be converted to native OKF+ 2.3 with editable tags and wikilink relationship overlays preserved." }], originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
+        const proposedContent = proposedNativeGkx23(fm, source, uid, opts.createdAt, opts.defaults);
+        return assessed({ path: source.path, status: "needs-gkx", standard: "GKX 2.2", findings: [{ code: "convert-gkx-2.2-to-2.3", message: "Valid editable GKX 2.2 frontmatter will be converted to native GKX 2.3 with editable tags and wikilink relationship overlays preserved." }], originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
       }
-      return assessed({ path: source.path, status: "okf-plus-2.2", standard: "OKF+ 2.2", findings: [], originalHash, originalContent: source.content, uid });
+      return assessed({ path: source.path, status: "gkx-2.2", standard: "GKX 2.2", findings: [], originalHash, originalContent: source.content, uid });
     }
     const destructive = invalidExplicitGovernance(fm);
     if (destructive.length && opts.mode !== "upgrade-all" && opts.mode !== "convert-to-23") return assessed({ path: source.path, status: "blocked", standard: "none", findings: destructive, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
@@ -1107,9 +1107,9 @@ async function auditOne(source: OkfMigrationSource, opts: AuditOptions): Promise
     if (override.blockers.length) return assessed({ path: source.path, status: "blocked", standard: "none", findings: override.blockers, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
     const uid = migrationUid(fm, opts.uuid, opts.mode === "upgrade-all" || opts.mode === "convert-to-23");
     const proposedContent = opts.mode === "convert-to-23"
-      ? proposedNativeOkf23(fm, source, uid, opts.createdAt, opts.defaults, override.salvage)
-      : proposedOkf(fm, source, uid, opts.createdAt, opts.defaults, override.salvage);
-    return assessed({ path: source.path, status: "needs-okf-plus", standard: "none", findings: [...validation, ...override.findings], salvage: override.salvage, originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
+      ? proposedNativeGkx23(fm, source, uid, opts.createdAt, opts.defaults, override.salvage)
+      : proposedGkx(fm, source, uid, opts.createdAt, opts.defaults, override.salvage);
+    return assessed({ path: source.path, status: "needs-gkx", standard: "none", findings: [...validation, ...override.findings], salvage: override.salvage, originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
   }
   // Google OKF v0.1 draft conformance is intentionally minimal: parseable YAML
   // frontmatter and a non-empty type. Producer-defined extra keys are allowed.
@@ -1119,11 +1119,11 @@ async function auditOne(source: OkfMigrationSource, opts: AuditOptions): Promise
     if (override.blockers.length) return assessed({ path: source.path, status: "blocked", standard: "Google OKF 0.1 draft", findings: override.blockers, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
     const uid = migrationUid(fm, opts.uuid, true);
     const proposedContent = opts.mode === "convert-to-23"
-      ? proposedNativeOkf23(fm, source, uid, opts.createdAt, opts.defaults, override.salvage)
-      : proposedOkf(fm, source, uid, opts.createdAt, opts.defaults, override.salvage);
-    const target = opts.mode === "convert-to-23" ? "native OKF+ 2.3" : "the human-editable OKF+ 2.2 Properties format";
+      ? proposedNativeGkx23(fm, source, uid, opts.createdAt, opts.defaults, override.salvage)
+      : proposedGkx(fm, source, uid, opts.createdAt, opts.defaults, override.salvage);
+    const target = opts.mode === "convert-to-23" ? "native GKX 2.3" : "the human-editable GKX 2.2 Properties format";
     const findings = [{ code: "upgrade-google-okf", message: `Google OKF/legacy frontmatter will be upgraded to ${target}.` }, ...override.findings];
-    return assessed({ path: source.path, status: "needs-okf-plus", standard: "Google OKF 0.1 draft", findings, salvage: override.salvage, originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
+    return assessed({ path: source.path, status: "needs-gkx", standard: "Google OKF 0.1 draft", findings, salvage: override.salvage, originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
   }
   const explicit = invalidExplicitGovernance(fm);
   if (explicit.length && opts.mode !== "upgrade-all" && opts.mode !== "convert-to-23") return assessed({ path: source.path, status: "blocked", standard: "none", findings: explicit, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
@@ -1131,55 +1131,55 @@ async function auditOne(source: OkfMigrationSource, opts: AuditOptions): Promise
   if (override.blockers.length) return assessed({ path: source.path, status: "blocked", standard: "none", findings: override.blockers, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
   const uid = migrationUid(fm, opts.uuid, opts.mode === "upgrade-all" || opts.mode === "convert-to-23");
   const proposedContent = opts.mode === "convert-to-23"
-    ? proposedNativeOkf23(fm, source, uid, opts.createdAt, opts.defaults, override.salvage)
-    : proposedOkf(fm, source, uid, opts.createdAt, opts.defaults, override.salvage);
-  const findings: OkfMigrationFinding[] = [{
-    code: fm.state === "none" ? "missing-frontmatter" : "missing-okf-type",
-    message: fm.state === "none" ? "No YAML frontmatter was found." : "Frontmatter is not OKF+ 2.2 and lacks the type required by Google OKF 0.1.",
+    ? proposedNativeGkx23(fm, source, uid, opts.createdAt, opts.defaults, override.salvage)
+    : proposedGkx(fm, source, uid, opts.createdAt, opts.defaults, override.salvage);
+  const findings: GkxMigrationFinding[] = [{
+    code: fm.state === "none" ? "missing-frontmatter" : "missing-gkx-type",
+    message: fm.state === "none" ? "No YAML frontmatter was found." : "Frontmatter is not GKX 2.2 and lacks the type required by Google OKF 0.1.",
   }, ...override.findings];
-  return assessed({ path: source.path, status: "needs-okf-plus", standard: "none", findings, salvage: override.salvage, originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
+  return assessed({ path: source.path, status: "needs-gkx", standard: "none", findings, salvage: override.salvage, originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
 }
 
-export async function createOkfMigrationPlan(
-  sources: OkfMigrationSource[],
-  options: Partial<OkfMigrationDefaults> & { now?: () => Date; uuid?: () => string; mode?: OkfMigrationMode } = {},
-): Promise<OkfMigrationPlan> {
+export async function createGkxMigrationPlan(
+  sources: GkxMigrationSource[],
+  options: Partial<GkxMigrationDefaults> & { now?: () => Date; uuid?: () => string; mode?: GkxMigrationMode } = {},
+): Promise<GkxMigrationPlan> {
   const { now: suppliedNow, uuid: suppliedUuid, mode = "safe-onboarding", ...overrides } = options;
-  const defaults: OkfMigrationDefaults = { ...DEFAULT_OKF_MIGRATION_DEFAULTS, ...overrides } as OkfMigrationDefaults;
+  const defaults: GkxMigrationDefaults = { ...DEFAULT_GKX_MIGRATION_DEFAULTS, ...overrides } as GkxMigrationDefaults;
   const now = suppliedNow ?? (() => new Date());
-  const uuid = suppliedUuid ?? makeOkfUuidV4;
+  const uuid = suppliedUuid ?? makeGkxUuidV4;
   const createdAt = now().toISOString();
-  const runId = `okf-${createdAt.replace(/[-:.]/g, "").replace("Z", "Z")}-${uuid().slice(0, 8)}`;
-  const entries: OkfMigrationEntry[] = [];
+  const runId = `gkx-${createdAt.replace(/[-:.]/g, "").replace("Z", "Z")}-${uuid().slice(0, 8)}`;
+  const entries: GkxMigrationEntry[] = [];
   for (const source of [...sources].sort((a, b) => codeUnitCompare(a.path, b.path))) {
-    if (source.path.toLowerCase().startsWith(".okf/")) continue;
+    if (source.path.toLowerCase().startsWith(".gkx/")) continue;
     entries.push(await auditOne(source, { createdAt, defaults, uuid, mode }));
   }
-  const uidMap = new Map<string, OkfMigrationEntry[]>();
+  const uidMap = new Map<string, GkxMigrationEntry[]>();
   for (const entry of entries) if (entry.uid && VALID_UID.test(entry.uid)) {
     const group = uidMap.get(entry.uid) ?? []; group.push(entry); uidMap.set(entry.uid, group);
   }
   for (const [uid, group] of uidMap) if (group.length > 1) {
     for (const entry of group) {
       entry.findings.push({ code: "duplicate-uid", message: `UID ${uid} is also used by ${group.filter((x) => x !== entry).map((x) => x.path).join(", ")}.` });
-      if (entry.status === "okf-plus-2.2" || entry.status === "okf-plus-2.3" || entry.status === "needs-okf-plus") {
+      if (entry.status === "gkx-2.2" || entry.status === "gkx-2.3" || entry.status === "needs-gkx") {
         entry.status = "blocked"; entry.standard = "none"; delete entry.proposedContent; delete entry.proposedHash;
       }
       entry.review = migrationReview(entry);
     }
   }
-  const totals: OkfMigrationPlan["totals"] = {
-    notes: entries.length, changes: 0, "okf-plus-2.2": 0, "okf-plus-2.3": 0, "google-okf-0.1": 0,
-    "google-reserved": 0, "needs-okf-plus": 0, blocked: 0,
+  const totals: GkxMigrationPlan["totals"] = {
+    notes: entries.length, changes: 0, "gkx-2.2": 0, "gkx-2.3": 0, "google-okf-0.1": 0,
+    "google-reserved": 0, "needs-gkx": 0, blocked: 0,
   };
-  for (const entry of entries) { totals[entry.status]++; if (entry.status === "needs-okf-plus") totals.changes++; }
-  const base = { schema: "okf-plus-migration-plan/4" as const, runId, createdAt, mode, defaults, totals, entries };
+  for (const entry of entries) { totals[entry.status]++; if (entry.status === "needs-gkx") totals.changes++; }
+  const base = { schema: "gkx-migration-plan/4" as const, runId, createdAt, mode, defaults, totals, entries };
   const planHash = await sha256Text(JSON.stringify(planMaterial(base)));
   return { ...base, planHash };
 }
 
 /** Remove raw/proposed note contents before persisting an audit plan. */
-export function publicOkfMigrationPlan(plan: OkfMigrationPlan): unknown {
+export function publicGkxMigrationPlan(plan: GkxMigrationPlan): unknown {
   return {
     schema: plan.schema, runId: plan.runId, createdAt: plan.createdAt, planHash: plan.planHash,
     mode: plan.mode, defaults: plan.defaults, totals: plan.totals,

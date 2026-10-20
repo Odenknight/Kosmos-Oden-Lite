@@ -9,7 +9,7 @@
  *        --group-id my-governed-vault-namespace
  *   node kosmos-build.mjs /path/to/vault graph.json --watch
  *
- * graph.json can be placed next to vault-kosmos.html (served over http) to
+ * graph.json can be placed next to kosmos-oden-lite.html (served over http) to
  * auto-load, or handed to any consumer of the Kosmos graph shape.
  *
  * Requires `npm run build` once (dist/kosmos-core.mjs); the repository ships

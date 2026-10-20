@@ -10,9 +10,9 @@ network or data-access behavior changes.
   still permits *disclosure*: a disclosure defect can leak the whole vault.
 - **Artifact integrity** — users install `main.js` without compiling; they
   trust it matches reviewed source.
-- **The auth token** — grants read access up to the configured OKF+
+- **The auth token** — grants read access up to the configured GKX
   sensitivity ceiling (default `internal`).
-- **Source-note integrity** — the optional OKF+ onboarding command has write
+- **Source-note integrity** — the optional GKX onboarding command has write
   authority only after a dry-run approval; a bulk metadata defect could damage
   many notes or misclassify sensitive material.
 - **Nextcloud credentials and synchronized file integrity** — the optional
@@ -31,7 +31,7 @@ network or data-access behavior changes.
 3. **Agent API network boundary (LAN mode).** Other machines on the subnet can
    reach the API when LAN mode is explicitly enabled.
 4. **Build/release pipeline.** Source → `main.js` → GitHub release.
-5. **OKF+ migration write boundary.** In-memory audit plan → explicit human
+5. **GKX migration write boundary.** In-memory audit plan → explicit human
    confirmations → local binary backup → source-matched atomic note process.
 6. **Nextcloud boundary.** Local vault → user-configured HTTPS/private endpoint
    → one scoped remote folder. The app password is held by Obsidian Secret
@@ -55,11 +55,11 @@ network or data-access behavior changes.
 | A Graphiti projection is mistaken for accepted truth | Exported episodes identify themselves as non-authoritative origin-separated adapter projections and omit later state from earlier episodes. |
 | Path traversal via renderer messages | Message paths validated: no absolute paths, no `..` segments. |
 | Malformed note content | Tolerant parser never throws the graph away; lineage validation degrades gracefully and reports via diagnostics. |
-| Bulk OKF+ migration damages notes | Read-only dry run; SHA-256-bound plan; independent-backup warning and acknowledgement; byte-exact per-file backup; source equality recheck; Obsidian atomic processor; human-authored body preserved; changed/missing notes skipped; result audit. |
-| Generated nested metadata prevents human correction or duplicates timestamps | Flat OKF+ 2.2 Obsidian Properties are the default writer surface; beta.10 repair is marker-gated, hash-bound, backed up, removes duplicate timestamps, and preserves genuinely authored native 2.3 notes. |
+| Bulk GKX migration damages notes | Read-only dry run; SHA-256-bound plan; independent-backup warning and acknowledgement; byte-exact per-file backup; source equality recheck; Obsidian atomic processor; human-authored body preserved; changed/missing notes skipped; result audit. |
+| Generated nested metadata prevents human correction or duplicates timestamps | Flat GKX 2.2 Obsidian Properties are the default writer surface; beta.10 repair is marker-gated, hash-bound, backed up, removes duplicate timestamps, and preserves genuinely authored native 2.3 notes. |
 | Migration hallucinates metadata or leaks notes to a model | The migration is deterministic and contains no LLM or network call. Conservative defaults are disclosed. Ambiguous YAML, invalid governance data, unsafe semantic links, and UID conflicts are blocked for review. |
 | `internal` default is mistaken for privacy classification | Apply requires acknowledgement that defaults are not content inspection; UI/docs require confidential/PHI review before cloud routing. Connector sensitivity enforcement remains independent. |
-| OKF processing rewrites agent-control/generated files | Custom exclusion patterns and an opt-in developer preset are applied before migration/enrichment; previews disclose every excluded path/pattern. The preset defaults off so upgrades never silently omit user notes. |
+| GKX processing rewrites agent-control/generated files | Custom exclusion patterns and an opt-in developer preset are applied before migration/enrichment; previews disclose every excluded path/pattern. The preset defaults off so upgrades never silently omit user notes. |
 | LAN model address is public, rebound through DNS, or exposed on an untrusted network | LAN mode requires a private/link-local IP literal, rejects DNS/public/bind-all/loopback addresses, displays the exact endpoint on every run, uses a separate sensitivity ceiling, always blocks PHI, and warns that network/device/firewall/model trust remains the user's responsibility. |
 | Nextcloud credential disclosure | Dedicated app-password guidance; Obsidian Secret Storage; password excluded from plugin data/logs; HTTPS required except literal private/loopback addresses; `.obsidian/**` excluded by default. |
 | Stale overwrite or concurrent two-device edit | Last-common-state SHA-256/ETag comparison; `If-Match`/`If-None-Match`; simultaneous edits preserve a timestamped remote conflict copy. |

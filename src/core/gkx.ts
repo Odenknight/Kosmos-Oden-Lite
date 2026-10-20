@@ -1,5 +1,5 @@
 /**
- * Kosmos Core — OKF+ (Open Knowledge Format Plus) parsing.
+ * Kosmos Core — GKX (Open Knowledge Format Plus) parsing.
  * Evolutionary frontmatter (type / timestamp / supersedes / superseded_by /
  * resource) plus the footer `**Related:**` semantic links.
  *
@@ -9,9 +9,9 @@
  */
 import type { Frontmatter } from "./markdown";
 import { normalizeStringList, parseWikiLinks } from "./markdown";
-import type { OkfData, OkfRelation, OkfSensitivity } from "./types";
+import type { GkxData, GkxRelation, GkxSensitivity } from "./types";
 
-const RELATIONS: OkfRelation[] = [
+const RELATIONS: GkxRelation[] = [
   "supports", "contradicts", "depends_on", "derived_from", "derives_from",
   "cites", "quotes", "interprets", "tests", "replicates",
   "fails_to_replicate", "extends", "narrows", "generalizes", "implements",
@@ -20,9 +20,9 @@ const RELATIONS: OkfRelation[] = [
   "blocks", "documents",
 ];
 
-/** Normalize a flat OKF list and unwrap canonical `"[[Target]]"` entries.
+/** Normalize a flat GKX list and unwrap canonical `"[[Target]]"` entries.
  * Legacy plain-title/path values remain readable for compatibility. */
-function normalizeOkfRefs(v: unknown): string[] {
+function normalizeGkxRefs(v: unknown): string[] {
   const out: string[] = [];
   for (const raw of normalizeStringList(v)) {
     const links = parseWikiLinks(raw);
@@ -36,7 +36,7 @@ function normalizeOkfRefs(v: unknown): string[] {
 
 const scalar = (v: unknown): string | undefined => typeof v === "string" && v !== "" ? v : undefined;
 
-function sensitivity(v: unknown): OkfSensitivity | undefined {
+function sensitivity(v: unknown): GkxSensitivity | undefined {
   if (v === "public" || v === "internal" || v === "restricted" || v === "confidential" || v === "regulated" || v === "phi" || v === "secret") return v;
   // An explicit but invalid label must not silently downgrade access. The
   // read-only projector fails closed at the highest sensitivity; a governed
@@ -44,25 +44,25 @@ function sensitivity(v: unknown): OkfSensitivity | undefined {
   return typeof v === "string" && v.trim() ? "secret" : undefined;
 }
 
-export function parseOkfPlus(data: Frontmatter, content: string): OkfData | null {
+export function parseGkxPlus(data: Frontmatter, content: string): GkxData | null {
   const related: string[] = [];
   const m = content.match(/^\s*\*\*Related:?\*\*\s*(.+)$/mi);
   if (m) for (const w of parseWikiLinks(m[1])) related.push(w.target);
   const raw = data as Record<string, unknown>;
   const has =
-    raw.okf_version != null || raw.uid != null || data.type != null || data.timestamp != null || data.supersedes != null ||
+    raw.gkx_version != null || raw.uid != null || data.type != null || data.timestamp != null || data.supersedes != null ||
     (data as Record<string, unknown>).superseded_by != null ||
     (data as Record<string, unknown>).supersededBy != null ||
     raw.forked_from != null || raw.forked_to != null ||
     RELATIONS.some((k) => raw[k] != null) || data.resource != null || related.length > 0;
   if (!has) return null;
-  const relations: Partial<Record<OkfRelation, string[]>> = {};
+  const relations: Partial<Record<GkxRelation, string[]>> = {};
   for (const key of RELATIONS) {
-    const refs = normalizeOkfRefs(raw[key]);
+    const refs = normalizeGkxRefs(raw[key]);
     if (refs.length) relations[key] = refs;
   }
   return {
-    okfVersion: scalar(raw.okf_version),
+    gkxVersion: scalar(raw.gkx_version),
     uid: scalar(raw.uid),
     type: scalar(data.type),
     title: scalar(data.title),
@@ -73,23 +73,23 @@ export function parseOkfPlus(data: Frontmatter, content: string): OkfData | null
     scopeId: scalar(raw.scope_id),
     sensitivity: sensitivity(raw.sensitivity),
     resource: scalar(data.resource),
-    supersedes: normalizeOkfRefs(data.supersedes),
-    supersededBy: normalizeOkfRefs(
+    supersedes: normalizeGkxRefs(data.supersedes),
+    supersededBy: normalizeGkxRefs(
       (data as Record<string, unknown>).superseded_by ?? (data as Record<string, unknown>).supersededBy
     ),
-    forkedFrom: normalizeOkfRefs(raw.forked_from),
+    forkedFrom: normalizeGkxRefs(raw.forked_from),
     // `forked_by` is read-only compatibility; canonical v2.2 emission is forked_to.
-    forkedTo: normalizeOkfRefs(raw.forked_to ?? raw.forked_by),
+    forkedTo: normalizeGkxRefs(raw.forked_to ?? raw.forked_by),
     relations,
     related: [...new Set([...related, ...(relations.related_to ?? [])])],
   };
 }
 
-/** Parse an OKF+ timestamp; returns ms since epoch or null when invalid/absent. */
-export function parseOkfTimestamp(okf: OkfData | null | undefined): number | null {
-  if (!okf) return null;
-  const projected = okf.projection?.authored?.createdAt;
-  const value = typeof projected === "string" ? projected : okf.timestamp;
+/** Parse an GKX timestamp; returns ms since epoch or null when invalid/absent. */
+export function parseGkxTimestamp(gkx: GkxData | null | undefined): number | null {
+  if (!gkx) return null;
+  const projected = gkx.projection?.authored?.createdAt;
+  const value = typeof projected === "string" ? projected : gkx.timestamp;
   if (typeof value !== "string") return null;
   const t = Date.parse(value);
   return Number.isNaN(t) ? null : t;

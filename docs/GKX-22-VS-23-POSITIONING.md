@@ -1,4 +1,4 @@
-# OKF+ 2.2 vs 2.3 — Audience Positioning Determination
+# GKX 2.2 vs 2.3 — Audience Positioning Determination
 
 **Status:** Decision record (design-level, adversarially verified)
 **Question:** Is 2.2 logic "enough" for the general public, with 2.3 positioned for
@@ -9,7 +9,7 @@ agentic use with very little human interaction?
 **Yes, with one refinement: the split is not between two note formats — it is between
 the authoring surface and the governance machinery.**
 
-- **OKF+ 2.2 is the complete human product.** Its flat Properties surface (identity,
+- **GKX 2.2 is the complete human product.** Its flat Properties surface (identity,
   type, title, description, timestamp, epistemic state, sensitivity, tags, lineage and
   relationship wikilinks) covers everything a person actually curates. Every field is
   editable in Obsidian's Properties UI; the lineage and relationship fields hold
@@ -18,7 +18,7 @@ the authoring surface and the governance machinery.**
   links" enabled). The empirical record shows fields beyond this set collapse into
   uncurated boilerplate (the spec vault's own auto-stamped descriptions and default
   epistemic states).
-- **OKF+ 2.3's structural additions are agent-facing:** origin separation
+- **GKX 2.3's structural additions are agent-facing:** origin separation
   (authored/derived/proposed/approved), evidence weights and independence groups,
   structured provenance, deterministic assessments, review/authorization state, and
   typed relationship envelopes. Humans do not author evidence *weights and structure*;
@@ -29,10 +29,10 @@ the authoring surface and the governance machinery.**
 - **The flat editable 2.3 profile is the bridge, and it is the default for anyone who
   wants agents.** It keeps the note in the same Properties-safe flat grammar as 2.2 —
   scalars plus quoted-wikilink lists, no nesting. The visible delta from a 2.2 note:
-  `timestamp` is replaced by `created_at`/`updated_at`, `okf_version` changes, one
+  `timestamp` is replaced by `created_at`/`updated_at`, `gkx_version` changes, one
   scalar is added (`authorship_origin`), and `scope`/`scope_id` become optional. The
   human never meets the governance machinery; it lives in the in-memory projection and
-  in `.okf/` sidecars.
+  in `.gkx/` sidecars.
 - **Nested in-note 2.3 remains a machine dialect.** It stays fully readable for
   corpora that are genuinely machine-managed (no human ever opens the file in an
   editor), but no Kosmos-Oden writer introduces it, and it should never be recommended
@@ -56,7 +56,7 @@ the authoring surface and the governance machinery.**
 2. **Link integrity constrains the human format.** Obsidian protects links only in
    flat, top-level fields; other Markdown editors protect frontmatter links *nowhere*.
    That is why the human profile keeps relations flat (rename-safe inside Obsidian)
-   and why the standalone contract adds uid-valued targets plus `okf mv` (rename-safe
+   and why the standalone contract adds uid-valued targets plus `gkx mv` (rename-safe
    everywhere else). Any format burying relationship targets in nested structures
    breaks silently on rename — disqualifying nested 2.3 as a human format independent
    of taste.
@@ -74,12 +74,12 @@ the authoring surface and the governance machinery.**
 Name all three profiles, avoid the base-vs-premium superset pattern, and accept that
 the version number stays user-visible (it is the first Properties row of every note):
 
-- **OKF+ Notes** (2.2) — the human profile; not a lesser product, the correct one.
-- **OKF+ Agent-Ready Notes** (flat 2.3) — the human surface plus agent governance in
+- **GKX Notes** (2.2) — the human profile; not a lesser product, the correct one.
+- **GKX Agent-Ready Notes** (flat 2.3) — the human surface plus agent governance in
   projection and sidecars.
-- **OKF+ Machine Dialect** (nested 2.3) — for stores no human edits by hand.
+- **GKX Machine Dialect** (nested 2.3) — for stores no human edits by hand.
 
-If desired, surface the profile explicitly (an `okf_profile: notes | agent-ready |
+If desired, surface the profile explicitly (an `gkx_profile: notes | agent-ready |
 machine` key or a documented version↔profile mapping) so the name in the docs matches
 something visible in the artifact; otherwise state plainly that profile names are a
-documentation layer over the visible `okf_version`.
+documentation layer over the visible `gkx_version`.

@@ -65,7 +65,7 @@ export function parseFrontmatter(raw: string): { data: Frontmatter; content: str
 }
 
 /** Frontmatter properties treated as relations (produce `property` links).
- * Includes every registered OKF+ 2.2 typed relationship. */
+ * Includes every registered GKX 2.2 typed relationship. */
 export const RELATION_PROPERTIES = [
   "related", "related_to", "supports", "contradicts", "depends_on",
   "derived_from", "derives_from", "cites", "quotes", "interprets", "tests",

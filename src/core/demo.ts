@@ -4,7 +4,7 @@ import type { KosmosGraph, KosmosLink, KosmosNode } from "./types";
 const demoAreas = [
   { path: "00_Atlas", label: "Atlas", color: "#7dd3fc", tags: ["map", "structure"], notes: ["Knowledge Constellation", "Navigation Principles", "Concept Cartography", "Open Questions", "Semantic Landmarks", "Routes and Tours", "Depth Cues", "Graph Vocabulary"] },
   { path: "10_Research", label: "Research", color: "#a78bfa", tags: ["research", "signal"], notes: ["Literature Radar", "AI Interface Notes", "Spatial Computing", "Local First Systems", "Cognitive Load", "Human Attention", "Pattern Library", "Insight Pipeline"] },
-  { path: "20_Projects", label: "Projects", color: "#34d399", tags: ["project", "active"], notes: ["Vault Kosmos", "Learning Studio", "Publishing Engine", "Workshop Planner", "Knowledge Garden", "Presentation Route Alpha", "Review Dashboard", "Automation Console"] },
+  { path: "20_Projects", label: "Projects", color: "#34d399", tags: ["project", "active"], notes: ["Kosmos-Oden-Lite", "Learning Studio", "Publishing Engine", "Workshop Planner", "Knowledge Garden", "Presentation Route Alpha", "Review Dashboard", "Automation Console"] },
   { path: "30_Sources", label: "Sources", color: "#fbbf24", tags: ["source", "reference"], notes: ["Obsidian Graph", "Three Dimensional UI", "Local Data Ethics", "Graph Layout Notes", "WebGL Performance", "File Watchers", "Navigation Research", "Interface Atmosphere"] },
   { path: "40_Writing", label: "Writing", color: "#fb7185", tags: ["writing", "draft"], notes: ["Public Alpha Story", "Demo Walkthrough", "Design Notes", "Launch Checklist", "Field Report", "Narrative Arc", "Readme Draft", "Release Notes"] },
   { path: "50_People", label: "People", color: "#f472b6", tags: ["people", "context"], notes: ["Research Partners", "Workshop Audience", "Maintainers", "Learners", "Editors", "Decision Makers", "Power Users", "Future Contributors"] },
@@ -114,7 +114,7 @@ export interface DemoEvent {
 }
 
 export function createDemoVaultEvents(now = Date.now()): DemoEvent[] {
-  const paths = ["20_Projects/Vault Kosmos.md", "40_Writing/Public Alpha Story.md", "00_Atlas/Routes and Tours.md", "30_Sources/WebGL Performance.md", "10_Research/Spatial Computing.md", "50_People/Future Contributors.md", "20_Projects/Presentation Route Alpha.md", "40_Writing/Demo Walkthrough.md"];
+  const paths = ["20_Projects/Kosmos-Oden-Lite.md", "40_Writing/Public Alpha Story.md", "00_Atlas/Routes and Tours.md", "30_Sources/WebGL Performance.md", "10_Research/Spatial Computing.md", "50_People/Future Contributors.md", "20_Projects/Presentation Route Alpha.md", "40_Writing/Demo Walkthrough.md"];
   return paths.map((path, i) => ({
     id: `demo-event:${i}`,
     type: i % 3 === 0 ? ("add" as const) : ("change" as const),

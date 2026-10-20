@@ -8,7 +8,7 @@ The 3D renderer bundles **Three.js** (r185, npm `three@0.185.1`), © 2010–2025
 three.js authors, under the MIT License. It is an exact-pinned npm dependency
 (`package.json` + `package-lock.json`, integrity recorded in
 `renderer-provenance.json`); esbuild bundles the ESM module into `main.js`,
-`vault-kosmos.html` and `dist/kosmos-embed.html` at build time — no CDN, no
+`kosmos-oden-lite.html` and `dist/kosmos-embed.html` at build time — no CDN, no
 runtime fetch, still a single offline file. The previous vendored global r128
 build is retained under `vendor/legacy/` (see its `.PROVENANCE.json`) for an
 optional frozen WebGL1-era compatibility artifact only.
@@ -67,8 +67,8 @@ endorsed by, sponsored by, or maintained by Google. References to “Open
 Knowledge Format” and “OKF” identify the external specification with which
 this project provides interoperability.
 
-The compatibility identifiers `gkos.profile/okf-plus-2.2` and
-`gkos.profile/okf-plus-2.3` are retained as frozen profile names.
+Profile identifiers that used the former format name are not accepted after
+the GKX rename; use the GKX names throughout.
 
 ## Build & dev dependencies
 

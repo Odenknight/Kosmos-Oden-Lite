@@ -4,4 +4,4 @@
  * versions.json stay in sync with this constant (CI fails otherwise).
  */
 export const KOSMOS_VERSION = "1.0.6";
-export const KOSMOS_NAME = "vault-kosmos-oden";
+export const KOSMOS_NAME = "kosmos-oden-lite";

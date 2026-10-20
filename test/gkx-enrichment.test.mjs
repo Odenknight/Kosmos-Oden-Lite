@@ -1,19 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  assessOkfEvidence,
-  createOkfEnrichmentApplyPlan,
-  deterministicOkfSuggestions,
-  publicOkfEnrichmentApplyPlan,
-  selectOkfEvidenceWindow,
+  assessGkxEvidence,
+  createGkxEnrichmentApplyPlan,
+  deterministicGkxSuggestions,
+  publicGkxEnrichmentApplyPlan,
+  selectGkxEvidenceWindow,
   sha256Text,
   validateLlmEnrichmentResponse,
-  verifyOkfEnrichmentApplyPlan,
+  verifyGkxEnrichmentApplyPlan,
 } from "../dist/kosmos-core.mjs";
 
 const canonicalNote = (title = "Current Guide", body = "# Current Guide\n\nBody bytes stay exactly the same.\n") => [
   "---",
-  'okf_version: "2.3"',
+  'gkx_version: "2.3"',
   'uid: "12345678-1234-4123-8123-123456789abc"',
   `title: "${title}"`,
   'type: "semantic"',
@@ -41,7 +41,7 @@ const canonicalNote = (title = "Current Guide", body = "# Current Guide\n\nBody 
 ].join("\n");
 
 const editable22 = `---
-okf_version: "2.2"
+gkx_version: "2.2"
 uid: "22345678-1234-4123-8123-123456789abc"
 type: "semantic"
 title: "Editable Guide"
@@ -77,24 +77,24 @@ const accept = (suggestionIndex, item, finalValue = item.value) => ({
 
 test("evidence window excludes code/tables and selects bounded reproducible prose", async () => {
   const note = [
-    "---", 'okf_version: "2.3"', "---", "# Build guide", "",
+    "---", 'gkx_version: "2.3"', "---", "# Build guide", "",
     "| key | value |", "|---|---|", "", "```sh", "rm -rf pretend", "```", "",
     "This guide explains the controlled deployment process and the evidence that an operator must review before release.", "",
     "This version supersedes [[Older Guide]] and records the explicit reason for replacement.", "", "#tag-one #tag-two",
   ].join("\n");
-  const first = await selectOkfEvidenceWindow(note, { maxParagraphs: 2, maxChars: 500 });
-  const second = await selectOkfEvidenceWindow(note, { maxParagraphs: 2, maxChars: 500 });
+  const first = await selectGkxEvidenceWindow(note, { maxParagraphs: 2, maxChars: 500 });
+  const second = await selectGkxEvidenceWindow(note, { maxParagraphs: 2, maxChars: 500 });
   assert.deepEqual(first, second);
   assert.equal(first.length, 2);
   assert.doesNotMatch(first.map((block) => block.text).join(" "), /rm -rf|key \| value/);
   assert.ok(first.every((block) => /^sha256:[0-9a-f]{64}$/.test(block.fingerprint)));
-  const suggestions = deterministicOkfSuggestions(first);
+  const suggestions = deterministicGkxSuggestions(first);
   assert.ok(suggestions.some((item) => item.field === "supersedes" && item.value === "[[Older Guide]]"));
   assert.ok(suggestions.every((item) => item.source === "deterministic"));
 });
 
 test("LLM response validation rejects unsupported, ungrounded, and excessive proposals", async () => {
-  const blocks = await selectOkfEvidenceWindow("A sufficiently long paragraph supplies bounded evidence for a controlled metadata proposal and nothing else.");
+  const blocks = await selectGkxEvidenceWindow("A sufficiently long paragraph supplies bounded evidence for a controlled metadata proposal and nothing else.");
   const result = validateLlmEnrichmentResponse({ suggestions: [
     { field: "description", value: "Grounded summary", confidence: 0.7, reason: "Supported by the only block", evidenceBlockIds: [1] },
     { field: "delete_note", value: "yes", confidence: 1, reason: "bad", evidenceBlockIds: [1] },
@@ -107,7 +107,7 @@ test("LLM response validation rejects unsupported, ungrounded, and excessive pro
 });
 
 test("LLM cannot propose governance authority or invent relationship targets", async () => {
-  const blocks = await selectOkfEvidenceWindow("This controlled guide supersedes [[Old Guide]] because the former process is obsolete and should no longer be used.");
+  const blocks = await selectGkxEvidenceWindow("This controlled guide supersedes [[Old Guide]] because the former process is obsolete and should no longer be used.");
   const result = validateLlmEnrichmentResponse({ suggestions: [
     { field: "sensitivity", value: "public", confidence: 1, reason: "model decided", evidenceBlockIds: [1] },
     { field: "supersedes", value: "[[Invented Guide]]", confidence: 0.9, reason: "not actually named", evidenceBlockIds: [1] },
@@ -118,13 +118,13 @@ test("LLM cannot propose governance authority or invent relationship targets", a
 });
 
 test("insufficient structure is reported as fallback evidence, not semantic certainty", async () => {
-  const blocks = await selectOkfEvidenceWindow("12345 67890 12345 67890 12345 67890 12345 67890");
+  const blocks = await selectGkxEvidenceWindow("12345 67890 12345 67890 12345 67890 12345 67890");
   assert.equal(blocks.length, 1);
   assert.equal(blocks[0].selectionRule, "fallback-prose");
-  const description = deterministicOkfSuggestions(blocks).find((item) => item.field === "description");
+  const description = deterministicGkxSuggestions(blocks).find((item) => item.field === "description");
   assert.ok(description);
   assert.ok(description.confidence < 0.7);
-  const assessment = assessOkfEvidence(blocks);
+  const assessment = assessGkxEvidence(blocks);
   assert.equal(assessment.status, "weak");
   assert.ok(assessment.reasons.some((reason) => /fallback/i.test(reason)));
 });
@@ -138,7 +138,7 @@ test("governed apply plan binds reviewed edits and safely merges metadata withou
     suggestion("supersedes", "[[Old Guide]]"),
     suggestion("related_to", "[[Project Hub]]"),
   ];
-  const plan = await createOkfEnrichmentApplyPlan([{
+  const plan = await createGkxEnrichmentApplyPlan([{
     path: "Current Guide.md",
     proposalId: "proposal-1",
     expectedNoteHash: await sha256Text(content),
@@ -151,7 +151,7 @@ test("governed apply plan binds reviewed edits and safely merges metadata withou
   });
   assert.equal(plan.totals.ready, 1);
   assert.equal(plan.totals.edited, 1);
-  assert.equal(await verifyOkfEnrichmentApplyPlan(plan), true);
+  assert.equal(await verifyGkxEnrichmentApplyPlan(plan), true);
   const proposed = plan.entries[0].proposedContent;
   assert.match(proposed, /description: "Reviewer-approved description"/);
   assert.match(proposed, /type: "procedural"/);
@@ -160,31 +160,31 @@ test("governed apply plan binds reviewed edits and safely merges metadata withou
   assert.match(proposed, /supersedes:\n  - "\[\[Old Guide\]\]"/);
   assert.match(proposed, /related_to:\n  - "\[\[Project Hub\]\]"/);
   assert.equal(proposed.slice(proposed.indexOf("---\n# Current Guide") + 4), content.slice(content.indexOf("---\n# Current Guide") + 4));
-  const persisted = JSON.stringify(publicOkfEnrichmentApplyPlan(plan));
+  const persisted = JSON.stringify(publicGkxEnrichmentApplyPlan(plan));
   assert.doesNotMatch(persisted, /Body bytes stay exactly the same|originalContent|proposedContent/);
 });
 
 test("apply plan verification detects decision tampering", async () => {
   const content = canonicalNote();
   const item = suggestion("description", "Reviewed description");
-  const plan = await createOkfEnrichmentApplyPlan([{
+  const plan = await createGkxEnrichmentApplyPlan([{
     path: "Current Guide.md", proposalId: "proposal-2", expectedNoteHash: await sha256Text(content), content,
     decisions: [accept(0, item)],
   }]);
-  assert.equal(await verifyOkfEnrichmentApplyPlan(plan), true);
+  assert.equal(await verifyGkxEnrichmentApplyPlan(plan), true);
   plan.entries[0].decisions[0].finalSuggestion.value = "Tampered after preview";
-  assert.equal(await verifyOkfEnrichmentApplyPlan(plan), false);
+  assert.equal(await verifyGkxEnrichmentApplyPlan(plan), false);
 });
 
-test("reviewed labels and links stay flat and human-editable on OKF+ 2.2 notes", async () => {
+test("reviewed labels and links stay flat and human-editable on GKX 2.2 notes", async () => {
   const proposals = [suggestion("tags", ["selected-label"]), suggestion("related_to", "[[Project Hub]]")];
-  const plan = await createOkfEnrichmentApplyPlan([{
+  const plan = await createGkxEnrichmentApplyPlan([{
     path: "Editable Guide.md", proposalId: "editable-22", expectedNoteHash: await sha256Text(editable22), content: editable22,
     decisions: proposals.map((item, index) => accept(index, item)),
   }], { resolveRelationship: async (_source, target) => target === "Project Hub" ? "Project Hub.md" : null });
   assert.equal(plan.totals.ready, 1);
   const proposed = plan.entries[0].proposedContent;
-  assert.match(proposed, /okf_version: "2\.2"/);
+  assert.match(proposed, /gkx_version: "2\.2"/);
   assert.match(proposed, /tags:\n  - "existing"\n  - "selected-label"/);
   assert.match(proposed, /related_to:\n  - "\[\[Project Hub\]\]"/);
   assert.doesNotMatch(proposed, /authorship:|authorization:|labels:/);
@@ -198,7 +198,7 @@ test("changed sources, unresolved/self relationships, and conflicting scalars ar
   const descriptionA = suggestion("description", "Description A");
   const descriptionB = suggestion("description", "Description B");
   const noteHash = await sha256Text(content);
-  const plan = await createOkfEnrichmentApplyPlan([
+  const plan = await createGkxEnrichmentApplyPlan([
     { path: "Changed.md", proposalId: "changed", expectedNoteHash: "0".repeat(64), content, decisions: [accept(0, descriptionA)] },
     { path: "Missing.md", proposalId: "missing", expectedNoteHash: noteHash, content, decisions: [accept(0, old)] },
     { path: "Current Guide.md", proposalId: "self", expectedNoteHash: noteHash, content, decisions: [accept(0, self)] },

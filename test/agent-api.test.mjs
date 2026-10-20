@@ -213,31 +213,31 @@ test("agent api", async (t) => {
     assert.equal(r.status, 202);
   });
 
-  await t.test("MCP tools/list exposes legacy and OKF+ 2.3 read-only tools", async () => {
+  await t.test("MCP tools/list exposes legacy and GKX 2.3 read-only tools", async () => {
     const r = await mcp({ jsonrpc: "2.0", id: 4, method: "tools/list" });
     const names = r.json().result.tools.map((x) => x.name);
     assert.deepEqual(names.sort(), [
       "assess_note", "assess_vault", "export_graphiti_episodes", "get_assessment",
-      "get_diagnostics", "get_effective_labels", "get_evidence", "get_lineage",
-      "get_note", "get_okf_note", "get_policy", "get_related", "get_relationships",
+      "get_diagnostics", "get_effective_labels", "get_evidence", "get_gkx_note",
+      "get_lineage", "get_note", "get_policy", "get_related", "get_relationships",
       "graph_at_time", "graphiti_ingestion_status", "search_notes", "validate_note", "vault_overview",
     ]);
     assert.ok(r.json().result.tools.every((x) => x.annotations.readOnlyHint === true));
   });
 
-  await t.test("OKF+ 2.3 assessment has REST/MCP parity and preserves read-only semantics", async () => {
+  await t.test("GKX 2.3 assessment has REST/MCP parity and preserves read-only semantics", async () => {
     const m = await mcp({ jsonrpc: "2.0", id: 41, method: "tools/call", params: { name: "get_assessment", arguments: { title: "Engine v2" } } });
     const viaMcp = m.json().result.structuredContent;
-    const r = await request(port, { path: "/okf/assessment?title=Engine%20v2", headers: auth });
+    const r = await request(port, { path: "/gkx/assessment?title=Engine%20v2", headers: auth });
     assert.equal(r.status, 200);
     assert.deepEqual(r.json(), viaMcp);
-    assert.equal(viaMcp.profile, "okf-plus-2.3-validating-projection");
+    assert.equal(viaMcp.profile, "gkx-2.3-validating-projection");
     assert.equal(viaMcp.interpretation, "documentation-and-support-quality-not-truth");
-    assert.equal(viaMcp.policy.id, "policy:okf23-default-v1");
+    assert.equal(viaMcp.policy.id, "policy:gkx23-default-v1");
   });
 
-  await t.test("OKF+ policy endpoint is bundled, deterministic, and remote updates are off", async () => {
-    const r = await request(port, { path: "/okf/policy", headers: auth });
+  await t.test("GKX policy endpoint is bundled, deterministic, and remote updates are off", async () => {
+    const r = await request(port, { path: "/gkx/policy", headers: auth });
     assert.equal(r.status, 200);
     assert.equal(r.json().remoteUpdatesEnabled, false);
     assert.match(r.json().policy.hash, /^sha256:[0-9a-f]{64}$/);
@@ -425,7 +425,7 @@ test("output cap: a huge note body is truncated (Doc2 §5.6)", async () => {
   assert.match(note.content, /truncated/);
 });
 
-test("OKF+ sensitivity ceiling filters search, note content, graph, and Graphiti pages", async () => {
+test("GKX sensitivity ceiling filters search, note content, graph, and Graphiti pages", async () => {
   const files = [
     { relativePath: "Public.md", content: "---\ntype: semantic\nsensitivity: public\ntimestamp: 2026-01-01T00:00:00Z\n---\npublic" },
     { relativePath: "Internal.md", content: "---\ntype: semantic\nsensitivity: internal\ntimestamp: 2026-01-02T00:00:00Z\n---\ninternal" },
@@ -453,14 +453,14 @@ test("OKF+ sensitivity ceiling filters search, note content, graph, and Graphiti
   assert.equal((await server.qNote({ title: "Patient" })).error, "note not found");
 });
 
-test("fail-closed read gate: a node with NO projection and NO okf.sensitivity ranks as the default, not internal", async () => {
-  // The verifier's scenario: an unlabeled node that also carries no OKF+
+test("fail-closed read gate: a node with NO projection and NO gkx.sensitivity ranks as the default, not internal", async () => {
+  // The verifier's scenario: an unlabeled node that also carries no GKX
   // projection must fall through to the CONFIGURED default sensitivity, never
   // the mid-open "internal" rank (which was the residual fail-open).
   const bareNode = {
     id: "bare", kind: "file", label: "Bare", path: "Bare.md", type: "note", area: "", tags: [],
     validAt: "2026-01-01T00:00:00Z",
-    okf: { uid: null, type: "note" }, // no projection, no sensitivity
+    gkx: { uid: null, type: "note" }, // no projection, no sensitivity
   };
   const graph = { nodes: [bareNode], links: [], diagnostics: {} };
   const provider = {
@@ -572,15 +572,15 @@ test("settings migration: v1 (no schema) turns query tokens OFF (Doc1 §3.7)", (
   assert.equal(migrated.agentSensitivityCeiling, "internal");
   assert.equal(migrated.agentToken, "keepme");        // existing token preserved
   assert.equal(migrated.agentPort, 5000);
-  assert.equal(migrated.okfEnrichmentLanCeiling, "internal");
-  assert.equal(migrated.okfDeveloperExclusions, false); // no silent file omission on upgrade
+  assert.equal(migrated.gkxEnrichmentLanCeiling, "internal");
+  assert.equal(migrated.gkxDeveloperExclusions, false); // no silent file omission on upgrade
   assert.equal(migrated.noteTimestampsEnabled, true);
   assert.equal(migrated.graphitiCombinedExtraction, false);
-  assert.deepEqual(migrated.okfExcludePatterns, []);
-  const lan = migrateAgentSettings({ okfEnrichmentProvider: "lan", okfEnrichmentLanCeiling: "confidential", okfExcludePatterns: ["**/AGENTS.md"] });
-  assert.equal(lan.okfEnrichmentProvider, "lan");
-  assert.equal(lan.okfEnrichmentLanCeiling, "confidential");
-  assert.deepEqual(lan.okfExcludePatterns, ["**/AGENTS.md"]);
+  assert.deepEqual(migrated.gkxExcludePatterns, []);
+  const lan = migrateAgentSettings({ gkxEnrichmentProvider: "lan", gkxEnrichmentLanCeiling: "confidential", gkxExcludePatterns: ["**/AGENTS.md"] });
+  assert.equal(lan.gkxEnrichmentProvider, "lan");
+  assert.equal(lan.gkxEnrichmentLanCeiling, "confidential");
+  assert.deepEqual(lan.gkxExcludePatterns, ["**/AGENTS.md"]);
   // defaults fill in for a null load
   const fresh = migrateAgentSettings(null);
   assert.equal(fresh.agentEnabled, DEFAULT_AGENT_SETTINGS.agentEnabled);
@@ -598,13 +598,13 @@ test("default-sensitivity setting: fail-closed default, validated on migration, 
   assert.equal(migrateAgentSettings({ agentDefaultSensitivity: "internal" }).agentDefaultSensitivity, "internal");
 
   // Plumbing: the setting flows through buildGraph -> parseSourceFile ->
-  // buildOkf23Projection so an unlabeled note resolves to the configured
+  // buildGkx23Projection so an unlabeled note resolves to the configured
   // default, and an authored classification is never lowered (raise-only).
   const unlabeled = { relativePath: "Unlabeled.md", content: "---\ntype: idea\n---\nno sensitivity here" };
   const authoredPublic = { relativePath: "Public.md", content: "---\ntype: idea\nsensitivity: public\n---\npublic note" };
   const secretGraph = buildGraph([unlabeled, authoredPublic], [], undefined, { defaultSensitivity: "secret" });
   const relaxedGraph = buildGraph([unlabeled, authoredPublic], [], undefined, { defaultSensitivity: "internal" });
-  const eff = (g, p) => g.nodes.find((n) => n.path === p).okf.projection.effective.sensitivity;
+  const eff = (g, p) => g.nodes.find((n) => n.path === p).gkx.projection.effective.sensitivity;
   assert.equal(eff(secretGraph, "Unlabeled.md"), "secret");
   assert.equal(eff(relaxedGraph, "Unlabeled.md"), "internal");
   // Authored public is respected regardless of the default (never raised/lowered by the default).

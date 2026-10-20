@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { applyNoteTimestamps, isoZulu, isoLocalOffset, isValidOkfTimestamp, timestampEligible } from "../dist/kosmos-core.mjs";
+import { applyNoteTimestamps, isoZulu, isoLocalOffset, isValidGkxTimestamp, timestampEligible } from "../dist/kosmos-core.mjs";
 
 test("portable timestamps use canonical UTC Zulu and preserve creation",()=>{
   const fm={created_at:"2026-01-01T00:00:00.000Z"};
@@ -9,13 +9,13 @@ test("portable timestamps use canonical UTC Zulu and preserve creation",()=>{
   assert.equal(fm.updated_at,"2026-07-18T12:34:56.000Z");
   assert.match(isoZulu(0),/Z$/);
 });
-test("editable OKF+ 2.2 uses its compact timestamp and does not regain beta.10 boilerplate",()=>{
-  const fm={okf_version:"2.2",timestamp:"2026-01-01T00:00:00.000Z"};
+test("editable GKX 2.2 uses its compact timestamp and does not regain beta.10 boilerplate",()=>{
+  const fm={gkx_version:"2.2",timestamp:"2026-01-01T00:00:00.000Z"};
   assert.equal(applyNoteTimestamps(fm,Date.UTC(2026,0,1),Date.UTC(2026,6,18)),false);
   assert.equal(fm.timestamp,"2026-01-01T00:00:00.000Z");
   assert.equal(fm.created_at,undefined);
   assert.equal(fm.updated_at,undefined);
-  const missing={okf_version:"2.2"};
+  const missing={gkx_version:"2.2"};
   assert.equal(applyNoteTimestamps(missing,Date.UTC(2026,0,2),Date.UTC(2026,6,18)),true);
   assert.equal(missing.timestamp,"2026-01-02T00:00:00.000Z");
 });
@@ -57,17 +57,17 @@ test("stamping an already-current note is a no-op write (anti-loop)",()=>{
   const fm={created_at:"2026-01-01T00:00:00.000Z",updated_at:"2026-07-18T12:34:56.000Z"};
   assert.equal(applyNoteTimestamps(fm,0,Date.UTC(2026,6,18,12,34,56)),false);
 });
-test("OKF timestamp validation accepts Zulu and numeric offsets, rejects naive wall-clock",()=>{
-  assert.equal(isValidOkfTimestamp("2026-07-18T12:34:56.000Z"),true);
-  assert.equal(isValidOkfTimestamp("2026-07-01T00:00:00Z"),true);
-  assert.equal(isValidOkfTimestamp("2026-07-19T14:42:07-04:00"),true);
-  assert.equal(isValidOkfTimestamp("2026-07-19T14:42:07.000+05:30"),true);
-  assert.equal(isValidOkfTimestamp("2026-07-19T14:42:07"),false); // no zone designator
-  assert.equal(isValidOkfTimestamp("not-a-date"),false);
+test("GKX timestamp validation accepts Zulu and numeric offsets, rejects naive wall-clock",()=>{
+  assert.equal(isValidGkxTimestamp("2026-07-18T12:34:56.000Z"),true);
+  assert.equal(isValidGkxTimestamp("2026-07-01T00:00:00Z"),true);
+  assert.equal(isValidGkxTimestamp("2026-07-19T14:42:07-04:00"),true);
+  assert.equal(isValidGkxTimestamp("2026-07-19T14:42:07.000+05:30"),true);
+  assert.equal(isValidGkxTimestamp("2026-07-19T14:42:07"),false); // no zone designator
+  assert.equal(isValidGkxTimestamp("not-a-date"),false);
 });
 
-test("timestamp eligibility excludes plugin and OKF internals",()=>{
+test("timestamp eligibility excludes plugin and GKX internals",()=>{
   assert.equal(timestampEligible("Notes/A.md","md"),true);
   assert.equal(timestampEligible(".obsidian/plugins/x.md","md"),false);
-  assert.equal(timestampEligible(".okf/diagnostics/x.md","md"),false);
+  assert.equal(timestampEligible(".gkx/diagnostics/x.md","md"),false);
 });

@@ -1,7 +1,7 @@
-# OKF+ 2.3 Deterministic Engine in Obsidian — Redesign
+# GKX 2.3 Deterministic Engine in Obsidian — Redesign
 
 **Status:** Design for the beta.13 development cycle (adversarially verified against
-the beta.12 codebase, the Obsidian platform, and the OKF+ 2.3 / GKOS invariants)
+the beta.12 codebase, the Obsidian platform, and the GKX 2.3 / GKOS invariants)
 **Baseline:** v0.6.5-beta.12 (flat editable 2.3 profile shipped)
 **Scope:** How the 2.3 deterministic engine — parser, validator, projection,
 assessment, migration, enrichment, proposals, and sidecars — functions properly
@@ -37,20 +37,20 @@ assessment, migration, enrichment, proposals, and sidecars — functions properl
 ┌────────────────────────────────────────────────────────────────────┐
 │ AUTHORING PLANE — the note (human territory)                       │
 │   Flat frontmatter only: scalars + flat quoted-wikilink lists.     │
-│   okf_version 2.2, or 2.3 in the flat editable profile.           │
+│   gkx_version 2.2, or 2.3 in the flat editable profile.           │
 │   Obsidian Properties can render and edit every key.               │
 └──────────────────────────────┬─────────────────────────────────────┘
                                │ deterministic read
 ┌──────────────────────────────▼─────────────────────────────────────┐
 │ PROJECTION PLANE — in-memory (engine territory)                    │
-│   parseOkf23Frontmatter → buildOkf23Projection → assessOkf23       │
+│   parseGkx23Frontmatter → buildGkx23Projection → assessGkx23       │
 │   UID index, typed edges, lineage, temporal validity, diagnostics, │
 │   derived labels, effective state. Recomputed incrementally.       │
 │   Supplies defaults for absent governance and MARKS them defaulted.│
 └──────────────────────────────▼─────────────────────────────────────┘
                                │ explicit, previewed, hash-bound writes
 ┌──────────────────────────────▼─────────────────────────────────────┐
-│ GOVERNANCE PLANE — .okf/ sidecars (governed territory)             │
+│ GOVERNANCE PLANE — .gkx/ sidecars (governed territory)             │
 │   assessments/  proposals/  decisions/  diagnostics/               │
 │   policy/  schema/  cache/  migrations/  backup/                   │
 │   Crash-safe writes, uid-keyed, input-hash-bound, per-decision     │
@@ -71,7 +71,7 @@ There are exactly **two** sanctioned authoring-plane writers, and no others:
    bind an input hash computed with `updated_at` excluded, so a stamper run never
    staleness-invalidates a pending proposal.
 
-Scalars permitted in frontmatter: `okf_version, uid, title, type, created_at,
+Scalars permitted in frontmatter: `gkx_version, uid, title, type, created_at,
 updated_at, description, resource, epistemic_state, sensitivity, authorship_origin,
 scope, scope_id` (2.2 additionally: `timestamp`). Flat string lists: `tags`, lineage
 keys, relation keys, and a new flat `sources:` list (§3.6) — quoted wikilinks or URLs.
@@ -86,8 +86,8 @@ continues to flatten marker-carrying generated notes.
 
 **Authority rule for flat `authorship_origin`:** the scalar is a *description*, not a
 switch. Values other than `authored`/`derived` (i.e. `proposed`, `approved`) are
-projected as `authored` and raise `OKF-AUTHORITY-003` ("flat approved/proposed origin
-requires a corroborating decision record") unless a matching `.okf/decisions/` record
+projected as `authored` and raise `GKX-AUTHORITY-003` ("flat approved/proposed origin
+requires a corroborating decision record") unless a matching `.gkx/decisions/` record
 exists. Without this rule, one typed word in the Properties panel would fabricate the
 approval state the entire governance plane exists to gate (beta.12 currently has this
 hole — work item §5.4).
@@ -103,7 +103,7 @@ rule); `metadataCache` YAML semantics differ and would fork semantics between su
 
 Property-type registration is a **UI nicety semantics never depend on**, implemented
 honestly: `app.metadataTypeManager` is an *undocumented internal* API (absent from
-`obsidian.d.ts`), so the "Register OKF property types" settings action feature-detects
+`obsidian.d.ts`), so the "Register GKX property types" settings action feature-detects
 it at runtime (try/catch, method-presence check) and otherwise shows the user a manual
 `.obsidian/types.json` snippet to paste. Types: `epistemic_state`, `sensitivity`,
 `authorship_origin`, `scope`, `uid` → *text*; `tags`, lineage/relations, `sources` →
@@ -116,23 +116,23 @@ cannot break validation — with a round-trip test (§6).
 
 ### 3.2 UID-first identity and rename handling
 
-New module `src/core/identity.ts` + persisted cache `.okf/cache/uid-index.json`:
+New module `src/core/identity.ts` + persisted cache `.gkx/cache/uid-index.json`:
 
 ```jsonc
-{ "schema": "okf-uid-index/1",
+{ "schema": "gkx-uid-index/1",
   "uids": { "<uid>": { "path": "Notes/A.md", "aliases": ["Old/A.md"], "firstSeen": "…" } } }
 ```
 
 - Rebuilt deterministically from the corpus at any time; the cache only preserves
   **rename history** (path aliases), which cannot be derived from bytes.
 - Wired to `vault.on("rename")` (VaultDataProvider already tracks renames).
-- Diagnostics stay as-is (`OKF-IDENTITY-001..004`), plus `OKF-IDENTITY-005
+- Diagnostics stay as-is (`GKX-IDENTITY-001..004`), plus `GKX-IDENTITY-005
   path-to-uid drift` when a cached uid reappears at a new path without a rename event.
 - Duplicate UIDs keep failing closed.
 
 ### 3.3 Sidecar subsystem (new `src/core/sidecar/`)
 
-`paths.ts` — deterministic uid-keyed paths, reject absolute/traversal, all under `.okf/`.
+`paths.ts` — deterministic uid-keyed paths, reject absolute/traversal, all under `.gkx/`.
 
 `writer.ts` — **crash-safe write protocol** (the guarantee is "no partially-written
 target is ever observable", *not* POSIX atomicity — `DataAdapter` exposes no fsync, and
@@ -151,14 +151,14 @@ quarantined (`*.invalid-<ts>`) and diagnosed, never half-applied.
 
 **Sync reality (two distinct regimes):**
 
-- **Obsidian Sync ignores dot-folders other than `.obsidian`** — `.okf/` does *not*
+- **Obsidian Sync ignores dot-folders other than `.obsidian`** — `.gkx/` does *not*
   replicate. Consequence: governance artifacts are **device-local** under Obsidian
   Sync. Everything except decisions rebuilds deterministically from bytes; decision
   records do not. The settings expose an optional **non-dot governance folder** (e.g.
-  `okf/`, user-configurable, same layout) for Obsidian Sync users who need decisions
+  `gkx/`, user-configurable, same layout) for Obsidian Sync users who need decisions
   and proposals to travel between devices.
 - **Third-party file sync (Nextcloud, Syncthing, Dropbox, Git) replicates every
-  `.okf/` write.** The sync-storm rule therefore stands: sidecars are written only by
+  `.gkx/` write.** The sync-storm rule therefore stands: sidecars are written only by
   explicit user actions — never automatically on file change. Assessments remain
   in-memory by default, with an explicit "Write assessment sidecars" command
   (previewed, batch, one file per uid so diffs stay local).
@@ -167,22 +167,22 @@ quarantined (`*.invalid-<ts>`) and diagnosed, never half-applied.
 
 Extends the existing enrichment flow (pending-until-accept) into a general envelope:
 
-- `.okf/proposals/<proposal-id>.yaml` — origin-preserving envelope: target uid, input
+- `.gkx/proposals/<proposal-id>.yaml` — origin-preserving envelope: target uid, input
   content hash (computed excluding `updated_at`, §2), proposed patch (authoring-plane
   keys only), proposer identity (`human`, `plugin:enrichment`, `agent:<id>`),
   created/expiry, rationale.
 - **Ingress validation is structural, not authority-judging.** Rejected at ingress:
   schema-invalid, stale hash, keys outside the authoring plane, unbounded wikilinks,
   oversized. **Admitted but tagged `requires-elevated-authority`:** sensitivity
-  reductions and epistemic promotions — the OKF+ 2.3 spec explicitly locates these *in
+  reductions and epistemic promotions — the GKX 2.3 spec explicitly locates these *in
   proposal space* (agents may propose, must never finalize); refusing them at ingress
   would push agents toward ungoverned channels. The review UI surfaces the tag
   prominently; nothing automated ever applies them.
-- **Decisions: one immutable file per decision** — `.okf/decisions/<decision-id>.yaml`
+- **Decisions: one immutable file per decision** — `.gkx/decisions/<decision-id>.yaml`
   (matching SIDECAR-FORMAT.md's reserved layout), each carrying `prev_decision_id` +
   `prev_hash`. Immutable-once-written files survive file sync without conflict-copy
   chain forks; the chain is a *derived index* (head file rebuilt deterministically),
-  and two heads after a sync merge raise an `OKF-DECISION-002 fork` diagnostic instead
+  and two heads after a sync merge raise an `GKX-DECISION-002 fork` diagnostic instead
   of a false tamper alarm. The current head hash is also persisted in plugin
   `data.json` (outside the synced corpus) and shown in the UI, so ledger truncation or
   rewrite is visible. **Disclosed honestly:** the chain detects accidental corruption,
@@ -197,8 +197,8 @@ Extends the existing enrichment flow (pending-until-accept) into a general envel
   timestamp, plan hash.
 - **Apply** uses `vault.process` with the staleness check **inside the process
   callback** (compare current content to the plan's original; return unchanged and
-  mark skipped on mismatch) — exactly as `applyOkfMigrationPlan` already does. Never a
-  separate read-then-write. Byte-exact backup under `.okf/backup/` first.
+  mark skipped on mismatch) — exactly as `applyGkxMigrationPlan` already does. Never a
+  separate read-then-write. Byte-exact backup under `.gkx/backup/` first.
 - **Origin attribution survives apply:** fields last set by an accepted proposal are
   attributed origin `approved` (with decision id) in the projection and all API/export
   surfaces — the decision index overlays the parse — until a subsequent human edit
@@ -216,8 +216,8 @@ path applies anything. Any conformance statement must list this waiver as a limi
 
 **Agent ingress:** the read API remains read-only; proposal ingress is a **separately
 claimed, separately authorized write capability** — a distinct opt-in `POST
-/v1/proposals` endpoint (and `okf_submit_proposal` MCP tool) requiring a
-propose-scoped token, writing only to `.okf/proposals/`, never touching notes.
+/v1/proposals` endpoint (and `gkx_submit_proposal` MCP tool) requiring a
+propose-scoped token, writing only to `.gkx/proposals/`, never touching notes.
 Landing it requires amending `kosmos-invariants.yml` (`api_write_routes:
 proposals-inbox-only`), `scripts/check-invariants.mjs`, and THREAT-MODEL.md in the
 same change — the CI invariant is a feature, not an obstacle. Fail-closed sensitivity
@@ -228,7 +228,7 @@ proposer), endpoint rate limit, saturation diagnostic.
 
 ### 3.5 Assessment, policy, and schema identity
 
-- Policy stays versioned + hashed (`OKF23_POLICY`); add `.okf/policy/` loading with
+- Policy stays versioned + hashed (`GKX23_POLICY`); add `.gkx/policy/` loading with
   hash-pinning; fall back to built-in.
 - Assessments embed `input_hash`, `policy_hash`, `engine_version` — reproducible,
   cache-keyed by exactly those.
@@ -239,10 +239,10 @@ proposer), endpoint rate limit, saturation diagnostic.
 
 ### 3.6 Capture ergonomics (new, normative)
 
-- An unadorned note is **never an error**. Notes without OKF frontmatter project as
+- An unadorned note is **never an error**. Notes without GKX frontmatter project as
   legacy with warnings, exactly as today. In the flat 2.3 profile, a missing
   `epistemic_state` is a *warning* + default (`hypothesis`, marked defaulted), not an
-  error — beta.12's error-level `OKF-SCHEMA-004` for it is relaxed (work item §5.5).
+  error — beta.12's error-level `GKX-SCHEMA-004` for it is relaxed (work item §5.5).
 - **Onboarding new captures is low-friction:** a "New governed note" template command,
   and an opt-in "onboard new notes" prompt that reuses the previewed hash-bound
   conversion flow. The recurring nature of onboarding (scan never rewrites) is
@@ -269,7 +269,7 @@ to the same deltas.
   others, and no background sidecar churn.
 - No epistemic promotion, sensitivity reduction, or lineage rewrite by any automated
   path — such proposals exist, tagged, and wait for the human.
-- Conformance claim: **OKF+ 2.3 Validating Projection Profile — a GCP-2/3-shaped
+- Conformance claim: **GKX 2.3 Validating Projection Profile — a GCP-2/3-shaped
   projection with L5-style decision recording under a disclosed single-actor waiver.
   No L1 source-preservation capability is implemented or claimed** (notes are mutable
   working files; backups are transient apply-safety artifacts, not a revision store).
@@ -280,10 +280,10 @@ to the same deltas.
 
 1. `src/core/sidecar/` (paths, crash-safe writer with platform fallbacks, reader,
    quarantine, startup sweep) + tests.
-2. UID index cache + rename wiring + `OKF-IDENTITY-005`.
+2. UID index cache + rename wiring + `GKX-IDENTITY-005`.
 3. Proposal envelope + structural validation + per-decision files + derived chain
    index + head anchor in `data.json` + review UI.
-4. `OKF-AUTHORITY-003`: flat `authorship_origin` treated as description; corroboration
+4. `GKX-AUTHORITY-003`: flat `authorship_origin` treated as description; corroboration
    required for `approved`/`proposed` (closes the beta.12 authority hole).
 5. Capture ergonomics: relax flat-profile `epistemic_state` to warning+default;
    defaulted-vs-authored marking; stop fabricating `description`; flat `sources:` list
@@ -308,6 +308,6 @@ to the same deltas.
   anchor divergence, rejection records, self-accepted disposition.
 - Origin attribution: accept → apply → rescan yields `approved` origin with decision
   id; later human edit re-attributes authored.
-- `authorship_origin: approved` without decision record → `OKF-AUTHORITY-003`,
+- `authorship_origin: approved` without decision record → `GKX-AUTHORITY-003`,
   projected as authored.
 - Round-trip: flat-2.3 note + accepted proposal → rescan yields zero changes.

@@ -245,7 +245,7 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
       g.__cosmos = true;
       return g;
     } catch (e) {
-      console.error("Vault Kosmos: cosmology layout failed, using fallback", e);
+      console.error("Kosmos-Oden-Lite: cosmology layout failed, using fallback", e);
     }
     return ensureNodeIndex(layoutGraph(graph));
   }
@@ -329,10 +329,10 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
           : b === "star" && node.__starColor ? node.__starColor   // H-R spectral color
           : node.color
         );
-        if (node.__ghost) { const g = lin("#6b7280"); for (let k = 0; k < 3; k++) c[k] = c[k] * 0.55 + g[k] * 0.45; } // superseded (OKF+) => ghosted
+        if (node.__ghost) { const g = lin("#6b7280"); for (let k = 0; k < 3; k++) c[k] = c[k] * 0.55 + g[k] * 0.45; } // superseded (GKX) => ghosted
         node.__baseC = c;
         node.__vt = node.validAt ? Date.parse(node.validAt) : null;
-        node.__it = (node.okf && node.okf.invalidAt) ? Date.parse(node.okf.invalidAt) : null;
+        node.__it = (node.gkx && node.gkx.invalidAt) ? Date.parse(node.gkx.invalidAt) : null;
         L.attrs.aColor.setXYZ(i, c[0], c[1], c[2]);
         L.attrs.aSeed.setX(i, hashUnitLocal(node.id));
         L.attrs.aVisible.setX(i, 1);
@@ -1057,22 +1057,22 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
         b.style.borderColor = (t.color || "#7dd3fc") + "66"; b.onclick = () => selectNode(t.id, true); host.appendChild(b);
       }
     }
-    const old = inspector.querySelector(".okfBox"); if (old) old.remove();
-    if (n.okf) {
-      const box = document.createElement("div"); box.className = "okfBox";
+    const old = inspector.querySelector(".gkxBox"); if (old) old.remove();
+    if (n.gkx) {
+      const box = document.createElement("div"); box.className = "gkxBox";
       const meta = document.createElement("div"); meta.className = "path";
       const dt = n.validAt ? new Date(n.validAt).toISOString().slice(0, 10) : "";
-      const projection = n.okf.projection;
+      const projection = n.gkx.projection;
       const score = projection?.assessment?.scores?.overall;
       const scoreText = typeof score === "number" ? ` · documentation ${Math.round(score * 100)}%` : projection ? " · not assessable" : "";
       const governance = projection ? ` · ${projection.sourceVersion || "legacy"} · ${projection.effective?.sensitivity || "internal"} · ${projection.diagnostics?.length || 0} diagnostic${projection.diagnostics?.length === 1 ? "" : "s"}` : "";
-      meta.textContent = "OKF+ " + (n.okf.type || "note") + governance + scoreText + (dt ? (" · " + dt) : "") + (n.okf.head ? " · HEAD" : "") + (n.okf.invalidAt ? (" · superseded " + new Date(n.okf.invalidAt).toISOString().slice(0, 10)) : "");
+      meta.textContent = "GKX " + (n.gkx.type || "note") + governance + scoreText + (dt ? (" · " + dt) : "") + (n.gkx.head ? " · HEAD" : "") + (n.gkx.invalidAt ? (" · superseded " + new Date(n.gkx.invalidAt).toISOString().slice(0, 10)) : "");
       if (projection) meta.title = "Governance overlay: assessment measures documentation and support quality, not truth or authorization. Proposed values are not included in effective state.";
       box.appendChild(meta);
       const chips = document.createElement("div"); chips.className = "linkchips";
       const nameOf = (i2: string) => { const x = G.nodeById.get(i2); return x ? x.label : i2; };
-      for (const pid of (n.okf.supersedesIds || [])) { const c2 = document.createElement("button"); c2.className = "linkchip"; c2.textContent = "↞ " + nameOf(pid); c2.onclick = () => selectNode(pid, true); chips.appendChild(c2); }
-      for (const nid of (n.okf.supersededByIds || [])) { const c2 = document.createElement("button"); c2.className = "linkchip"; c2.textContent = "↠ " + nameOf(nid); c2.onclick = () => selectNode(nid, true); chips.appendChild(c2); }
+      for (const pid of (n.gkx.supersedesIds || [])) { const c2 = document.createElement("button"); c2.className = "linkchip"; c2.textContent = "↞ " + nameOf(pid); c2.onclick = () => selectNode(pid, true); chips.appendChild(c2); }
+      for (const nid of (n.gkx.supersededByIds || [])) { const c2 = document.createElement("button"); c2.className = "linkchip"; c2.textContent = "↠ " + nameOf(nid); c2.onclick = () => selectNode(nid, true); chips.appendChild(c2); }
       if (chips.children.length) box.appendChild(chips);
       inspector.appendChild(box);
     }
@@ -1131,7 +1131,7 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
   }
   function toggleChrono() {
     if (!G) return;
-    if (!G.__timeSpan) { showHint(LANG === "de" ? "Keine OKF+ Zeitstempel im Vault" : "No OKF+ timestamps in this vault"); return; }
+    if (!G.__timeSpan) { showHint(LANG === "de" ? "Keine GKX Zeitstempel im Vault" : "No GKX timestamps in this vault"); return; }
     const on = chronoBar && !chronoBar.classList.contains("show");
     if (chronoBar) chronoBar.classList.toggle("show", !!on);
     if (chronoBtn) chronoBtn.classList.toggle("on", !!on);
@@ -1951,7 +1951,7 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
     for (const n of graph.nodes) {
       nodes.add(n.id);
       visual.set(n.id, (n.area || "") + "" + (n.color || "") + "" + (n.kind || ""));
-      meta.set(n.id, (n.label || "") + "" + (n.status || "") + "" + (n.type || "") + "" + ((n.tags || []).join(",")) + "" + ((n.aliases || []).join(",")) + "" + (n.updatedAt || 0) + "" + (n.validAt || "") + "" + ((n.okf && n.okf.invalidAt) || "") + "" + ((n.okf && n.okf.head) ? 1 : 0));
+      meta.set(n.id, (n.label || "") + "" + (n.status || "") + "" + (n.type || "") + "" + ((n.tags || []).join(",")) + "" + ((n.aliases || []).join(",")) + "" + (n.updatedAt || 0) + "" + (n.validAt || "") + "" + ((n.gkx && n.gkx.invalidAt) || "") + "" + ((n.gkx && n.gkx.head) ? 1 : 0));
     }
     for (const l of graph.links) links.add(l.source + "" + l.target + "" + (l.kind || ""));
     return { nodes, links, visual, meta };
@@ -1974,7 +1974,7 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
       r.node.tags = m.tags; r.node.status = m.status; r.node.type = m.type; r.node.label = m.label; r.node.aliases = m.aliases;
       if (m.updatedAt != null) r.node.updatedAt = m.updatedAt;
       if (m.validAt != null) { r.node.validAt = m.validAt; r.node.__vt = Date.parse(m.validAt); }
-      if (m.okf) { r.node.okf = m.okf; r.node.__it = m.okf.invalidAt ? Date.parse(m.okf.invalidAt) : null; }
+      if (m.gkx) { r.node.gkx = m.gkx; r.node.__it = m.gkx.invalidAt ? Date.parse(m.gkx.invalidAt) : null; }
     }
     if (graph.areas) G.areas = graph.areas;
     buildFilterUI();
@@ -1992,7 +1992,7 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
       __prevSig = sig;
       if (label) setConn(label, true);
     } catch (e) {
-      console.error("Vault Kosmos: failed to render graph", e);
+      console.error("Kosmos-Oden-Lite: failed to render graph", e);
       showFatal("Could not render this vault.");
     }
   }
@@ -2001,7 +2001,7 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
   // Deterministic capture always boots the demo scene (even in "wait" mode) so a
   // browser test has a stable, self-contained target with no folder picker.
   if (opts.autoStart === "demo" || CAPTURE.on) {
-    try { buildDemo(); ensureFrame(); runCapture(); } catch (e) { console.error("Vault Kosmos: demo failed", e); showFatal("The demo could not be built."); }
+    try { buildDemo(); ensureFrame(); runCapture(); } catch (e) { console.error("Kosmos-Oden-Lite: demo failed", e); showFatal("The demo could not be built."); }
     if (!CAPTURE.on) setTimeout(() => { showHint(MOBILE ? "Drag to orbit · pinch to zoom · tap a body" : "Drag to orbit · scroll to zoom · click a body to focus"); }, 900);
   } else {
     showHint(LANG === "de" ? "Warte auf Vault…" : "Waiting for vault…");
@@ -2011,7 +2011,7 @@ export function createKosmosApp(opts: KosmosAppOptions = {}): KosmosApp {
     ok: true,
     renderGraph,
     showDemo() {
-      try { buildDemo(); ensureFrame(); } catch (e) { console.error("Vault Kosmos: demo failed", e); showFatal("The demo could not be built."); }
+      try { buildDemo(); ensureFrame(); } catch (e) { console.error("Kosmos-Oden-Lite: demo failed", e); showFatal("The demo could not be built."); }
     },
     setConn,
     setVaultStatus,

@@ -1,4 +1,4 @@
-# Vault Kosmos (Kosmos-Oden) — Detailed Recommended Changes
+# Kosmos-Oden-Lite (Kosmos-Oden) — Detailed Recommended Changes
 
 **Repository:** `Odenknight/Kosmos-Oden`  
 **Repository version reviewed:** `v0.5.1`  
@@ -9,7 +9,7 @@
 
 ## 1. Purpose of This Document
 
-This document converts the architectural and repository assessment of Vault Kosmos into a concrete remediation and improvement plan.
+This document converts the architectural and repository assessment of Kosmos-Oden-Lite into a concrete remediation and improvement plan.
 
 The recommendations are organized by priority and include:
 
@@ -20,7 +20,7 @@ The recommendations are organized by priority and include:
 - suggested validation steps; and
 - acceptance criteria suitable for human or automated-agent review.
 
-This is not a recommendation to rewrite the project. Vault Kosmos already has a sound product concept and several strong design choices:
+This is not a recommendation to rewrite the project. Kosmos-Oden-Lite already has a sound product concept and several strong design choices:
 
 - local-first operation;
 - a read-only Agent API;
@@ -427,14 +427,14 @@ Example:
 ```ts
 type KosmosMessage =
   | {
-      protocol: "vault-kosmos";
+      protocol: "kosmos-oden-lite";
       version: 1;
       type: "vault-snapshot";
       requestId: string;
       payload: VaultSnapshot;
     }
   | {
-      protocol: "vault-kosmos";
+      protocol: "kosmos-oden-lite";
       version: 1;
       type: "vault-delta";
       requestId: string;
@@ -679,7 +679,7 @@ Host and Origin validation help against certain browser attacks, but do not encr
 
 Display a warning before LAN mode is enabled:
 
-> LAN mode exposes the read-only Vault Kosmos API over unencrypted HTTP. Use it only on a trusted network. For stronger protection, use a VPN, SSH tunnel, TLS reverse proxy, or another authenticated encrypted transport.
+> LAN mode exposes the read-only Kosmos-Oden-Lite API over unencrypted HTTP. Use it only on a trusted network. For stronger protection, use a VPN, SSH tunnel, TLS reverse proxy, or another authenticated encrypted transport.
 
 ### Recommended technical controls
 
@@ -750,7 +750,7 @@ Example high-level workflow:
   run: |
     gh release create "$GITHUB_REF_NAME" release/* \
       --verify-tag \
-      --title "Vault Kosmos $GITHUB_REF_NAME" \
+      --title "Kosmos-Oden-Lite $GITHUB_REF_NAME" \
       --notes-file "$NOTES"
 ```
 
@@ -959,7 +959,7 @@ Create a machine-readable `BUILD-INFO.json`:
 
 ```json
 {
-  "project": "vault-kosmos",
+  "project": "kosmos-oden-lite",
   "version": "0.5.1",
   "gitCommit": "<full commit SHA>",
   "gitTag": "v0.5.1",

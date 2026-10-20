@@ -2,9 +2,9 @@
 
 KGCP is Kosmos-Oden's deterministic, agent-facing projection of an Obsidian vault. It is the formal name for the built-in Graphiti-like operability that does not require Graphiti, a graph database, embeddings, or an LLM.
 
-KGCP provides UID-first identity, explicit typed relationships, canonical lineage, point-in-time state, sensitivity filtering, OKF+ v2.3 governance origins, assessments, diagnostics, lexical search, REST, MCP, and reproducible Graphiti adapter episodes. Source notes remain authoritative.
+KGCP provides UID-first identity, explicit typed relationships, canonical lineage, point-in-time state, sensitivity filtering, GKX v2.3 governance origins, assessments, diagnostics, lexical search, REST, MCP, and reproducible Graphiti adapter episodes. Source notes remain authoritative.
 
-Graphiti is optional. The `okf-plus-graphiti/2.3.0` adapter turns KGCP records into chronological JSON episodes and authored `fact_triple` episodes. Graphiti may then infer entities, facts, communities, and semantic retrieval indexes. Those results are derived proposals and must never be imported into authored OKF+ fields. A future import workflow may store them only as derived/proposal sidecars requiring review.
+Graphiti is optional. The `gkx-graphiti/2.3.0` adapter turns KGCP records into chronological JSON episodes and authored `fact_triple` episodes. Graphiti may then infer entities, facts, communities, and semantic retrieval indexes. Those results are derived proposals and must never be imported into authored GKX fields. A future import workflow may store them only as derived/proposal sidecars requiring review.
 
 ## Time model
 
@@ -14,7 +14,7 @@ Graphiti is optional. The `okf-plus-graphiti/2.3.0` adapter turns KGCP records i
 - `processing_time`: Kosmos indexing/export time.
 - Graphiti ingestion time remains Graphiti-owned.
 
-The plugin maintains `created_at` and `updated_at` when portable timestamping is enabled. `.obsidian/` and `.okf/` are excluded and write-loop suppression prevents timestamp updates from recursively stamping themselves.
+The plugin maintains `created_at` and `updated_at` when portable timestamping is enabled. `.obsidian/` and `.gkx/` are excluded and write-loop suppression prevents timestamp updates from recursively stamping themselves.
 
 ## Graphiti 0.29 contract
 

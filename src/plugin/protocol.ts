@@ -8,7 +8,7 @@
  * main.js, so a single current version is sufficient; unknown/future versions
  * are rejected clearly rather than acted on.
  */
-export const KOSMOS_PROTOCOL = "vault-kosmos";
+export const KOSMOS_PROTOCOL = "kosmos-oden-lite";
 export const KOSMOS_PROTOCOL_VERSION = 1;
 
 export interface FilesPayload {

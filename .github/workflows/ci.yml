@@ -37,7 +37,7 @@ jobs:
       - name: Version synchronization
         run: npm run check:versions
 
-      - name: Artifact checks (main.js, vault-kosmos.html, self-containment)
+      - name: Artifact checks (main.js, kosmos-oden-lite.html, self-containment)
         run: npm run check:artifacts
 
       - name: Invariants policy (kosmos-invariants.yml)
@@ -61,7 +61,7 @@ jobs:
             main.js
             manifest.json
             styles.css
-            vault-kosmos.html
+            kosmos-oden-lite.html
 
   reproducibility:
     runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && 'ubuntu-latest' || fromJSON('["self-hosted","Linux","X64","r720-ci"]') }}
@@ -76,12 +76,12 @@ jobs:
       - name: First build
         run: |
           npm run build
-          sha256sum main.js vault-kosmos.html dist/kosmos-embed.html > first.sha256
+          sha256sum main.js kosmos-oden-lite.html dist/kosmos-embed.html > first.sha256
       - name: Second build
         run: |
           git clean -xfd -e node_modules -e first.sha256
           npm run build
-          sha256sum main.js vault-kosmos.html dist/kosmos-embed.html > second.sha256
+          sha256sum main.js kosmos-oden-lite.html dist/kosmos-embed.html > second.sha256
       - name: Compare
         run: diff -u first.sha256 second.sha256
 

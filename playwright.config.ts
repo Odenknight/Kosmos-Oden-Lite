@@ -5,7 +5,7 @@ import { defineConfig, devices } from "@playwright/test";
  *
  * Serves the built stable WebGL2 artifacts over http on a fixed port and runs
  * the renderer smoke + visual tests across Chromium, Firefox and WebKit. These
- * tests require `npm run build` first (they load vault-kosmos.html) and the
+ * tests require `npm run build` first (they load kosmos-oden-lite.html) and the
  * Playwright browsers (`npx playwright install`).
  *
  * SOFTWARE GL (CI): headless CI runners have no GPU. Without the flags below a

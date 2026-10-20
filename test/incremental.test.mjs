@@ -129,8 +129,8 @@ test("lineage change in ONE note re-derives temporal state for its partner", () 
   assert.equal(delta.reparsed, 1);
   const b = graph.nodes.find((n) => n.id === "file:Notes/B.md");
   const c = graph.nodes.find((n) => n.id === "file:Notes/C.md");
-  assert.equal(b.okf.invalidAt, c.validAt); // partner invalidated without being reparsed
-  assert.equal(c.okf.head, true);
+  assert.equal(b.gkx.invalidAt, c.validAt); // partner invalidated without being reparsed
+  assert.equal(c.gkx.head, true);
   assert.ok(delta.changedNodes.includes("file:Notes/B.md")); // meta delta captured
 });
 
@@ -145,9 +145,9 @@ test("Related footer change retags the link kind", () => {
   assert.equal(semantic.target, "file:Notes/B.md");
 });
 
-test("human edits to flat OKF+ labels and wikilinks update every graph projection incrementally", () => {
+test("human edits to flat GKX labels and wikilinks update every graph projection incrementally", () => {
   const idx = new KosmosIndex();
-  const note = (tags, related) => `---\nokf_version: "2.2"\nuid: "11111111-1111-4111-8111-111111111111"\ntype: "semantic"\ntitle: "Editable"\ndescription: "Human-editable metadata."\ntimestamp: "2026-07-01T00:00:00Z"\nepistemic_state: "hypothesis"\nscope: "node"\nscope_id: "11111111-1111-4111-8111-111111111111"\nsensitivity: "internal"\ntags: [${tags}]\nsupersedes: []\nsuperseded_by: []\nforked_from: []\nforked_to: []\nrelated_to: ["[[${related}]]"]\n---\nBody`;
+  const note = (tags, related) => `---\ngkx_version: "2.2"\nuid: "11111111-1111-4111-8111-111111111111"\ntype: "semantic"\ntitle: "Editable"\ndescription: "Human-editable metadata."\ntimestamp: "2026-07-01T00:00:00Z"\nepistemic_state: "hypothesis"\nscope: "node"\nscope_id: "11111111-1111-4111-8111-111111111111"\nsensitivity: "internal"\ntags: [${tags}]\nsupersedes: []\nsuperseded_by: []\nforked_from: []\nforked_to: []\nrelated_to: ["[[${related}]]"]\n---\nBody`;
   let { graph } = idx.setFiles([
     N("Editable.md", note("old-label", "B")),
     N("B.md", "# B"),

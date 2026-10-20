@@ -14,12 +14,13 @@ import { ItemView, Notice, Plugin, TFile, TFolder, WorkspaceLeaf } from "obsidia
 import EMBED_HTML_B64 from "../../dist/kosmos-embed.html";
 import { KOSMOS_VERSION } from "../core/version";
 import { GRAPHITI_CORE_VERSION, graphitiIngestionProfile } from "../core/graphiti";
-import type { OkfMigrationMode } from "../core/okf-migration";
+import type { GkxMigrationMode } from "../core/gkx-migration";
 import { DEFAULT_AGENT_SETTINGS, KosmosAgentServer, makeToken, migrateAgentSettings, type AgentSettings } from "./agent-server";
 import { KosmosSettingTab, buildAgentGuide, installedBridgePath } from "./settings";
 import { applyNoteTimestamps, timestampEligible } from "../core/timestamps";
-import { openOkfMigrationWorkflow } from "./okf-migration";
-import { openOkfEnrichmentWorkflow } from "./okf-enrichment";
+import { openGkxMigrationWorkflow } from "./gkx-migration";
+import { openGkxEnrichmentWorkflow } from "./gkx-enrichment";
+import { LEGACY_PLUGIN_ID, fnv1a32Hex, importLegacySettings, isEmptyPluginData, legacyNextcloudSecretId } from "./legacy-settings";
 import { validateRendererMessage, wrap } from "./protocol";
 import { VaultDataProvider, attachmentListFrom, folderListFrom, nodeRequire } from "./vault-provider";
 import {
@@ -35,7 +36,7 @@ import {
   type SyncSummary,
 } from "./nextcloud-sync";
 
-const VIEW_TYPE = "vault-kosmos-view";
+const VIEW_TYPE = "kosmos-oden-lite-view";
 
 /** Decode the self-contained constellation page (Three.js + core + renderer). */
 function kosmosHtml(): string {
@@ -70,15 +71,15 @@ class KosmosView extends ItemView {
 
   constructor(leaf: WorkspaceLeaf) { super(leaf); }
   getViewType(): string { return VIEW_TYPE; }
-  getDisplayText(): string { return "Vault Kosmos"; }
+  getDisplayText(): string { return "Kosmos-Oden-Lite"; }
   getIcon(): string { return "orbit"; }
 
   async onOpen(): Promise<void> {
     const root = this.contentEl;
     root.empty();
-    root.addClass("vault-kosmos-root");
+    root.addClass("kosmos-oden-lite-root");
     const frame = document.createElement("iframe");
-    frame.setAttribute("title", "Vault Kosmos");
+    frame.setAttribute("title", "Kosmos-Oden-Lite");
     // Defense-in-depth: the renderer is treated as a distinct, opaque-origin
     // context. It needs scripts (WebGL/Three.js), pointer lock (fly mode) and
     // downloads (exports); it does NOT get allow-same-origin, so it cannot reach
@@ -246,7 +247,7 @@ class KosmosView extends ItemView {
   }
 }
 
-export default class VaultKosmosPlugin extends Plugin {
+export default class KosmosOdenLitePlugin extends Plugin {
   agentSettings: AgentSettings = { ...DEFAULT_AGENT_SETTINGS };
   nextcloudSettings: NextcloudSettings = { ...DEFAULT_NEXTCLOUD_SETTINGS };
   nextcloudState: NextcloudSyncState = emptyNextcloudState();
@@ -286,7 +287,7 @@ export default class VaultKosmosPlugin extends Plugin {
         });
       });
     } catch (error) {
-      console.warn("Vault Kosmos: could not stamp note timestamps", file?.path, error);
+      console.warn("Kosmos-Oden-Lite: could not stamp note timestamps", file?.path, error);
     }
   }
 
@@ -295,17 +296,31 @@ export default class VaultKosmosPlugin extends Plugin {
   }
 
   startAgentApi(): void {
-    this.agentApi.start((msg) => new Notice("Vault Kosmos Agent API: " + msg));
+    this.agentApi.start((msg) => new Notice("Kosmos-Oden-Lite Agent API: " + msg));
     if (this.agentApi.status.startsWith("unavailable")) {
-      new Notice("Vault Kosmos: the Agent API needs desktop Obsidian.");
+      new Notice("Kosmos-Oden-Lite: the Agent API needs desktop Obsidian.");
+    }
+  }
+
+  /** Read the former plugin's data.json (read-only) with its settings keys renamed. */
+  private async readLegacySettings(): Promise<Record<string, unknown> | null> {
+    const path = `${this.app.vault.configDir}/plugins/${LEGACY_PLUGIN_ID}/data.json`;
+    try {
+      if (!(await this.app.vault.adapter.exists(path))) return null;
+      return importLegacySettings(JSON.parse(await this.app.vault.adapter.read(path)));
+    } catch (e) {
+      console.error("Kosmos-Oden-Lite: could not import settings from the old plugin folder:", e);
+      return null;
     }
   }
 
   async onload(): Promise<void> {
-    const persisted = await this.loadData();
+    let persisted = await this.loadData();
+    const imported = isEmptyPluginData(persisted) ? await this.readLegacySettings() : null;
+    if (imported) persisted = imported;
     this.agentSettings = migrateAgentSettings(persisted);
     this.nextcloudSettings = migrateNextcloudSettings(persisted?.nextcloud);
-    if (!persisted?.nextcloud) this.nextcloudSettings.remoteFolder = `Vault-Kosmos/${this.app.vault.getName()}`;
+    if (!persisted?.nextcloud) this.nextcloudSettings.remoteFolder = `Kosmos-Oden-Lite/${this.app.vault.getName()}`;
     const scope = syncScope(this.nextcloudSettings);
     this.nextcloudState = migrateNextcloudState(persisted?.nextcloudState, scope);
     this.nextcloudStatus = this.nextcloudSettings.serverUrl ? "Ready" : "Not configured";
@@ -317,8 +332,8 @@ export default class VaultKosmosPlugin extends Plugin {
       } catch (e: any) {
         // No secure RNG: leave the token empty. With agentRequireToken on, the
         // server rejects every request rather than accepting a weak token (§16).
-        console.error("Vault Kosmos:", e);
-        new Notice("Vault Kosmos: could not create a secure Agent API token; the API will refuse requests until one exists.");
+        console.error("Kosmos-Oden-Lite:", e);
+        new Notice("Kosmos-Oden-Lite: could not create a secure Agent API token; the API will refuse requests until one exists.");
       }
     }
     if (!this.agentSettings.agentGraphNamespace) {
@@ -327,7 +342,15 @@ export default class VaultKosmosPlugin extends Plugin {
         settingsChanged = true;
       } catch (_) { /* token failure above already leaves the API fail-closed */ }
     }
+    if (imported) {
+      settingsChanged = true;
+      try {
+        const legacySecret = this.app.secretStorage.getSecret(legacyNextcloudSecretId(this.app.vault.getName()));
+        if (legacySecret && !this.getNextcloudPassword()) this.setNextcloudPassword(legacySecret);
+      } catch (e) { console.error("Kosmos-Oden-Lite: could not import the Nextcloud password:", e); }
+    }
     if (settingsChanged) await this.saveAgentSettings();
+    if (imported) new Notice("Kosmos-Oden-Lite: settings were imported from the old Vault Kosmos plugin. The old plugin folder was left unchanged.");
     this.provider = new VaultDataProvider(this.app, () => ({ defaultSensitivity: this.agentSettings.agentDefaultSensitivity }));
     this.agentApi = new KosmosAgentServer(nodeRequire("http"), this.agentSettings, this.provider);
     this.addSettingTab(new KosmosSettingTab(this.app, this));
@@ -335,25 +358,25 @@ export default class VaultKosmosPlugin extends Plugin {
     this.addCommand({ id: "write-agent-api-guide", name: "Write Agent API guide (AGENT-API.md) to vault", callback: () => void this.writeAgentGuide() });
 
     this.registerView(VIEW_TYPE, (leaf) => new KosmosView(leaf));
-    this.addRibbonIcon("orbit", "Open Vault Kosmos", () => void this.activate());
-    this.addCommand({ id: "open-vault-kosmos", name: "Open Vault Kosmos", callback: () => void this.activate() });
+    this.addRibbonIcon("orbit", "Open Kosmos-Oden-Lite", () => void this.activate());
+    this.addCommand({ id: "open-kosmos-oden-lite", name: "Open Kosmos-Oden-Lite", callback: () => void this.activate() });
     this.addCommand({
-      id: "mark-notes-okf-plus",
-      name: "Scan and repair human-editable OKF+ formatting (back up and preview)",
-      callback: () => void this.markNotesInOkf(),
+      id: "mark-notes-gkx",
+      name: "Scan and repair human-editable GKX formatting (back up and preview)",
+      callback: () => void this.markNotesInGkx(),
     });
-    this.addCommand({ id: "propose-okf-plus-enrichment", name: "Re-scan editable OKF+ notes for label and relationship proposals", callback: () => void this.proposeOkfEnrichment() });
+    this.addCommand({ id: "propose-gkx-enrichment", name: "Re-scan editable GKX notes for label and relationship proposals", callback: () => void this.proposeGkxEnrichment() });
     this.addCommand({
-      id: "upgrade-all-notes-okf-plus-2-2",
-      name: "Convert recoverable notes to editable OKF+ 2.2 (preview first)",
-      callback: () => void this.markNotesInOkf("upgrade-all"),
+      id: "upgrade-all-notes-gkx-2-2",
+      name: "Convert recoverable notes to editable GKX 2.2 (preview first)",
+      callback: () => void this.markNotesInGkx("upgrade-all"),
     });
     this.addCommand({
-      id: "upgrade-all-notes-okf-plus-2-3",
-      name: "Convert recoverable notes to native OKF+ 2.3 (preview first)",
-      callback: () => void this.markNotesInOkf("convert-to-23"),
+      id: "upgrade-all-notes-gkx-2-3",
+      name: "Convert recoverable notes to native GKX 2.3 (preview first)",
+      callback: () => void this.markNotesInGkx("convert-to-23"),
     });
-    this.addCommand({ id: "export-graphiti-episodes", name: "Export Graphiti episodes (OKF+)", callback: () => void this.exportGraphitiEpisodes() });
+    this.addCommand({ id: "export-graphiti-episodes", name: "Export Graphiti episodes (GKX)", callback: () => void this.exportGraphitiEpisodes() });
     this.addCommand({ id: "sync-nextcloud-now", name: "Sync vault with Nextcloud now", callback: () => void this.runNextcloudSync(true) });
 
     // Don't react to the startup metadata-resolve storm; the view's initial load already
@@ -458,10 +481,7 @@ export default class VaultKosmosPlugin extends Plugin {
   }
 
   nextcloudSecretId(): string {
-    const source = `${this.manifest.id}-${this.app.vault.getName()}`.toLowerCase();
-    let hash = 2166136261;
-    for (let i = 0; i < source.length; i++) { hash ^= source.charCodeAt(i); hash = Math.imul(hash, 16777619); }
-    return `vault-kosmos-nextcloud-${(hash >>> 0).toString(16)}`;
+    return `kosmos-oden-lite-nextcloud-${fnv1a32Hex(`${this.manifest.id}-${this.app.vault.getName()}`.toLowerCase())}`;
   }
 
   getNextcloudPassword(): string { return this.app.secretStorage.getSecret(this.nextcloudSecretId()) || ""; }
@@ -473,16 +493,16 @@ export default class VaultKosmosPlugin extends Plugin {
     try {
       await new NextcloudWebDavClient(this.nextcloudSettings, this.getNextcloudPassword()).test();
       this.nextcloudStatus = "Connection successful";
-      new Notice("Vault Kosmos: Nextcloud connection successful");
+      new Notice("Kosmos-Oden-Lite: Nextcloud connection successful");
     } catch (e: any) {
       this.nextcloudStatus = `Connection failed: ${e?.message || String(e)}`;
-      new Notice(`Vault Kosmos: ${this.nextcloudStatus}`);
+      new Notice(`Kosmos-Oden-Lite: ${this.nextcloudStatus}`);
     }
   }
 
   async runNextcloudSync(showNotice = true): Promise<SyncSummary | null> {
     if (this.nextcloudSyncRunning) {
-      if (showNotice) new Notice("Vault Kosmos: a Nextcloud sync is already running");
+      if (showNotice) new Notice("Kosmos-Oden-Lite: a Nextcloud sync is already running");
       return null;
     }
     this.nextcloudSyncRunning = true;
@@ -497,23 +517,23 @@ export default class VaultKosmosPlugin extends Plugin {
       this.nextcloudStatus = result.errors.length
         ? `Completed with ${result.errors.length} error(s)`
         : `Synced: ${result.uploaded} up, ${result.downloaded} down, ${result.conflicts.length} conflict(s)`;
-      if (showNotice || result.errors.length || result.conflicts.length) new Notice(`Vault Kosmos: ${this.nextcloudStatus}`);
+      if (showNotice || result.errors.length || result.conflicts.length) new Notice(`Kosmos-Oden-Lite: ${this.nextcloudStatus}`);
       return result;
     } catch (e: any) {
       this.nextcloudStatus = `Sync failed: ${e?.message || String(e)}`;
-      if (showNotice) new Notice(`Vault Kosmos: ${this.nextcloudStatus}`);
+      if (showNotice) new Notice(`Kosmos-Oden-Lite: ${this.nextcloudStatus}`);
       return null;
     } finally { this.nextcloudSyncRunning = false; }
   }
 
   /** Audit the vault and open the explicit backup/approval gate. No LLM or
    * network route is involved; the core planner refuses ambiguous metadata. */
-  async markNotesInOkf(mode: OkfMigrationMode = "safe-onboarding"): Promise<void> {
-    await openOkfMigrationWorkflow(this.app, mode, () => this.provider.markFullDirty(), this.agentSettings);
+  async markNotesInGkx(mode: GkxMigrationMode = "safe-onboarding"): Promise<void> {
+    await openGkxMigrationWorkflow(this.app, mode, () => this.provider.markFullDirty(), this.agentSettings);
   }
 
-  async proposeOkfEnrichment(): Promise<void> {
-    await openOkfEnrichmentWorkflow(this.app, this.agentSettings, () => this.provider.markFullDirty());
+  async proposeGkxEnrichment(): Promise<void> {
+    await openGkxEnrichmentWorkflow(this.app, this.agentSettings, () => this.provider.markFullDirty());
   }
 
   async writeAgentGuide(): Promise<void> {
@@ -525,7 +545,7 @@ export default class VaultKosmosPlugin extends Plugin {
       installedBridgePath(this.app, this)
     );
     await this.app.vault.adapter.write("AGENT-API.md", md);
-    new Notice("Vault Kosmos: wrote AGENT-API.md to your vault root (with your address + token filled in)");
+    new Notice("Kosmos-Oden-Lite: wrote AGENT-API.md to your vault root (with your address + token filled in)");
   }
 
   onunload(): void {
@@ -545,13 +565,13 @@ export default class VaultKosmosPlugin extends Plugin {
     await this.app.vault.adapter.write("graphiti-episodes.json", JSON.stringify(episodes, null, 2));
     await this.app.vault.adapter.write("graphiti-ingestion-profile.json", JSON.stringify(graphitiIngestionProfile({ combinedExtraction: this.agentSettings.graphitiCombinedExtraction }), null, 2));
     await this.app.vault.adapter.write("graphiti-ingest-sample.py", SAMPLE_INGEST_PY);
-    new Notice(`Vault Kosmos: exported ${episodes.length} KGCP/Graphiti episodes, ingestion profile, and pinned sample script`);
+    new Notice(`Kosmos-Oden-Lite: exported ${episodes.length} KGCP/Graphiti episodes, ingestion profile, and pinned sample script`);
   }
 }
 
 /** Sample Graphiti ingestion script written next to the export. */
 const SAMPLE_INGEST_PY = `#!/usr/bin/env python3
-# Ingest an Obsidian vault (exported by Vault Kosmos v${KOSMOS_VERSION}, OKF+) into Graphiti.
+# Ingest an Obsidian vault (exported by Kosmos-Oden-Lite v${KOSMOS_VERSION}, GKX) into Graphiti.
 # Graphiti: https://github.com/getzep/graphiti
 #
 #   pip install "graphiti-core[falkordb]==${GRAPHITI_CORE_VERSION}"   # tested pin; security floor is >=0.28.2
@@ -591,7 +611,7 @@ async def main(path: str) -> None:
     started = time.perf_counter()
     completed = 0
     try:
-        for e in episodes:  # chronological order preserves OKF+ knowledge chains
+        for e in episodes:  # chronological order preserves GKX knowledge chains
             body = json.loads(e["episode_body"])
             saga = body.get("saga") or {}
             await g.add_episode(

@@ -21,10 +21,10 @@ test("CRITICAL: one-sided `supersedes` invalidates the predecessor (§3.1)", () 
   const v1 = byId(graph, "file:Ideas/Engine v1.md");
   const v2 = byId(graph, "file:Ideas/Engine v2.md");
   // v1 never declared superseded_by, yet the canonical model derives it:
-  assert.deepEqual(v1.okf.supersededByIds, ["file:Ideas/Engine v2.md"]);
-  assert.equal(v1.okf.invalidAt, v2.validAt);
-  assert.equal(v1.okf.head, false);
-  assert.equal(v2.okf.head, true);
+  assert.deepEqual(v1.gkx.supersededByIds, ["file:Ideas/Engine v2.md"]);
+  assert.equal(v1.gkx.invalidAt, v2.validAt);
+  assert.equal(v1.gkx.head, false);
+  assert.equal(v2.gkx.head, true);
   assert.equal(graph.diagnostics.lineageEdges, 1);
 });
 
@@ -38,10 +38,10 @@ test("one-sided `superseded_by` produces the same canonical lineage", () => {
   );
   const v1 = byId(graph, "file:a v1.md");
   const v2 = byId(graph, "file:a v2.md");
-  assert.deepEqual(v1.okf.supersededByIds, ["file:a v2.md"]);
-  assert.deepEqual(v2.okf.supersedesIds, ["file:a v1.md"]);
-  assert.equal(v1.okf.invalidAt, v2.validAt);
-  assert.equal(v2.okf.head, true);
+  assert.deepEqual(v1.gkx.supersededByIds, ["file:a v2.md"]);
+  assert.deepEqual(v2.gkx.supersedesIds, ["file:a v1.md"]);
+  assert.equal(v1.gkx.invalidAt, v2.validAt);
+  assert.equal(v2.gkx.head, true);
 });
 
 test("both sides declared -> ONE deduplicated canonical edge", () => {
@@ -72,7 +72,7 @@ test("self-supersession is ignored with a warning", () => {
   const graph = buildGraph([note("self.md", "type: idea\ntimestamp: 2026-01-01\nsupersedes:\n  - self")], []);
   assert.equal(graph.diagnostics.lineageEdges, 0);
   assert.ok(graph.diagnostics.lineageWarnings.some((w) => w.includes("self-supersession")));
-  assert.equal(byId(graph, "file:self.md").okf.head, false); // no lineage participation
+  assert.equal(byId(graph, "file:self.md").gkx.head, false); // no lineage participation
 });
 
 test("cycles are detected and reported, graph survives (§3.5)", () => {
@@ -104,7 +104,7 @@ test("multiple direct successors: earliest successor wins invalid_at, warning em
     []
   );
   const v1 = byId(graph, "file:v1.md");
-  assert.equal(v1.okf.invalidAt, byId(graph, "file:v2b.md").validAt); // earliest successor
+  assert.equal(v1.gkx.invalidAt, byId(graph, "file:v2b.md").validAt); // earliest successor
   assert.ok(graph.diagnostics.lineageWarnings.some((w) => w.includes("multiple-successors")));
 });
 
@@ -128,7 +128,7 @@ test("HEAD is derived from lineage participation, never from a frontmatter field
     ],
     []
   );
-  assert.equal(byId(graph, "file:plain.md").okf.head, false);
-  assert.equal(byId(graph, "file:v1.md").okf.head, false);
-  assert.equal(byId(graph, "file:v2.md").okf.head, true);
+  assert.equal(byId(graph, "file:plain.md").gkx.head, false);
+  assert.equal(byId(graph, "file:v1.md").gkx.head, false);
+  assert.equal(byId(graph, "file:v2.md").gkx.head, true);
 });

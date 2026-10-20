@@ -1,11 +1,11 @@
-import type { OkfMigrationEntry } from "./okf-migration";
+import type { GkxMigrationEntry } from "./gkx-migration";
 
-export type OkfBlockedReviewClass = "mechanical" | "identity-decision" | "relationship-decision" | "privacy-decision" | "mixed" | "unknown";
+export type GkxBlockedReviewClass = "mechanical" | "identity-decision" | "relationship-decision" | "privacy-decision" | "mixed" | "unknown";
 
-export interface OkfBlockedModelReview {
+export interface GkxBlockedModelReview {
   path: string;
   noteHash: string;
-  classification: OkfBlockedReviewClass;
+  classification: GkxBlockedReviewClass;
   summary: string;
   manualSteps: string[];
   questionsForHuman: string[];
@@ -13,7 +13,7 @@ export interface OkfBlockedModelReview {
   evidenceFindingCodes: string[];
 }
 
-const REVIEW_CLASSES = new Set<OkfBlockedReviewClass>(["mechanical", "identity-decision", "relationship-decision", "privacy-decision", "mixed", "unknown"]);
+const REVIEW_CLASSES = new Set<GkxBlockedReviewClass>(["mechanical", "identity-decision", "relationship-decision", "privacy-decision", "mixed", "unknown"]);
 const REDACTED_KEY = /^\s*[^:#]*(?:token|password|passwd|secret|api[_-]?key|access[_-]?key|private[_-]?key|authorization)[^:]*:/i;
 const INLINE_REDACTED_KEY = /[{,]\s*["']?[^,:{}]*(?:token|password|passwd|secret|api[_-]?key|access[_-]?key|private[_-]?key|authorization)[^,:{}]*["']?\s*:/i;
 
@@ -35,7 +35,7 @@ function redactLikelyCredentials(lines: string[]): string[] {
 }
 
 /** Return only a provably bounded YAML header; never guess where an unterminated header ends. */
-export function boundedOkfBlockedFrontmatter(content: string, maxChars: number): { excerpt: string; reason?: string } {
+export function boundedGkxBlockedFrontmatter(content: string, maxChars: number): { excerpt: string; reason?: string } {
   const source = content.charCodeAt(0) === 0xfeff ? content.slice(1) : content;
   const lines = source.split(/\r?\n/);
   if (lines[0]?.trim() !== "---") return { excerpt: "", reason: "No bounded frontmatter section was found; only deterministic findings were sent." };
@@ -52,10 +52,10 @@ function boundedStrings(value: unknown, maxItems: number, maxChars: number): str
 }
 
 /** Validate advisory JSON and require citations to deterministic blocker codes. */
-export function validateOkfBlockedModelReview(value: unknown, entry: OkfMigrationEntry): OkfBlockedModelReview {
+export function validateGkxBlockedModelReview(value: unknown, entry: GkxMigrationEntry): GkxBlockedModelReview {
   const row: any = value;
   const findingCodes = new Set(entry.review.reasons.map((finding) => finding.code));
-  const classification: OkfBlockedReviewClass = REVIEW_CLASSES.has(row?.classification) ? row.classification : "unknown";
+  const classification: GkxBlockedReviewClass = REVIEW_CLASSES.has(row?.classification) ? row.classification : "unknown";
   const summary = typeof row?.summary === "string" ? row.summary.trim().slice(0, 700) : "";
   const confidence = Number(row?.confidence);
   if (!summary || !Number.isFinite(confidence) || confidence < 0 || confidence > 1) throw new Error("model review failed the advisory schema");

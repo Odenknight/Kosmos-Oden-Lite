@@ -99,7 +99,7 @@ export function createStandaloneUI(handlers: StandaloneUIHandlers): StandaloneUI
     overlay.innerHTML = "";
     const card = document.createElement("div");
     card.className = "ko-card";
-    card.innerHTML = `<h2>Vault Kosmos — Standalone</h2>
+    card.innerHTML = `<h2>Kosmos-Oden-Lite — Standalone</h2>
       <p class="ko-sub">Open a folder of Markdown notes (an Obsidian vault or any knowledge base) and explore it as a 3D cosmos. Everything runs locally in this page — nothing is uploaded, nothing is modified.</p>`;
     const mkBtn = (label: string, sub: string, ghost: boolean, onClick: () => void) => {
       const b = document.createElement("button");

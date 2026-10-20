@@ -54,7 +54,7 @@ test("Nextcloud URL builder supports instance roots, DAV roots, subpaths, and sa
 });
 
 test("exclusions and path validation block plugin metadata and traversal", () => {
-  assert.equal(isExcluded(".obsidian/plugins/vault-kosmos-oden/data.json", [".obsidian/**"]), true);
+  assert.equal(isExcluded(".obsidian/plugins/kosmos-oden-lite/data.json", [".obsidian/**"]), true);
   assert.equal(isExcluded("Notes/a.md", [".obsidian/**"]), false);
   assert.equal(isExcluded("private/a.md", ["private/**"]), true);
   assert.equal(safeRelativePath("Notes/a.md"), true);
@@ -70,7 +70,8 @@ test(".obsidian sync is selectable while Kosmos credential state stays protected
   const enabledPatterns = effectiveSyncExcludes(enabled);
   assert.equal(isExcluded(".obsidian/hotkeys.json", enabledPatterns), false);
   assert.equal(isExcluded(".obsidian/plugins/example/data.json", enabledPatterns), false);
-  assert.equal(isExcluded(".obsidian/plugins/vault-kosmos-oden/data.json", enabledPatterns), true);
+  assert.equal(isExcluded(".obsidian/plugins/kosmos-oden-lite/data.json", enabledPatterns), true);
+  assert.equal(isExcluded(".obsidian/plugins/vault-kosmos-oden/data.json", enabledPatterns), true, "former plugin folder stays protected");
 });
 
 test("sync state resets when the remote scope changes", () => {

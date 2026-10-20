@@ -21,7 +21,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const rel = resolve(root, "release");
 const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 
-const ARTIFACTS = ["manifest.json", "main.js", "styles.css", "versions.json", "vault-kosmos.html", "kosmos-mcp-stdio.mjs"];
+const ARTIFACTS = ["manifest.json", "main.js", "styles.css", "versions.json", "kosmos-oden-lite.html", "kosmos-mcp-stdio.mjs"];
 
 function git(cmd, fallback = "") {
   try { return execSync(`git ${cmd}`, { cwd: root, stdio: ["ignore", "pipe", "ignore"] }).toString().trim(); }
@@ -46,7 +46,7 @@ const lockHash = (() => {
 
 const buildInfo = {
   schemaVersion: 1,
-  project: "vault-kosmos",
+  project: "kosmos-oden-lite",
   version: pkg.version,
   repository: "https://github.com/Odenknight/Kosmos-Oden",
   gitCommit: process.env.GITHUB_SHA || git("rev-parse HEAD"),

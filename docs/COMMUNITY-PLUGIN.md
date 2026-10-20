@@ -8,12 +8,12 @@ viewer** stay cleanly separated, and how to publish and submit it.
 | Kind | Files | Where it lives | How a user gets it |
 |---|---|---|---|
 | **Plugin** | `manifest.json`, `styles.css`, `versions.json` (committed) + `main.js` (build output, gitignored) | source at repo root; all four attached to each release | Obsidian **Community plugins** browser / BRAT — Obsidian downloads only these files from the release |
-| **Standalone** | `vault-kosmos.html` (one self-contained file) | **not** committed (build output); attached to each release as its own asset | download the single file from the **Releases** page and open it in a browser |
+| **Standalone** | `kosmos-oden-lite.html` (one self-contained file) | **not** committed (build output); attached to each release as its own asset | download the single file from the **Releases** page and open it in a browser |
 
 The standalone is **never** part of the plugin download — Obsidian only fetches
-`manifest.json` / `main.js` / `styles.css`. `vault-kosmos.html` is a separate,
+`manifest.json` / `main.js` / `styles.css`. `kosmos-oden-lite.html` is a separate,
 independently downloadable asset on the same release. Build outputs
-(`main.js`, `vault-kosmos.html`, `dist/`) are gitignored so the tracked tree
+(`main.js`, `kosmos-oden-lite.html`, `dist/`) are gitignored so the tracked tree
 shows only source + `manifest.json`/`styles.css`/`versions.json`; CI rebuilds
 `main.js` fresh on every push and attaches it to tagged releases.
 
@@ -49,8 +49,8 @@ adding an entry to `community-plugins.json`:
 
 ```json
 {
-  "id": "vault-kosmos",
-  "name": "Vault Kosmos (Kosmos-Oden)",
+  "id": "kosmos-oden-lite",
+  "name": "Kosmos-Oden-Lite",
   "author": "OdenKnight",
   "description": "A 3D constellation view of your notes …",
   "repo": "Odenknight/Kosmos-Oden"
@@ -59,7 +59,7 @@ adding an entry to `community-plugins.json`:
 
 Pre-flight checklist (Obsidian bot + reviewers check these):
 - [ ] `manifest.json` at repo root with `id`, `name`, `version`, `minAppVersion`, `description`, `author`, `isDesktopOnly`. ✔ (current)
-- [ ] `id` is unique, lowercase-hyphen, no "obsidian"/"plugin". ✔ `vault-kosmos`
+- [ ] `id` is unique, lowercase-hyphen, no "obsidian"/"plugin". ✔ `kosmos-oden-lite`
 - [ ] `name` does not contain "Obsidian". ✔
 - [ ] A GitHub **release whose tag == manifest version, no `v` prefix**, with `manifest.json`, `main.js`, `styles.css` as individual assets. ← use the flow above (the only prior tag, `v0.5.1`, is prefixed and pre-dates this policy).
 - [ ] `versions.json` maps plugin version → minAppVersion. ✔
@@ -75,4 +75,4 @@ Browse**. Subsequent releases are picked up automatically from new tags.
   install directly from releases, including `0.6.0-beta.*` pre-releases for the
   r185 renderer line.
 - **Manual**: copy `manifest.json` + `main.js` + `styles.css` into
-  `<vault>/.obsidian/plugins/vault-kosmos/` and enable it.
+  `<vault>/.obsidian/plugins/kosmos-oden-lite/` and enable it.

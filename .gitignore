@@ -7,12 +7,12 @@ release/
 # Generated build outputs — rebuilt by `npm run build`, attached to GitHub
 # Releases by CI (not committed). The committed plugin components are only
 # manifest.json + styles.css + versions.json (+ source). The standalone viewer
-# (vault-kosmos.html) is a separate release download, kept out of the tracked
+# (kosmos-oden-lite.html) is a separate release download, kept out of the tracked
 # tree so the plugin footprint stays clean. main.js is also generated (embeds
 # the iframe page as base64) — rebuilding on Windows re-encodes its embedded
 # HTML's line endings even with no source change, producing spurious diffs;
 # it's rebuilt by CI and attached to each release like the rest.
-vault-kosmos.html
+kosmos-oden-lite.html
 dist/
 main.js
 

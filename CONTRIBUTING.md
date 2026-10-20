@@ -24,7 +24,7 @@ npm run verify     # typecheck + build + test + version/artifact/invariant check
 - New behavior has tests; fixed defects get a regression test.
 - Security-relevant changes keep `npm run check:invariants` green (see
   `kosmos-invariants.yml`).
-- Generated/build artifacts (`main.js`, `vault-kosmos.html`, `dist/`) are **not
+- Generated/build artifacts (`main.js`, `kosmos-oden-lite.html`, `dist/`) are **not
   committed** — CI rebuilds them from source on every push and attaches them to
   tagged releases. Run `npm run build` locally to produce a working `main.js`
   for manual testing; don't commit it.

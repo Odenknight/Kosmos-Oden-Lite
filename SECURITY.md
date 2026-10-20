@@ -49,6 +49,7 @@ Nextcloud app passwords are stored under a per-vault identifier in Obsidian
 Secret Storage (Obsidian 1.11.4+), not in plugin `data.json`. Kosmos-Oden never
 logs the password. Prefer a dedicated, revocable Nextcloud app password and
 HTTPS; plain HTTP is rejected except for literal private/loopback addresses.
-When `.obsidian` synchronization is enabled, Vault Kosmos still forcibly
-excludes `.obsidian/plugins/vault-kosmos/data.json` so device-local state and
+When `.obsidian` synchronization is enabled, Kosmos-Oden-Lite still forcibly
+excludes `.obsidian/plugins/kosmos-oden-lite/data.json` (and the former plugin
+folder's `data.json`, which the one-time settings import leaves in place) so device-local state and
 the Agent API token cannot be synchronized.

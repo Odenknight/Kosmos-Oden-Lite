@@ -36,9 +36,9 @@ five different interpretations of the same vault.
 | `types.ts` | Shared types: nodes, links, graph, diagnostics, lineage/temporal models. |
 | `paths.ts` | POSIX path normalization, note/attachment classification, deterministic hashes. |
 | `markdown.ts` | Tolerant frontmatter + wikilink/markdown/property link parsing. |
-| `okf.ts` | Flat OKF+ 2.2 metadata, typed relations, compatibility aliases, and legacy `**Related:**` parsing (declarations only). |
-| `okf23.ts` | Source-preserving nested OKF+ 2.3 parser, origin-separated validating projection, deterministic policy/assessment, labels, and structured diagnostics. |
-| `okf-migration.ts` | Strict Google OKF/OKF+ conformance audit plus deterministic, hash-bound OKF+ onboarding proposals; no Obsidian or LLM dependency. |
+| `gkx.ts` | Flat GKX 2.2 metadata, typed relations, compatibility aliases, and legacy `**Related:**` parsing (declarations only). |
+| `gkx23.ts` | Source-preserving nested GKX 2.3 parser, origin-separated validating projection, deterministic policy/assessment, labels, and structured diagnostics. |
+| `gkx-migration.ts` | Strict Google OKF/GKX conformance audit plus deterministic, hash-bound GKX onboarding proposals; no Obsidian or LLM dependency. |
 | `resolver.ts` | Link/title resolution with ambiguity tracking. |
 | `lineage.ts` | **Canonical lineage normalization** — one `NEWER→OLDER` edge set from either declared side; validation (cycles, self-ref, unresolved, multi-successor, ordering, duplicates, ambiguity). |
 | `temporal.ts` | `valid_at`/`invalid_at`, HEAD derivation, and the **one** point-in-time projector. |
@@ -61,17 +61,17 @@ page) and streams the vault in via the versioned `postMessage` protocol
 (`protocol.ts`). `agent-server.ts` is a framework-free HTTP + MCP server
 (unit-testable in Node) backed by `vault-provider.ts`, which owns a
 `KosmosIndex` so the API answers from the *same* normalized graph the viewer
-renders, filtered by the configured OKF+ sensitivity ceiling. `settings.ts`
+renders, filtered by the configured GKX sensitivity ceiling. `settings.ts`
 provides Anthropic, OpenAI, stdio, and vendor-neutral quick-connect configs;
 the release's `kosmos-mcp-stdio.mjs` preserves MCP lifecycle headers for
-stdio-only harnesses. `okf-migration.ts` hosts the explicit structural
-audit/backup/apply modal. `okf-enrichment.ts` builds deterministic and optional
-bounded-LLM proposals; `okf-enrichment-apply.ts` keeps the later human review,
+stdio-only harnesses. `gkx-migration.ts` hosts the explicit structural
+audit/backup/apply modal. `gkx-enrichment.ts` builds deterministic and optional
+bounded-LLM proposals; `gkx-enrichment-apply.ts` keeps the later human review,
 hash-bound decision plan, backup, source recheck, and write authority in a
-separate step. `okf-blocked-review.ts` is an on-device/private-LAN-only,
+separate step. `gkx-blocked-review.ts` is an on-device/private-LAN-only,
 advisory boundary for
 migration blockers; it shares the bounded JSON request transport in
-`okf-llm.ts` but has no route into either writer.
+`gkx-llm.ts` but has no route into either writer.
 
 `nextcloud-sync-core.ts` contains DOM-free settings migration, URL/path
 validation, exclusions, and the deterministic three-way planner.
@@ -91,15 +91,15 @@ plugin data.
 `scripts/build.mjs` is the deterministic generator (Doc1 §3.3): modular TS →
 esbuild bundle → inlined into single-file HTML with `vendor/three.min.js`.
 Outputs: `main.js` (plugin, embeds `dist/kosmos-embed.html` as base64),
-`vault-kosmos.html` (standalone), and `dist/*.mjs` node bundles for the CLI and
+`kosmos-oden-lite.html` (standalone), and `dist/*.mjs` node bundles for the CLI and
 tests. Executable artifacts are byte-reproducible across clean builds (verified
 by a CI job); volatile metadata lives only in `release/BUILD-INFO.json`.
 
 ## Read/write boundary
 
 Read-only: visualization, ordinary directory scanning, Agent API, MCP/REST
-queries, Chrono, in-memory Graphiti generation, and the initial OKF audit.
-Writes happen only through explicit, named, user-triggered commands. The OKF+
+queries, Chrono, in-memory Graphiti generation, and the initial GKX audit.
+Writes happen only through explicit, named, user-triggered commands. The GKX
 migrator has a separate approval boundary: save-audit writes only a content-free
 plan; apply requires backup/sensitivity confirmations, writes binary backups,
 and edits only sources still identical to the approved hash-bound plan.

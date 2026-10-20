@@ -5,7 +5,7 @@ import { test, expect } from "@playwright/test";
  * (CI/CD directive §7.4). Uses deterministic capture mode so the scene boots
  * without a folder picker. Run after `npm run build`.
  */
-const CAPTURE = "/vault-kosmos.html?capture=1&seed=1907&time=0&dpr=1&quality=high&camera=overview&animation=off";
+const CAPTURE = "/kosmos-oden-lite.html?capture=1&seed=1907&time=0&dpr=1&quality=high&camera=overview&animation=off";
 
 test("standalone boots the r185 WebGL2 renderer and draws the demo cosmos", async ({ page }) => {
   const errors: string[] = [];
@@ -69,7 +69,7 @@ test("agent traversal renders a breadcrumb plus bounded comet dust", async ({ pa
 });
 
 test("primary controls remain inside compact-desktop and mobile viewports", async ({ page }) => {
-  await page.goto("/vault-kosmos.html");
+  await page.goto("/kosmos-oden-lite.html");
   await page.getByRole("button", { name: /Load Demo/ }).click();
   await page.waitForFunction(() => document.getElementById("boot")?.classList.contains("gone"), null, { timeout: 15_000 });
   for (const viewport of [
@@ -104,7 +104,7 @@ test("primary controls remain inside compact-desktop and mobile viewports", asyn
 });
 
 test("constellation key and minimap can be shown from the toolbar", async ({ page }) => {
-  await page.goto("/vault-kosmos.html");
+  await page.goto("/kosmos-oden-lite.html");
   await page.getByRole("button", { name: /Load Demo/ }).click();
   await page.waitForFunction(() => document.getElementById("boot")?.classList.contains("gone"), null, { timeout: 15_000 });
   await page.setViewportSize({ width: 1280, height: 720 });
