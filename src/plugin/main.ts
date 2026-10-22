@@ -310,8 +310,15 @@ export default class KosmosOdenLitePlugin extends Plugin {
       return importLegacySettings(JSON.parse(await this.app.vault.adapter.read(path)));
     } catch (e) {
       console.error("Kosmos-Oden-Lite: could not import settings from the old plugin folder:", e);
+      new Notice("Kosmos-Oden-Lite: the old Vault Kosmos settings could not be read, so defaults are used. Re-enter your settings, or fix the old data.json and reinstall.");
       return null;
     }
+  }
+
+  /** True while the pre-rename plugin is also enabled in this vault. Both would
+   *  bind the same Agent API port and sync the same Nextcloud folder. */
+  private legacyPluginEnabled(): boolean {
+    try { return (this.app as any).plugins?.enabledPlugins?.has?.(LEGACY_PLUGIN_ID) === true; } catch { return false; }
   }
 
   async onload(): Promise<void> {
@@ -350,11 +357,13 @@ export default class KosmosOdenLitePlugin extends Plugin {
       } catch (e) { console.error("Kosmos-Oden-Lite: could not import the Nextcloud password:", e); }
     }
     if (settingsChanged) await this.saveAgentSettings();
-    if (imported) new Notice("Kosmos-Oden-Lite: settings were imported from the old Vault Kosmos plugin. The old plugin folder was left unchanged.");
+    if (imported) new Notice("Kosmos-Oden-Lite: settings were imported from the old Vault Kosmos plugin. The old plugin folder was left unchanged. Disable the old plugin.");
+    const legacyEnabled = this.legacyPluginEnabled();
+    if (legacyEnabled) new Notice("Kosmos-Oden-Lite: the old Vault Kosmos plugin is still enabled. The Agent API and startup sync stay off until you disable it and reload.", 15000);
     this.provider = new VaultDataProvider(this.app, () => ({ defaultSensitivity: this.agentSettings.agentDefaultSensitivity }));
     this.agentApi = new KosmosAgentServer(nodeRequire("http"), this.agentSettings, this.provider);
     this.addSettingTab(new KosmosSettingTab(this.app, this));
-    if (this.agentSettings.agentEnabled) this.startAgentApi();
+    if (this.agentSettings.agentEnabled && !legacyEnabled) this.startAgentApi();
     this.addCommand({ id: "write-agent-api-guide", name: "Write Agent API guide (AGENT-API.md) to vault", callback: () => void this.writeAgentGuide() });
 
     this.registerView(VIEW_TYPE, (leaf) => new KosmosView(leaf));
@@ -384,7 +393,7 @@ export default class KosmosOdenLitePlugin extends Plugin {
     this.app.workspace.onLayoutReady(() => {
       this.eventsLive = true;
       this.provider.markFullDirty();
-      if (this.nextcloudSettings.enabled && this.nextcloudSettings.syncOnStartup) {
+      if (this.nextcloudSettings.enabled && this.nextcloudSettings.syncOnStartup && !legacyEnabled) {
         this.startupSyncTimer = window.setTimeout(() => {
           this.startupSyncTimer = null;
           void this.runNextcloudSync(false);

@@ -40,7 +40,7 @@ test("legacy settings import renames former okf* keys to gkx* and keeps everythi
 
 test("legacy settings import prefers an existing gkx* key and rejects non-objects", () => {
   assert.deepEqual(importLegacySettings({ okfEnrichmentModel: "old", gkxEnrichmentModel: "new" }), { gkxEnrichmentModel: "new" });
-  for (const bad of [null, undefined, "x", 3, [1, 2]]) assert.equal(importLegacySettings(bad), null);
+  for (const bad of [null, undefined, "x", 3, [1, 2], {}]) assert.equal(importLegacySettings(bad), null);
 });
 
 test("empty plugin data triggers the import; saved data does not", () => {

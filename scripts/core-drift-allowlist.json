@@ -94,6 +94,10 @@
       "reason": "Import-order delta only: the type-only Gkx23ProjectionOptions import sits after the ./paths import. Code identical.",
       "fingerprint": "sha256:5c76ce2947127a2f985e517a5d0cf119"
     },
+    "paths.ts": {
+      "reason": "Pre-rename state folder: '.okf' (backups, migration and enrichment copies written by builds before the GKX rename) stays in DEFAULT_IGNORED_DIRS so scanners skip it instead of reading those copies as duplicate notes. Skipping is not an alias: nothing under .okf is read as GKX data. Found by independent review 2026-10-22; the engine has the same gap upstream.",
+      "fingerprint": "sha256:505367e6ab2eedd9cea16b6111e8c5be"
+    },
     "types.ts": {
       "reason": "Product identity: GkxAssessment.assessor.id is typed as the literal \"tool:kosmos-oden\" to match gkx23.ts.",
       "fingerprint": "sha256:781fbfb982170a8e92f432583d022dca"

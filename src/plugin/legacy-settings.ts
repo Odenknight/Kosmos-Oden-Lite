@@ -26,7 +26,7 @@ export function isEmptyPluginData(data: unknown): boolean {
  * Rename former settings keys (okf* to gkx*). Every other key and every value,
  * including nested Nextcloud settings and sync state, is kept unchanged. A key
  * already present under its new name wins over its former name. Returns null
- * for data that is not a settings object.
+ * for data that is not a settings object or holds no settings.
  */
 export function importLegacySettings(raw: unknown): Record<string, unknown> | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
@@ -40,7 +40,7 @@ export function importLegacySettings(raw: unknown): Record<string, unknown> | nu
     const renamed = KEY_PREFIX + key.slice(LEGACY_KEY_PREFIX.length);
     if (!(renamed in out)) out[renamed] = value;
   }
-  return out;
+  return Object.keys(out).length ? out : null;
 }
 
 /** FNV-1a 32-bit hash as lowercase hex; used for per-vault Secret Storage ids. */
