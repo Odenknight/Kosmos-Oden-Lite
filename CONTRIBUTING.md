@@ -83,3 +83,10 @@ self-approve one (Doc2 §9).
 
 - Keep commits focused; describe the "why".
 - The PR template lists the checklist reviewers (human or agent) will verify.
+
+## Contributor License Agreement
+
+Before an outside contribution can be merged, you must accept [CLA.md](CLA.md):
+put `I have read and agree to CLA.md v0.1` in the pull request and sign off each
+commit with `git commit -s`. See also [AUTHORSHIP.md](AUTHORSHIP.md) and
+[TRADEMARKS.md](TRADEMARKS.md).
