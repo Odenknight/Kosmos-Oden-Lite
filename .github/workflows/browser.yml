@@ -48,10 +48,10 @@ jobs:
       # pinning it into the offline runtime bundle.
       - name: Install Playwright + Chromium
         run: |
-          npm install --no-save --save-exact @playwright/test@1.48.2
-          # Playwright 1.48 maps unsupported distributions (the r720-ci pool's Debian 13
-          # image) to Ubuntu 20.04 packages, which apt cannot install there. Fall back to
-          # the browser alone; the test step then shows any missing system library.
+          # Uses the repository's pinned @playwright/test (package.json), which knows
+          # the r720-ci pool's Debian 13 image. If the system-dependency install still
+          # fails on a runner, fall back to the browser alone; the test step then shows
+          # any missing system library.
           npx playwright install --with-deps chromium || {
             echo "::warning title=Playwright::system dependency install failed on this runner; installing browsers only"
             npx playwright install chromium
