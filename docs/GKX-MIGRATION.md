@@ -18,6 +18,17 @@ Kosmos. Google's current primary specification is
 
 ## Workflow and warnings
 
+For strict Engine ingestion, use **Convert to native GKX 2.3**. Editable
+2.2 remains a compatibility authoring surface; it is not native 2.3 output.
+The current Engine ingestion validator requires a strict 2.3 projection and
+reports `GKX_INGEST_PROFILE_VERSION_REQUIRED` for compatibility input. This
+does not mean that a successful 2.2 conversion passed strict ingestion.
+
+Notes carrying the historical `okf_version` key are reported as **Legacy
+OKF**, separately from Google's draft. A safe scan leaves them unchanged;
+explicit conversion removes that obsolete key while preserving note identity
+and body. Review the plan and retain the original backup before applying it.
+
 The beta.12 workflow offers three explicit modes:
 
 - **Scan and repair** leaves valid editable 2.2, genuinely authored native 2.3,
