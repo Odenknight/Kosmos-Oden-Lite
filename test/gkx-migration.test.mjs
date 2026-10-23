@@ -1,5 +1,34 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+
+test("old OKF metadata is not attributed to Google's draft", async () => {
+  const content = validGkx.replace('gkx_version: "2.2"', 'okf_version: "2.2"');
+  const audit = await createGkxMigrationPlan([{ path: "Legacy.md", content }], options());
+  assert.equal(audit.entries[0].standard, "Legacy OKF");
+  assert.equal(audit.entries[0].status, "legacy-okf");
+  assert.equal(audit.totals["legacy-okf"], 1);
+  assert.equal(audit.totals["google-okf-0.1"], 0);
+  assert.equal(audit.entries[0].proposedContent, undefined);
+  const converted = await createGkxMigrationPlan([{ path: "Legacy.md", content }], { ...options(), mode: "convert-to-23" });
+  assert.equal(converted.entries[0].standard, "Legacy OKF");
+  assert.equal(converted.entries[0].findings[0].code, "upgrade-legacy-okf");
+});
+
+
+test("explicit conversion consumes the legacy version key without changing identity or body", async () => {
+  const source = validGkx.replace('gkx_version: "2.2"', 'okf_version: "2.2"');
+  for (const mode of ["upgrade-all", "convert-to-23"]) {
+    const plan = await createGkxMigrationPlan([{ path: "Legacy.md", content: source }], { ...options(), mode });
+    const entry = plan.entries[0];
+    assert.equal(entry.status, "needs-gkx");
+    assert.equal(entry.uid, "11111111-1111-4111-8111-111111111111");
+    assert.doesNotMatch(entry.proposedContent, /^okf_version:/m);
+    assert.match(entry.proposedContent, mode === "convert-to-23" ? /^gkx_version: "2.3"$/m : /^gkx_version: "2.2"$/m);
+    assert.ok(entry.proposedContent.endsWith("---\nBody.\n"));
+    assert.equal(await verifyGkxMigrationPlan(plan), true);
+  }
+});
+
 import {
   createGkxMigrationPlan,
   publicGkxMigrationPlan,
