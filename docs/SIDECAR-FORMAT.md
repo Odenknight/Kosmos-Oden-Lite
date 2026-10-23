@@ -1,15 +1,15 @@
-# OKF+ 2.3 Sidecar Boundary
+# GKX 2.3 Sidecar Boundary
 
 Reserved sidecar locations are:
 
 ```text
-.okf/assessments/<uid>.assessment.yaml
-.okf/proposals/<proposal-id>.yaml
-.okf/decisions/<decision-id>.yaml
-.okf/diagnostics/<uid>.diagnostics.yaml
-.okf/policy/
-.okf/schema/
-.okf/cache/
+.gkx/assessments/<uid>.assessment.yaml
+.gkx/proposals/<proposal-id>.yaml
+.gkx/decisions/<decision-id>.yaml
+.gkx/diagnostics/<uid>.diagnostics.yaml
+.gkx/policy/
+.gkx/schema/
+.gkx/cache/
 ```
 
 Beta.11 assessments and validation are in-memory read projections. REST and MCP

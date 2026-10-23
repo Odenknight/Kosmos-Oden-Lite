@@ -1,7 +1,7 @@
 /**
  * Kosmos standalone — entry point (§5, §19).
  *
- * A genuine offline single-file viewer: open vault-kosmos.html from disk,
+ * A genuine offline single-file viewer: open kosmos-oden-lite.html from disk,
  * click "Open Knowledge Folder", and the directory renders with the exact
  * same Kosmos Core semantics as the Obsidian plugin, the Agent API and the
  * kosmos-build CLI. No Obsidian, Node, server or network required.
@@ -59,7 +59,7 @@ function pickCoreNode(n: any) {
   return {
     id: n.id, kind: n.kind, path: n.path, label: n.label, area: n.area, depth: n.depth,
     extension: n.extension, size: n.size, createdAt: n.createdAt, updatedAt: n.updatedAt,
-    validAt: n.validAt, okf: n.okf, type: n.type, status: n.status, priority: n.priority,
+    validAt: n.validAt, gkx: n.gkx, type: n.type, status: n.status, priority: n.priority,
     tags: n.tags, aliases: n.aliases, color: n.color, outgoing: n.outgoing, incoming: n.incoming,
     unresolved: n.unresolved,
   };
@@ -78,8 +78,8 @@ function exportableGraph(graph: KosmosGraph) {
 }
 
 function statusFromGraph(graph: KosmosGraph) {
-  const heads = graph.nodes.filter((n) => n.okf && n.okf.head).length;
-  const superseded = graph.nodes.filter((n) => n.okf && n.okf.invalidAt).length;
+  const heads = graph.nodes.filter((n) => n.gkx && n.gkx.head).length;
+  const superseded = graph.nodes.filter((n) => n.gkx && n.gkx.invalidAt).length;
   const rendererDiag = app.getDiagnostics();
   return {
     source: sourceName,
@@ -101,7 +101,7 @@ function renderSnapshot(snapshot: DirectorySnapshot, label: string): void {
   const update = index.setFiles(snapshot.files, snapshot.folders, snapshot.attachments);
   app.setAttachments(snapshot.attachments);
   app.renderGraph(update.graph, label);
-  for (const w of update.graph.diagnostics.lineageWarnings) console.warn("Vault Kosmos lineage:", w);
+  for (const w of update.graph.diagnostics.lineageWarnings) console.warn("Kosmos-Oden-Lite lineage:", w);
 }
 
 async function loadSource(src: KnowledgeSource, snapshot: DirectorySnapshot): Promise<void> {
@@ -153,7 +153,7 @@ function applyDiff(diff: SnapshotDiff, snapshot: DirectorySnapshot): void {
   app.renderGraph(update.graph, sourceName);
   ui.setStatus({ lastScanAt: snapshot.scannedAt, ...statusFromGraph(update.graph) });
   console.debug(
-    `Vault Kosmos rescan: +${diff.addedFiles.length} ~${diff.changedFiles.length} -${diff.removedFiles.length} files, ` +
+    `Kosmos-Oden-Lite rescan: +${diff.addedFiles.length} ~${diff.changedFiles.length} -${diff.removedFiles.length} files, ` +
     `${diff.addedDirs.length} new / ${diff.removedDirs.length} removed folder(s); re-parsed ${update.delta.reparsed} note(s)`
   );
 }

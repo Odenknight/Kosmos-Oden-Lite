@@ -10,7 +10,7 @@ Releases are built **from the tag in CI**, not copied from a workstation
    `versions.json` and `src/core/version.ts` agree.
 3. Update `CHANGELOG.md` (move `[Unreleased]` items under the new version).
 4. `npm run verify` locally to confirm the tree is release-ready. `main.js`,
-   `vault-kosmos.html`, and `dist/` are generated and **gitignored** — do not
+   `kosmos-oden-lite.html`, and `dist/` are generated and **gitignored** — do not
    commit them; CI builds them fresh from source.
 5. Commit the version/changelog changes, then tag with the **exact manifest
    version, no `v` prefix** (Obsidian requirement — see
@@ -23,7 +23,7 @@ Releases are built **from the tag in CI**, not copied from a workstation
 2. `npm run verify` — typecheck + build + tests + version/artifact/invariant checks.
 3. Assert the tag matches `manifest.json`.
 4. `npm run package:release` — stages `release/` with `manifest.json`, `main.js`,
-   `styles.css`, `versions.json`, `vault-kosmos.html`, `kosmos-mcp-stdio.mjs`, plus:
+   `styles.css`, `versions.json`, `kosmos-oden-lite.html`, `kosmos-mcp-stdio.mjs`, plus:
    - `BUILD-INFO.json` — provenance: commit, tag, workflow, run id, Node version,
      lockfile SHA-256, dirty flag, build time.
    - `SHA256SUMS` — integrity hashes over every release file.
@@ -40,11 +40,11 @@ validation runs with `contents: read`.
 git checkout X.Y.Z
 npm ci
 npm run build
-sha256sum main.js vault-kosmos.html        # compare against the release SHA256SUMS
+sha256sum main.js kosmos-oden-lite.html        # compare against the release SHA256SUMS
 jq . BUILD-INFO.json                        # confirm commit/tag match the tag you built
 ```
 
-Executable artifacts (`main.js`, `vault-kosmos.html`, `dist/kosmos-embed.html`)
+Executable artifacts (`main.js`, `kosmos-oden-lite.html`, `dist/kosmos-embed.html`)
 are byte-reproducible across clean builds — CI's `reproducibility` job builds
 twice and diffs the hashes. Only `BUILD-INFO.json`'s `buildTimeUtc` is expected
 to vary between builds; it is release metadata and is never embedded in the

@@ -7,6 +7,20 @@ changes, called out under **Compatibility**).
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking rename to GKX and Kosmos-Oden-Lite.** The plugin id is now
+  `kosmos-oden-lite` (was `vault-kosmos-oden`) and the display name is
+  Kosmos-Oden-Lite. All OKF/OKF+ names became GKX names, matching GKOS-Engine
+  2.0.0: the `gkx_version` frontmatter key, `.gkx/` runtime folder, `GKX-*`
+  diagnostics, `gkx23-default-v1` policy, `/gkx/*` REST routes, `get_gkx_note`
+  MCP tool, `gkx*` settings keys and `kosmos-oden-lite.html` standalone file.
+  The old names are not accepted as aliases: notes that use `okf_version` must
+  be migrated to `gkx_version`. On first load with no saved settings, the plugin
+  imports settings once from the old `vault-kosmos-oden` plugin folder (renaming
+  `okf*` keys to `gkx*`, and copying the Nextcloud password), shows a notice, and
+  leaves the old folder untouched.
+
 ### Fixed
 
 - Added the existing vendored-core drift check to the normal `verify` command,

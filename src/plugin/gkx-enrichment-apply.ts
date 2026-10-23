@@ -1,7 +1,7 @@
 import { App, Modal, Notice, Setting, TFile, normalizePath } from "obsidian";
-import { publicOkfEnrichmentApplyPlan, verifyOkfEnrichmentApplyPlan, type OkfEnrichmentApplyEntry, type OkfEnrichmentApplyPlan } from "../core/okf-enrichment";
+import { publicGkxEnrichmentApplyPlan, verifyGkxEnrichmentApplyPlan, type GkxEnrichmentApplyEntry, type GkxEnrichmentApplyPlan } from "../core/gkx-enrichment";
 
-export interface OkfEnrichmentApplyResult {
+export interface GkxEnrichmentApplyResult {
   runId: string;
   planHash: string;
   applied: string[];
@@ -28,25 +28,25 @@ async function ensureFolder(app: App, path: string): Promise<void> {
   }
 }
 
-export async function saveOkfEnrichmentApplyPlan(app: App, plan: OkfEnrichmentApplyPlan): Promise<string> {
-  const root = normalizePath(`.okf/enrichment/${plan.runId}`);
+export async function saveGkxEnrichmentApplyPlan(app: App, plan: GkxEnrichmentApplyPlan): Promise<string> {
+  const root = normalizePath(`.gkx/enrichment/${plan.runId}`);
   const path = `${root}/plan.json`;
   await ensureFolder(app, root);
-  const serialized = JSON.stringify(publicOkfEnrichmentApplyPlan(plan), null, 2) + "\n";
+  const serialized = JSON.stringify(publicGkxEnrichmentApplyPlan(plan), null, 2) + "\n";
   if (await app.vault.adapter.exists(path)) {
     if (await app.vault.adapter.read(path) !== serialized) throw new Error(`a different enrichment plan already exists at ${path}`);
   } else await app.vault.adapter.write(path, serialized);
   return path;
 }
 
-export async function applyOkfEnrichmentPlan(app: App, plan: OkfEnrichmentApplyPlan): Promise<OkfEnrichmentApplyResult> {
-  if (!(await verifyOkfEnrichmentApplyPlan(plan))) throw new Error("approved enrichment plan or in-memory content changed after preview; build a new plan");
-  const root = normalizePath(`.okf/enrichment/${plan.runId}`);
-  const backupRoot = normalizePath(`.okf/backup/${plan.runId}`);
-  const planPath = await saveOkfEnrichmentApplyPlan(app, plan);
+export async function applyGkxEnrichmentPlan(app: App, plan: GkxEnrichmentApplyPlan): Promise<GkxEnrichmentApplyResult> {
+  if (!(await verifyGkxEnrichmentApplyPlan(plan))) throw new Error("approved enrichment plan or in-memory content changed after preview; build a new plan");
+  const root = normalizePath(`.gkx/enrichment/${plan.runId}`);
+  const backupRoot = normalizePath(`.gkx/backup/${plan.runId}`);
+  const planPath = await saveGkxEnrichmentApplyPlan(app, plan);
   const resultPath = `${root}/result.json`;
   await ensureFolder(app, backupRoot);
-  const result: OkfEnrichmentApplyResult = { runId: plan.runId, planHash: plan.planHash, applied: [], skippedChanged: [], skippedMissing: [], failed: [], reviewed: plan.totals.reviewed, accepted: plan.totals.accepted, rejected: plan.totals.rejected, edited: plan.totals.edited, backupRoot, planPath, resultPath, completedAt: "" };
+  const result: GkxEnrichmentApplyResult = { runId: plan.runId, planHash: plan.planHash, applied: [], skippedChanged: [], skippedMissing: [], failed: [], reviewed: plan.totals.reviewed, accepted: plan.totals.accepted, rejected: plan.totals.rejected, edited: plan.totals.edited, backupRoot, planPath, resultPath, completedAt: "" };
   for (const entry of plan.entries.filter((candidate) => candidate.status === "ready")) {
     try {
       const abstract = app.vault.getAbstractFileByPath(entry.path);
@@ -78,7 +78,7 @@ function acknowledgement(parent: HTMLElement, text: string, changed: (checked: b
   input.addEventListener("change", () => changed(input.checked));
 }
 
-function renderEntries(parent: HTMLElement, title: string, entries: OkfEnrichmentApplyEntry[]): void {
+function renderEntries(parent: HTMLElement, title: string, entries: GkxEnrichmentApplyEntry[]): void {
   const details = parent.createEl("details"); details.createEl("summary", { text: `${title} (${entries.length})` });
   for (const entry of entries.slice(0, 50)) {
     const note = details.createEl("div"); note.style.margin = "8px 0 12px";
@@ -92,12 +92,12 @@ function renderEntries(parent: HTMLElement, title: string, entries: OkfEnrichmen
   }
 }
 
-export class OkfEnrichmentApplyPreviewModal extends Modal {
+export class GkxEnrichmentApplyPreviewModal extends Modal {
   private applying = false;
-  constructor(app: App, private plan: OkfEnrichmentApplyPlan, private onApplied?: (result: OkfEnrichmentApplyResult) => void) { super(app); }
+  constructor(app: App, private plan: GkxEnrichmentApplyPlan, private onApplied?: (result: GkxEnrichmentApplyResult) => void) { super(app); }
   onOpen(): void {
     const { contentEl, plan } = this; contentEl.empty();
-    contentEl.createEl("h2", { text: "Apply reviewed OKF+ enrichment — governed preview" });
+    contentEl.createEl("h2", { text: "Apply reviewed GKX enrichment — governed preview" });
     contentEl.createEl("p", { text: `${plan.totals.reviewed} suggestions reviewed: ${plan.totals.accepted} accepted, ${plan.totals.rejected} rejected, ${plan.totals.edited} edited. ${plan.totals.ready} notes are ready; ${plan.totals.blocked} are blocked; ${plan.totals.noChange} require no write.` });
     contentEl.createEl("p", { text: `Plan SHA-256: ${plan.planHash}`, cls: "setting-item-description" });
     contentEl.createEl("p", { text: "The plan contains hashes and decisions, not note bodies. Each ready note is rechecked, byte-backed up, and written only if it still exactly matches the reviewed source. Markdown body bytes remain unchanged." });
@@ -105,7 +105,7 @@ export class OkfEnrichmentApplyPreviewModal extends Modal {
     renderEntries(contentEl, "Blocked", plan.entries.filter((entry) => entry.status === "blocked"));
     renderEntries(contentEl, "No change", plan.entries.filter((entry) => entry.status === "no-change"));
     if (!plan.totals.ready) {
-      new Setting(contentEl).addButton((button) => button.setButtonText("Save decision audit").onClick(async () => { const path = await saveOkfEnrichmentApplyPlan(this.app, plan); new Notice(`Decision audit saved to ${path}`); })).addButton((button) => button.setButtonText("Close").setCta().onClick(() => this.close()));
+      new Setting(contentEl).addButton((button) => button.setButtonText("Save decision audit").onClick(async () => { const path = await saveGkxEnrichmentApplyPlan(this.app, plan); new Notice(`Decision audit saved to ${path}`); })).addButton((button) => button.setButtonText("Close").setCta().onClick(() => this.close()));
       return;
     }
     let backup = false, reviewed = false, relationship = false; let applyButton: HTMLButtonElement | null = null;
@@ -115,16 +115,16 @@ export class OkfEnrichmentApplyPreviewModal extends Modal {
     acknowledgement(contentEl, "I verified supersession direction and relationship meaning. Resolved targets do not by themselves prove the relationship is true.", (value) => { relationship = value; refresh(); });
     new Setting(contentEl)
       .addButton((button) => button.setButtonText("Cancel").onClick(() => this.close()))
-      .addButton((button) => button.setButtonText("Save plan only").onClick(async () => { const path = await saveOkfEnrichmentApplyPlan(this.app, plan); new Notice(`Enrichment plan saved to ${path}`); }))
+      .addButton((button) => button.setButtonText("Save plan only").onClick(async () => { const path = await saveGkxEnrichmentApplyPlan(this.app, plan); new Notice(`Enrichment plan saved to ${path}`); }))
       .addButton((button) => {
         button.setButtonText(`Back up and apply ${plan.totals.ready} notes`).setWarning(); applyButton = button.buttonEl; refresh();
         button.onClick(async () => {
           if (this.applying || !backup || !reviewed || !relationship) return;
           this.applying = true; refresh(); applyButton!.textContent = "Applying safely…";
-          const notice = new Notice("Vault Kosmos: backing up and applying reviewed enrichment…", 0);
+          const notice = new Notice("Kosmos-Oden-Lite: backing up and applying reviewed enrichment…", 0);
           try {
-            const result = await applyOkfEnrichmentPlan(this.app, plan); notice.hide(); this.onApplied?.(result);
-            new Notice(`Vault Kosmos: ${result.applied.length} notes updated; ${result.skippedChanged.length + result.skippedMissing.length} changed/missing skipped; ${result.failed.length} failed. Audit: ${result.resultPath}`, 12000); this.close();
+            const result = await applyGkxEnrichmentPlan(this.app, plan); notice.hide(); this.onApplied?.(result);
+            new Notice(`Kosmos-Oden-Lite: ${result.applied.length} notes updated; ${result.skippedChanged.length + result.skippedMissing.length} changed/missing skipped; ${result.failed.length} failed. Audit: ${result.resultPath}`, 12000); this.close();
           } catch (error: any) { notice.hide(); this.applying = false; applyButton!.textContent = `Back up and apply ${plan.totals.ready} notes`; refresh(); new Notice(`Enrichment apply stopped: ${String(error?.message || error)}. No unbacked note is intentionally written.`, 15000); }
         });
       });

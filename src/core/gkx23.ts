@@ -1,5 +1,5 @@
 /**
- * OKF+ v2.3 Validating Projection Profile.
+ * GKX v2.3 Validating Projection Profile.
  *
  * This module is deliberately source-preserving and read-only. It parses the
  * bounded YAML subset used by the v2.3 canonical examples, keeps unknown
@@ -9,25 +9,25 @@
  */
 import { KOSMOS_VERSION } from "./version";
 import { codeUnitCompare } from "./paths";
-import { isValidOkfTimestamp } from "./timestamps";
+import { isValidGkxTimestamp } from "./timestamps";
 import type {
-  OkfAssessment,
-  OkfAssessmentScores,
-  OkfData,
-  OkfDiagnostic,
-  OkfOrigin,
-  OkfOriginProjection,
-  OkfProjection,
-  OkfSensitivity,
+  GkxAssessment,
+  GkxAssessmentScores,
+  GkxData,
+  GkxDiagnostic,
+  GkxOrigin,
+  GkxOriginProjection,
+  GkxProjection,
+  GkxSensitivity,
 } from "./types";
 
-export const OKF23_PROFILE = "okf-plus-2.3-validating-projection" as const;
-export const OKF23_POLICY = Object.freeze({
-  id: "policy:okf23-default-v1",
+export const GKX23_PROFILE = "gkx-2.3-validating-projection" as const;
+export const GKX23_POLICY = Object.freeze({
+  id: "policy:gkx23-default-v1",
   version: "1.0.0",
-  // SHA-256 of the canonical policy JSON shipped in docs/OKF-PLUS-2.3-PROFILE.md.
-  hash: "sha256:c2c476ca6f847bca20477d36ddda7a443d9fb4c5a9b1c3677a4347436deb0fb2",
-  compatibleOkfVersions: ["2.3"],
+  // SHA-256 of the canonical policy JSON shipped in docs/GKX-2.3-PROFILE.md.
+  hash: "sha256:2c2d8ec1e6481cbd4476bcc544c4fd19be03d8f21e317e44d889ea46e940ec8b",
+  compatibleGkxVersions: ["2.3"],
   missingValueBehavior: "exclude-null-and-renormalize",
   weights: Object.freeze({
     structural_completeness: 0.15,
@@ -38,7 +38,7 @@ export const OKF23_POLICY = Object.freeze({
     contradiction_status: 0.10,
     review_readiness: 0.10,
   }),
-  sensitivityDefault: "internal" as OkfSensitivity,
+  sensitivityDefault: "internal" as GkxSensitivity,
   assessmentThresholds: Object.freeze([
     [0.90, "assessment:strongly-documented"],
     [0.75, "assessment:well-documented"],
@@ -50,7 +50,7 @@ export const OKF23_POLICY = Object.freeze({
 });
 
 const CORE_FIELDS = new Set([
-  "okf_version", "uid", "title", "type", "created_at", "updated_at",
+  "gkx_version", "uid", "title", "type", "created_at", "updated_at",
   "authorship", "epistemic", "sensitivity", "provenance", "relationships",
   "evidence", "lineage", "review", "assessment", "authorization", "labels",
 ]);
@@ -82,27 +82,27 @@ const EPISTEMIC_STATES = new Set([
 // The seven-level sensitivity vocabulary, ordered open→restrictive. Exported so
 // downstream plugins can populate a "default sensitivity" picker from the ONE
 // canonical list instead of duplicating it.
-export const SENSITIVITY_LEVELS: OkfSensitivity[] = [
+export const SENSITIVITY_LEVELS: GkxSensitivity[] = [
   "public", "internal", "restricted", "confidential", "regulated", "phi", "secret",
 ];
 // Ordering used for "raise-only, never lower" comparisons. Higher index = more
 // restrictive. Any automatic detection (none ships today — see below) may only
 // move effective sensitivity UP this ladder, never down.
-export const SENSITIVITY_RANK: Record<OkfSensitivity, number> = Object.freeze(
-  Object.fromEntries(SENSITIVITY_LEVELS.map((level, index) => [level, index])) as Record<OkfSensitivity, number>,
+export const SENSITIVITY_RANK: Record<GkxSensitivity, number> = Object.freeze(
+  Object.fromEntries(SENSITIVITY_LEVELS.map((level, index) => [level, index])) as Record<GkxSensitivity, number>,
 );
 // GKOS §11 fail-closed default: a note that declares NO sensitivity resolves to
 // the most restrictive practical level out of the box. Deployments may relax
-// this via Okf23ProjectionOptions.defaultSensitivity (validated below), but the
+// this via Gkx23ProjectionOptions.defaultSensitivity (validated below), but the
 // engine ships closed.
-export const FAIL_CLOSED_SENSITIVITY_DEFAULT: OkfSensitivity = "secret";
+export const FAIL_CLOSED_SENSITIVITY_DEFAULT: GkxSensitivity = "secret";
 // Fallback effective epistemic state for a value outside the frozen twelve-state
 // vocabulary. "unknown" is one of the twelve states (see EPISTEMIC_STATES) and is
 // the GKOS-designated null-weight state.
 export const EPISTEMIC_FALLBACK_STATE = "unknown" as const;
 
 /** Options controlling deterministic projection behavior. */
-export interface Okf23ProjectionOptions {
+export interface Gkx23ProjectionOptions {
   /**
    * Effective sensitivity applied when a note declares no sensitivity field.
    * Fail-closed to {@link FAIL_CLOSED_SENSITIVITY_DEFAULT} ("secret") when
@@ -114,10 +114,10 @@ export interface Okf23ProjectionOptions {
    * adds detection, it must only RAISE effective sensitivity above this default
    * (never lower it) — the projection enforces raise-only via SENSITIVITY_RANK.
    */
-  defaultSensitivity?: OkfSensitivity;
+  defaultSensitivity?: GkxSensitivity;
 }
 
-function resolveDefaultSensitivity(options?: Okf23ProjectionOptions): OkfSensitivity {
+function resolveDefaultSensitivity(options?: Gkx23ProjectionOptions): GkxSensitivity {
   const configured = options?.defaultSensitivity;
   return configured && SENSITIVITY_LEVELS.includes(configured) ? configured : FAIL_CLOSED_SENSITIVITY_DEFAULT;
 }
@@ -129,12 +129,12 @@ interface YamlLine { indent: number; text: string; line: number }
 
 function diagnostic(
   code: string,
-  severity: OkfDiagnostic["severity"],
+  severity: GkxDiagnostic["severity"],
   message: string,
   sourcePath: string,
   field?: string,
   remediation?: string,
-): OkfDiagnostic {
+): GkxDiagnostic {
   return { code, severity, field, message, deterministic: true, remediation, sourcePath };
 }
 
@@ -251,8 +251,8 @@ function parseBlock(lines: YamlLine[], start: number, indent: number, issues: Ar
   return { value: out, next: i };
 }
 
-/** Parse the non-executable YAML subset used by the OKF+ v2.3 profile. */
-export function parseOkf23Frontmatter(raw: string): { data: Record<string, unknown>; issues: Array<{ line: number; message: string }>; present: boolean } {
+/** Parse the non-executable YAML subset used by the GKX v2.3 profile. */
+export function parseGkx23Frontmatter(raw: string): { data: Record<string, unknown>; issues: Array<{ line: number; message: string }>; present: boolean } {
   const bounded = headerFromMarkdown(raw);
   if (!bounded.header) return {
     data: {}, present: false,
@@ -294,14 +294,14 @@ function relationTarget(item: unknown): string | null {
   return normalize(text(obj.target) ?? text(obj.target_uid) ?? text(obj.uid));
 }
 
-function relationOrigin(item: unknown, fallback: OkfOrigin = "authored"): OkfOrigin {
+function relationOrigin(item: unknown, fallback: GkxOrigin = "authored"): GkxOrigin {
   const value = text(record(item).origin);
   return value === "derived" || value === "proposed" || value === "approved" || value === "authored" ? value : fallback;
 }
 
-function blankProjection(): OkfOriginProjection { return { tags: [], labels: [], relationships: {} }; }
+function blankProjection(): GkxOriginProjection { return { tags: [], labels: [], relationships: {} }; }
 
-function splitRelations(source: Record<string, unknown>, origins: Record<OkfOrigin, OkfOriginProjection>, fallback: OkfOrigin): void {
+function splitRelations(source: Record<string, unknown>, origins: Record<GkxOrigin, GkxOriginProjection>, fallback: GkxOrigin): void {
   for (const type of RELATION_TYPES) {
     for (const item of list(source[type])) {
       const target = relationTarget(item);
@@ -312,7 +312,7 @@ function splitRelations(source: Record<string, unknown>, origins: Record<OkfOrig
   }
 }
 
-function appendAuthoredRelationships(target: OkfOriginProjection, type: string, values: string[]): void {
+function appendAuthoredRelationships(target: GkxOriginProjection, type: string, values: string[]): void {
   if (!values.length) return;
   const existing = target.relationships[type] ?? [];
   const seen = new Set(existing.map(relationTarget).filter((value): value is string => Boolean(value)));
@@ -323,7 +323,7 @@ function appendAuthoredRelationships(target: OkfOriginProjection, type: string, 
   target.relationships[type] = existing;
 }
 
-function replaceAuthoredRelationships(target: OkfOriginProjection, type: string, values: string[]): void {
+function replaceAuthoredRelationships(target: GkxOriginProjection, type: string, values: string[]): void {
   const normalized = [...new Set(values.map(relationTarget).filter((value): value is string => Boolean(value)))];
   if (normalized.length) target.relationships[type] = normalized;
   else delete target.relationships[type];
@@ -336,13 +336,13 @@ function compatibleEpistemicState(value: string | null): string | null {
   return value;
 }
 
-function splitLabels(source: Record<string, unknown>, origins: Record<OkfOrigin, OkfOriginProjection>): void {
-  for (const origin of ["authored", "derived", "proposed", "approved"] as OkfOrigin[]) {
+function splitLabels(source: Record<string, unknown>, origins: Record<GkxOrigin, GkxOriginProjection>): void {
+  for (const origin of ["authored", "derived", "proposed", "approved"] as GkxOrigin[]) {
     origins[origin].labels = list(source[origin]).filter((x) => typeof x === "string" || (x && typeof x === "object"));
   }
 }
 
-function splitEvidence(source: Record<string, unknown>, origins: Record<OkfOrigin, OkfOriginProjection>, fallback: OkfOrigin): void {
+function splitEvidence(source: Record<string, unknown>, origins: Record<GkxOrigin, GkxOriginProjection>, fallback: GkxOrigin): void {
   for (const kind of ["supports", "contradicts"] as const) {
     for (const item of list(source[kind])) {
       const origin = relationOrigin(item, fallback);
@@ -355,7 +355,7 @@ function splitEvidence(source: Record<string, unknown>, origins: Record<OkfOrigi
   }
 }
 
-function evidenceEntries(projection: OkfProjection, kind: "supports" | "contradicts"): unknown[] {
+function evidenceEntries(projection: GkxProjection, kind: "supports" | "contradicts"): unknown[] {
   const out: unknown[] = [];
   for (const origin of [projection.authored, projection.derived, projection.proposed, projection.approved]) {
     const evidence = record(origin.evidence);
@@ -385,18 +385,18 @@ function groupedEvidence(items: unknown[]): number | null {
   return 1 - product;
 }
 
-function hasApproval(approved: OkfOriginProjection, authored: OkfOriginProjection): boolean {
+function hasApproval(approved: GkxOriginProjection, authored: GkxOriginProjection): boolean {
   const authorization = record(authored.authorization);
   return approved.labels.length > 0 || Object.keys(approved.relationships).length > 0 || Boolean(text(authorization.decision_id));
 }
 
 function assessmentLabel(score: number | null): string {
   if (score == null) return "assessment:not-assessable";
-  for (const [threshold, label] of OKF23_POLICY.assessmentThresholds) if (score >= threshold) return label;
+  for (const [threshold, label] of GKX23_POLICY.assessmentThresholds) if (score >= threshold) return label;
   return "assessment:not-assessable";
 }
 
-export function assessOkf23(projection: OkfProjection): OkfAssessment {
+export function assessGkx23(projection: GkxProjection): GkxAssessment {
   const a = projection.authored;
   const diagnostics = projection.diagnostics;
   const frontmatter = projection.rawFrontmatter;
@@ -424,7 +424,7 @@ export function assessOkf23(projection: OkfProjection): OkfAssessment {
   if (refs.length) provenanceQuality = Object.keys(locator).length ? (hash && SHA256.test(hash) ? 0.80 : 0.65) : 0.45;
   else if (text(provenance.source_kind)) provenanceQuality = 0.20;
   if (record(provenance.extraction).method == null) provenanceQuality -= 0.10;
-  if (diagnostics.some((d) => d.code.startsWith("OKF-PROVENANCE") && d.severity === "error")) provenanceQuality -= 0.20;
+  if (diagnostics.some((d) => d.code.startsWith("GKX-PROVENANCE") && d.severity === "error")) provenanceQuality -= 0.20;
 
   const support = groupedEvidence(evidenceEntries(projection, "supports"));
   const contradiction = groupedEvidence(evidenceEntries(projection, "contradicts"));
@@ -432,10 +432,10 @@ export function assessOkf23(projection: OkfProjection): OkfAssessment {
 
   let relationshipIntegrity = 1;
   for (const d of diagnostics) {
-    if (d.code === "OKF-IDENTITY-003" || d.code === "OKF-LINEAGE-002") relationshipIntegrity = 0;
-    else if (d.code.startsWith("OKF-RELATIONSHIP") && d.severity === "error") relationshipIntegrity -= 0.20;
-    else if (d.code.startsWith("OKF-LINEAGE") && d.severity === "error") relationshipIntegrity -= 0.30;
-    else if (d.code.startsWith("OKF-RELATIONSHIP") || d.code.startsWith("OKF-LINEAGE")) relationshipIntegrity -= 0.10;
+    if (d.code === "GKX-IDENTITY-003" || d.code === "GKX-LINEAGE-002") relationshipIntegrity = 0;
+    else if (d.code.startsWith("GKX-RELATIONSHIP") && d.severity === "error") relationshipIntegrity -= 0.20;
+    else if (d.code.startsWith("GKX-LINEAGE") && d.severity === "error") relationshipIntegrity -= 0.30;
+    else if (d.code.startsWith("GKX-RELATIONSHIP") || d.code.startsWith("GKX-LINEAGE")) relationshipIntegrity -= 0.10;
   }
 
   let freshness: number | null = null;
@@ -457,7 +457,7 @@ export function assessOkf23(projection: OkfProjection): OkfAssessment {
   ];
   const reviewReadiness = readinessParts.reduce((sum, [weight, valid]) => sum + (valid ? weight : 0), 0);
 
-  const components: OkfAssessmentScores = {
+  const components: GkxAssessmentScores = {
     structural_completeness: rounded(structural), provenance_quality: rounded(provenanceQuality),
     evidence_support: rounded(evidenceSupport), relationship_integrity: rounded(relationshipIntegrity),
     temporal_freshness: rounded(freshness), contradiction_status: rounded(contradictionStatus),
@@ -465,8 +465,8 @@ export function assessOkf23(projection: OkfProjection): OkfAssessment {
   };
   let weighted = 0, applied = 0;
   const exclusions: string[] = [];
-  for (const [key, weight] of Object.entries(OKF23_POLICY.weights)) {
-    const value = components[key as keyof OkfAssessmentScores];
+  for (const [key, weight] of Object.entries(GKX23_POLICY.weights)) {
+    const value = components[key as keyof GkxAssessmentScores];
     if (value == null) exclusions.push(key);
     else { weighted += value * weight; applied += weight; }
   }
@@ -475,8 +475,8 @@ export function assessOkf23(projection: OkfProjection): OkfAssessment {
   const deterministicAt = text(a.updatedAt) ?? text(a.createdAt) ?? "1970-01-01T00:00:00.000Z";
   return {
     assessmentId: `assessment:${projection.contentHash.replace(/[^a-z0-9]/gi, "-")}`,
-    targetUid: uid, profile: OKF23_PROFILE,
-    policy: { id: OKF23_POLICY.id, version: OKF23_POLICY.version, hash: OKF23_POLICY.hash, weights: { ...OKF23_POLICY.weights }, missingValueBehavior: OKF23_POLICY.missingValueBehavior },
+    targetUid: uid, profile: GKX23_PROFILE,
+    policy: { id: GKX23_POLICY.id, version: GKX23_POLICY.version, hash: GKX23_POLICY.hash, weights: { ...GKX23_POLICY.weights }, missingValueBehavior: GKX23_POLICY.missingValueBehavior },
     assessor: { id: "tool:kosmos-oden", engineVersion: KOSMOS_VERSION }, inputHash: `fnv1a32:${projection.contentHash}`,
     calculatedAt: deterministicAt, scores: components, exclusions, labels: { derived: [label] }, diagnostics: [...diagnostics],
     interpretation: "documentation-and-support-quality-not-truth",
@@ -484,17 +484,17 @@ export function assessOkf23(projection: OkfProjection): OkfAssessment {
 }
 
 /** Build an origin-preserving projection for canonical v2.3 and legacy notes. */
-export function buildOkf23Projection(raw: string, sourcePath: string, contentHash: string, legacy: OkfData | null, options: Okf23ProjectionOptions = {}): OkfProjection | undefined {
-  const parsed = parseOkf23Frontmatter(raw);
+export function buildGkx23Projection(raw: string, sourcePath: string, contentHash: string, legacy: GkxData | null, options: Gkx23ProjectionOptions = {}): GkxProjection | undefined {
+  const parsed = parseGkx23Frontmatter(raw);
   const data = parsed.data;
-  const version = text(data.okf_version);
+  const version = text(data.gkx_version);
   if (!parsed.present && !legacy) return undefined;
-  const mode: OkfProjection["mode"] = version === "2.3" ? "strict-v2.3" : version ? "compatible" : "legacy";
-  const diagnostics: OkfDiagnostic[] = parsed.issues.map((issue) => diagnostic("OKF-SCHEMA-001", "error", `${issue.message} (line ${issue.line})`, sourcePath, "frontmatter"));
-  if (version && version !== "2.3") diagnostics.push(diagnostic("OKF-SCHEMA-002", "info", `OKF+ ${version} is read through the compatibility projection; the source note was not rewritten.`, sourcePath, "okf_version"));
-  if (!version) diagnostics.push(diagnostic("OKF-SCHEMA-003", "warning", "No OKF+ version is declared; legacy compatibility semantics apply.", sourcePath, "okf_version"));
+  const mode: GkxProjection["mode"] = version === "2.3" ? "strict-v2.3" : version ? "compatible" : "legacy";
+  const diagnostics: GkxDiagnostic[] = parsed.issues.map((issue) => diagnostic("GKX-SCHEMA-001", "error", `${issue.message} (line ${issue.line})`, sourcePath, "frontmatter"));
+  if (version && version !== "2.3") diagnostics.push(diagnostic("GKX-SCHEMA-002", "info", `GKX ${version} is read through the compatibility projection; the source note was not rewritten.`, sourcePath, "gkx_version"));
+  if (!version) diagnostics.push(diagnostic("GKX-SCHEMA-003", "warning", "No GKX version is declared; legacy compatibility semantics apply.", sourcePath, "gkx_version"));
 
-  const origins: Record<OkfOrigin, OkfOriginProjection> = {
+  const origins: Record<GkxOrigin, GkxOriginProjection> = {
     authored: blankProjection(), derived: blankProjection(), proposed: blankProjection(), approved: blankProjection(),
   };
   const authored = origins.authored;
@@ -513,12 +513,12 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
     : flatOrigin ? { origin: flatOrigin } : {};
   const declaredOrigin = text(record(data.authorship).origin) ?? flatOrigin ?? "unknown";
   authored.assertionOrigin = declaredOrigin;
-  const fallbackOrigin: OkfOrigin = declaredOrigin === "derived" || declaredOrigin === "proposed" || declaredOrigin === "approved" ? declaredOrigin : "authored";
+  const fallbackOrigin: GkxOrigin = declaredOrigin === "derived" || declaredOrigin === "proposed" || declaredOrigin === "approved" ? declaredOrigin : "authored";
   authored.epistemic = record(data.epistemic);
   authored.epistemicState = compatibleEpistemicState(text(record(data.epistemic).state) ?? text(data.epistemic_state) ?? legacy?.epistemicState ?? null);
   authored.sensitivityBlock = record(data.sensitivity);
   const flatSensitivity = typeof data.sensitivity === "string" ? text(data.sensitivity) : null;
-  authored.sensitivity = (text(record(data.sensitivity).level) ?? flatSensitivity ?? legacy?.sensitivity ?? null) as OkfSensitivity | null;
+  authored.sensitivity = (text(record(data.sensitivity).level) ?? flatSensitivity ?? legacy?.sensitivity ?? null) as GkxSensitivity | null;
   authored.provenance = record(data.provenance);
   authored.evidence = {};
   authored.lineage = record(data.lineage);
@@ -530,8 +530,8 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
   splitEvidence(record(data.evidence), origins, fallbackOrigin);
 
   if (version === "2.3") {
-    const requiredScalars = ["okf_version", "uid", "title", "type", "created_at"];
-    for (const key of requiredScalars) if (!text(data[key])) diagnostics.push(diagnostic("OKF-SCHEMA-004", "error", `Required OKF+ 2.3 field ${key} is missing or empty.`, sourcePath, key));
+    const requiredScalars = ["gkx_version", "uid", "title", "type", "created_at"];
+    for (const key of requiredScalars) if (!text(data[key])) diagnostics.push(diagnostic("GKX-SCHEMA-004", "error", `Required GKX 2.3 field ${key} is missing or empty.`, sourcePath, key));
     // Governance blocks are optional in-note: the flat editable profile keeps
     // them out of frontmatter and the projection supplies in-memory defaults
     // (spec §2.1 permits derived metadata to live outside the source note).
@@ -539,24 +539,24 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
     // may be a flat scalar level.
     const optionalBlocks = ["authorship", "epistemic", "provenance", "relationships", "evidence", "lineage", "review", "assessment", "authorization", "labels"];
     for (const key of optionalBlocks) if (data[key] != null && (typeof data[key] !== "object" || Array.isArray(data[key]))) {
-      diagnostics.push(diagnostic("OKF-SCHEMA-004", "error", `OKF+ 2.3 block ${key} must be a mapping when present.`, sourcePath, key));
+      diagnostics.push(diagnostic("GKX-SCHEMA-004", "error", `GKX 2.3 block ${key} must be a mapping when present.`, sourcePath, key));
     }
     if (data.sensitivity != null && typeof data.sensitivity !== "string" && (typeof data.sensitivity !== "object" || Array.isArray(data.sensitivity))) {
-      diagnostics.push(diagnostic("OKF-SCHEMA-004", "error", "OKF+ 2.3 sensitivity must be a flat level or a mapping.", sourcePath, "sensitivity"));
+      diagnostics.push(diagnostic("GKX-SCHEMA-004", "error", "GKX 2.3 sensitivity must be a flat level or a mapping.", sourcePath, "sensitivity"));
     }
     if (!text(record(data.epistemic).state) && !text(data.epistemic_state)) {
-      diagnostics.push(diagnostic("OKF-SCHEMA-004", "error", "OKF+ 2.3 requires an epistemic state (epistemic.state or flat epistemic_state).", sourcePath, "epistemic.state"));
+      diagnostics.push(diagnostic("GKX-SCHEMA-004", "error", "GKX 2.3 requires an epistemic state (epistemic.state or flat epistemic_state).", sourcePath, "epistemic.state"));
     }
   }
 
-  const assignment = record(data.okf_assignment);
+  const assignment = record(data.gkx_assignment);
   const assignedRole = text(record(assignment.role).id);
   if (assignedRole === "specialist-reviewer") {
     const authority = record(assignment.authority);
     for (const key of ["may_approve", "may_authorize_use", "may_modify_originals", "may_lower_sensitivity", "may_promote_epistemic_state", "may_change_authoritative_lineage"]) {
-      if (authority[key] === true) diagnostics.push(diagnostic("OKF-AUTHORITY-ROLE-001", "critical", `Specialist Reviewer assignment cannot grant ${key} without a separate accepted authority contract.`, sourcePath, `okf_assignment.authority.${key}`));
+      if (authority[key] === true) diagnostics.push(diagnostic("GKX-AUTHORITY-ROLE-001", "critical", `Specialist Reviewer assignment cannot grant ${key} without a separate accepted authority contract.`, sourcePath, `gkx_assignment.authority.${key}`));
     }
-    if (text(record(assignment.output).write_mode) !== "proposal-sidecar-only") diagnostics.push(diagnostic("OKF-AUTHORITY-ROLE-002", "error", "Specialist Reviewer output must be proposal-sidecar-only.", sourcePath, "okf_assignment.output.write_mode"));
+    if (text(record(assignment.output).write_mode) !== "proposal-sidecar-only") diagnostics.push(diagnostic("GKX-AUTHORITY-ROLE-002", "error", "Specialist Reviewer output must be proposal-sidecar-only.", sourcePath, "gkx_assignment.output.write_mode"));
   }
   // Flat Obsidian Properties remain the human-editable authoring surface even
   // when a native 2.3 note is present. This makes a tags/relationship edit take
@@ -573,8 +573,8 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
   }
 
   const uid = text(authored.uid);
-  if (!uid) diagnostics.push(diagnostic("OKF-IDENTITY-001", "warning", "The note has no canonical UID and remains path-bound.", sourcePath, "uid", "Assign a stable UUIDv7 through an authorized migration."));
-  else if (!UUID.test(uid) && !NAMESPACED_ID.test(uid)) diagnostics.push(diagnostic("OKF-IDENTITY-002", "error", "The UID is neither a UUID nor a policy-permitted namespaced globally unique identifier.", sourcePath, "uid"));
+  if (!uid) diagnostics.push(diagnostic("GKX-IDENTITY-001", "warning", "The note has no canonical UID and remains path-bound.", sourcePath, "uid", "Assign a stable UUIDv7 through an authorized migration."));
+  else if (!UUID.test(uid) && !NAMESPACED_ID.test(uid)) diagnostics.push(diagnostic("GKX-IDENTITY-002", "error", "The UID is neither a UUID nor a policy-permitted namespaced globally unique identifier.", sourcePath, "uid"));
   // Epistemic state: the AUTHORED value (kept verbatim on authored.epistemicState
   // and echoed in the diagnostic below) is never silently erased, but a value
   // outside the frozen twelve-state vocabulary must not flow through as the
@@ -586,7 +586,7 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
   let epistemicStateDefaulted = false;
   if (authoredEpistemicState && !EPISTEMIC_STATES.has(authoredEpistemicState)) {
     diagnostics.push(diagnostic(
-      "OKF-EPISTEMIC-002", "error",
+      "GKX-EPISTEMIC-002", "error",
       `Unknown epistemic state: ${authoredEpistemicState}. Effective state falls back to "${EPISTEMIC_FALLBACK_STATE}" (null-weight); the invalid value is retained here for repair.`,
       sourcePath, "epistemic.state",
       `Rewrite epistemic.state (or the flat epistemic_state property) to one of the twelve valid GKOS states, e.g. "hypothesis" or "${EPISTEMIC_FALLBACK_STATE}". An upgrade-all migration run rewrites invalid states to the conservative default automatically.`,
@@ -594,18 +594,18 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
     effectiveEpistemicState = EPISTEMIC_FALLBACK_STATE;
     epistemicStateDefaulted = true;
   }
-  if (authoredEpistemicState === "accepted" && !hasApproval(origins.approved, authored)) diagnostics.push(diagnostic("OKF-EPISTEMIC-004", "warning", "Accepted state lacks an approval or authorization record; acceptance is not treated as verified authority.", sourcePath, "epistemic.state"));
+  if (authoredEpistemicState === "accepted" && !hasApproval(origins.approved, authored)) diagnostics.push(diagnostic("GKX-EPISTEMIC-004", "warning", "Accepted state lacks an approval or authorization record; acceptance is not treated as verified authority.", sourcePath, "epistemic.state"));
 
   // Temporal diagnostic (DIV-001): a naive wall-clock timestamp (no Z, no
   // numeric offset) is rejected by the schema and the stamper; the projection
-  // must flag it too, using the SAME shared validator (isValidOkfTimestamp).
+  // must flag it too, using the SAME shared validator (isValidGkxTimestamp).
   for (const [field, value] of [
     ["created_at", text(data.created_at) ?? legacy?.timestamp ?? null],
     ["updated_at", text(data.updated_at)],
   ] as const) {
-    if (value && !isValidOkfTimestamp(value)) {
+    if (value && !isValidGkxTimestamp(value)) {
       diagnostics.push(diagnostic(
-        "OKF-TEMPORAL-001", "warning",
+        "GKX-TEMPORAL-001", "warning",
         `${field} "${value}" is not a portable timestamp: it lacks a UTC "Z" designator or a numeric ±HH:MM offset (naive wall-clock is rejected by the schema and the stamper).`,
         sourcePath, field,
         "Rewrite as ISO-8601 with an explicit zone, e.g. 2026-07-20T12:00:00Z or 2026-07-20T12:00:00-04:00.",
@@ -618,13 +618,13 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
   // the box), NOT to a mid-open level. The default is configurable per
   // deployment via options.defaultSensitivity but can only be relaxed
   // explicitly; the engine never silently defaults to an open level.
-  // OKF-SENSITIVITY-001 keeps firing so the defaulting stays visible.
+  // GKX-SENSITIVITY-001 keeps firing so the defaulting stays visible.
   const rawSensitivity = text(record(data.sensitivity).level) ?? flatSensitivity ?? legacy?.sensitivity ?? null;
   const defaultSensitivity = resolveDefaultSensitivity(options);
-  let effectiveSensitivity: OkfSensitivity = defaultSensitivity;
-  if (!rawSensitivity) diagnostics.push(diagnostic("OKF-SENSITIVITY-001", "warning", `Sensitivity is missing; effective sensitivity fails closed to the restricted default (${defaultSensitivity}).`, sourcePath, "sensitivity.level"));
-  else if (SENSITIVITY_LEVELS.includes(rawSensitivity as OkfSensitivity)) effectiveSensitivity = rawSensitivity as OkfSensitivity;
-  else { effectiveSensitivity = "secret"; diagnostics.push(diagnostic("OKF-SENSITIVITY-005", "error", "Invalid sensitivity fails closed to secret for effective access control.", sourcePath, "sensitivity.level")); }
+  let effectiveSensitivity: GkxSensitivity = defaultSensitivity;
+  if (!rawSensitivity) diagnostics.push(diagnostic("GKX-SENSITIVITY-001", "warning", `Sensitivity is missing; effective sensitivity fails closed to the restricted default (${defaultSensitivity}).`, sourcePath, "sensitivity.level"));
+  else if (SENSITIVITY_LEVELS.includes(rawSensitivity as GkxSensitivity)) effectiveSensitivity = rawSensitivity as GkxSensitivity;
+  else { effectiveSensitivity = "secret"; diagnostics.push(diagnostic("GKX-SENSITIVITY-005", "error", "Invalid sensitivity fails closed to secret for effective access control.", sourcePath, "sensitivity.level")); }
   // Detection hook (raise-only, per SENSITIVITY_RANK): no PII/sensitive-content
   // detection ships in the engine today. If a deployment adds one, it plugs in
   // here and may only INCREASE effectiveSensitivity above the value resolved
@@ -635,13 +635,13 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
   const provenance = record(authored.provenance);
   const refs = list(provenance.source_refs).filter((x) => text(x));
   const hash = text(provenance.content_hash);
-  if (!refs.length) diagnostics.push(diagnostic("OKF-PROVENANCE-001", "warning", "No source reference is declared.", sourcePath, "provenance.source_refs"));
-  if (hash && !SHA256.test(hash)) diagnostics.push(diagnostic("OKF-PROVENANCE-002", "error", "Provenance content_hash must use sha256 followed by 64 hexadecimal characters.", sourcePath, "provenance.content_hash"));
+  if (!refs.length) diagnostics.push(diagnostic("GKX-PROVENANCE-001", "warning", "No source reference is declared.", sourcePath, "provenance.source_refs"));
+  if (hash && !SHA256.test(hash)) diagnostics.push(diagnostic("GKX-PROVENANCE-002", "error", "Provenance content_hash must use sha256 followed by 64 hexadecimal characters.", sourcePath, "provenance.content_hash"));
 
-  for (const kind of ["supports", "contradicts"] as const) for (const [index, item] of evidenceEntries({ authored, derived: origins.derived, proposed: origins.proposed, approved: origins.approved } as OkfProjection, kind).entries()) {
+  for (const kind of ["supports", "contradicts"] as const) for (const [index, item] of evidenceEntries({ authored, derived: origins.derived, proposed: origins.proposed, approved: origins.approved } as GkxProjection, kind).entries()) {
     const obj = record(item), strength = number(obj.strength), relevance = number(obj.relevance);
-    if (strength == null || strength < 0 || strength > 1) diagnostics.push(diagnostic("OKF-EVIDENCE-002", "error", `${kind}[${index}] strength must be within 0..1.`, sourcePath, `evidence.${kind}[${index}].strength`));
-    if (relevance == null || relevance < 0 || relevance > 1) diagnostics.push(diagnostic("OKF-EVIDENCE-003", "error", `${kind}[${index}] relevance must be within 0..1.`, sourcePath, `evidence.${kind}[${index}].relevance`));
+    if (strength == null || strength < 0 || strength > 1) diagnostics.push(diagnostic("GKX-EVIDENCE-002", "error", `${kind}[${index}] strength must be within 0..1.`, sourcePath, `evidence.${kind}[${index}].strength`));
+    if (relevance == null || relevance < 0 || relevance > 1) diagnostics.push(diagnostic("GKX-EVIDENCE-003", "error", `${kind}[${index}] relevance must be within 0..1.`, sourcePath, `evidence.${kind}[${index}].relevance`));
   }
 
   const extensions = Object.fromEntries(Object.entries(data).filter(([key]) => !CORE_FIELDS.has(key) && !LEGACY_FIELDS.has(key)));
@@ -653,7 +653,7 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
   origins.derived.labels = [...new Set(derivedLabels)].sort();
   origins.derived.sensitivity = effectiveSensitivity;
   origins.derived.effectiveSensitivityReason = rawSensitivity ? "authored-source-classification" : "policy-default";
-  const effective: OkfOriginProjection = {
+  const effective: GkxOriginProjection = {
     tags: [...(authored.tags ?? [])],
     labels: [...new Set([...origins.authored.labels, ...origins.derived.labels, ...origins.approved.labels])],
     relationships: {}, epistemicState: effectiveEpistemicState, epistemicStateDefaulted, sensitivity: effectiveSensitivity,
@@ -665,20 +665,20 @@ export function buildOkf23Projection(raw: string, sourcePath: string, contentHas
   for (const origin of [origins.authored, origins.derived, origins.approved]) for (const kind of ["supports", "contradicts"] as const) {
     (effective.evidence as Record<string, unknown[]>)[kind].push(...list(record(origin.evidence)[kind]));
   }
-  const projection: OkfProjection = {
-    profile: OKF23_PROFILE, conformanceClaim: "reader-and-deterministic-assessor", mode,
+  const projection: GkxProjection = {
+    profile: GKX23_PROFILE, conformanceClaim: "reader-and-deterministic-assessor", mode,
     sourceVersion: version, sourcePath, contentHash, rawFrontmatter: data, extensions,
     authored, derived: origins.derived, proposed: origins.proposed, approved: origins.approved, effective,
     diagnostics, assessment: undefined as never,
   };
-  projection.assessment = assessOkf23(projection);
+  projection.assessment = assessGkx23(projection);
   return projection;
 }
 
 /** Recalculate derived assessment after corpus-level diagnostics/resolution. */
-export function refreshOkf23Assessment(projection: OkfProjection): void {
+export function refreshGkx23Assessment(projection: GkxProjection): void {
   projection.diagnostics.sort((a, b) => codeUnitCompare(a.code, b.code) || codeUnitCompare(a.field ?? "", b.field ?? "") || codeUnitCompare(a.message, b.message));
-  projection.assessment = assessOkf23(projection);
+  projection.assessment = assessGkx23(projection);
   projection.derived.labels = [...new Set([
     ...projection.derived.labels.filter((x): x is string => typeof x === "string" && !x.startsWith("assessment:")),
     ...projection.assessment.labels.derived,
@@ -699,9 +699,9 @@ export function refreshOkf23Assessment(projection: OkfProjection): void {
   }
 }
 
-export function okf23RelationTargets(projection: OkfProjection): Array<{ type: string; target: string; origin: OkfOrigin; raw: unknown }> {
-  const out: Array<{ type: string; target: string; origin: OkfOrigin; raw: unknown }> = [];
-  for (const origin of ["authored", "derived", "proposed", "approved"] as OkfOrigin[]) {
+export function gkx23RelationTargets(projection: GkxProjection): Array<{ type: string; target: string; origin: GkxOrigin; raw: unknown }> {
+  const out: Array<{ type: string; target: string; origin: GkxOrigin; raw: unknown }> = [];
+  for (const origin of ["authored", "derived", "proposed", "approved"] as GkxOrigin[]) {
     for (const [type, items] of Object.entries(projection[origin].relationships)) for (const item of items) {
       const target = relationTarget(item); if (target) out.push({ type, target, origin, raw: item });
     }
@@ -709,4 +709,4 @@ export function okf23RelationTargets(projection: OkfProjection): Array<{ type: s
   return out;
 }
 
-export function okf23Inverse(type: string): string | undefined { return INVERSES[type]; }
+export function gkx23Inverse(type: string): string | undefined { return INVERSES[type]; }

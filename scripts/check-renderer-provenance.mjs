@@ -40,7 +40,7 @@ must(prov.webglVersion === 2, "stable renderer must target WebGL2");
 must(/mit/i.test(prov.license), "renderer license must be recorded (MIT)");
 
 // 4. generated HTML carries the build marker and no runtime CDN
-for (const html of ["vault-kosmos.html", "dist/kosmos-embed.html"]) {
+for (const html of ["kosmos-oden-lite.html", "dist/kosmos-embed.html"]) {
   if (!existsSync(resolve(root, html))) { problems.push(`${html} missing — run npm run build`); continue; }
   const h = read(html);
   const markerRe = new RegExp(`kosmos-renderer" content="three r${prov.threeRevision} WebGLRenderer webgl${prov.webglVersion}"`);

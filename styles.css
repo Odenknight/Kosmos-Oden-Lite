@@ -1,6 +1,6 @@
 /* The constellation renders inside an isolated iframe, so it needs only to fill the view. */
-.vault-kosmos-root { position: absolute; inset: 0; padding: 0; margin: 0; overflow: hidden; }
-.vault-kosmos-root iframe { width: 100%; height: 100%; border: 0; display: block; background: #03060f; }
+.kosmos-oden-lite-root { position: absolute; inset: 0; padding: 0; margin: 0; overflow: hidden; }
+.kosmos-oden-lite-root iframe { width: 100%; height: 100%; border: 0; display: block; background: #03060f; }
 .kosmos-settings-tabs {
   position: sticky;
   top: 0;
@@ -50,7 +50,7 @@
 .kosmos-settings-panel input[type="password"] {
   max-width: 100%;
 }
-.okf-review-help {
+.gkx-review-help {
   margin: 0.75rem 0 1rem;
   padding: 0.75rem 1rem;
   border: 1px solid var(--background-modifier-border);
@@ -58,31 +58,31 @@
   background: var(--background-secondary);
 }
 
-.okf-review-help h3 {
+.gkx-review-help h3 {
   margin: 0 0 0.5rem;
 }
 
-.okf-review-help ol {
+.gkx-review-help ol {
   margin: 0.5rem 0;
   padding-left: 1.5rem;
 }
 
-.okf-review-progress {
+.gkx-review-progress {
   font-weight: var(--font-semibold);
 }
 
-.okf-review-note {
+.gkx-review-note {
   margin: 0.35rem 0;
   padding: 0.35rem 0.5rem;
   border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.okf-review-note > summary {
+.gkx-review-note > summary {
   cursor: pointer;
   font-weight: var(--font-semibold);
 }
 
-.okf-review-note .okf-review-proposal {
+.gkx-review-note .gkx-review-proposal {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(280px, 1.25fr);
   gap: 0.5rem 1rem;
@@ -91,26 +91,26 @@
   padding: 0.55rem 0;
 }
 
-.okf-review-note .okf-review-proposal .setting-item-info,
-.okf-review-note .okf-review-proposal .setting-item-control {
+.gkx-review-note .gkx-review-proposal .setting-item-info,
+.gkx-review-note .gkx-review-proposal .setting-item-control {
   align-self: start;
   min-width: 0;
   margin: 0;
 }
 
-.okf-review-note .okf-review-proposal .setting-item-control {
+.gkx-review-note .gkx-review-proposal .setting-item-control {
   display: grid;
   grid-template-columns: max-content minmax(160px, 1fr);
   gap: 0.5rem;
   width: 100%;
 }
 
-.okf-review-note .okf-review-proposal input[type="text"] {
+.gkx-review-note .gkx-review-proposal input[type="text"] {
   width: 100%;
   min-width: 0;
 }
 
-.okf-review-issue {
+.gkx-review-issue {
   margin: 0.5rem 0;
   padding: 0.6rem 0.75rem;
   border-left: 3px solid var(--color-orange);
@@ -147,7 +147,7 @@
   .kosmos-settings-panel .setting-item-control select {
     width: 100%;
   }
-  .okf-review-note .okf-review-proposal {
+  .gkx-review-note .gkx-review-proposal {
     grid-template-columns: minmax(0, 1fr);
   }
 }

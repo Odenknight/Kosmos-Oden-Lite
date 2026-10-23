@@ -48,7 +48,7 @@ Record:
 
 ```bash
 git rev-parse HEAD
-sha256sum vendor/three.min.js main.js vault-kosmos.html dist/kosmos-embed.html
+sha256sum vendor/three.min.js main.js kosmos-oden-lite.html dist/kosmos-embed.html
 node --version
 npm --version
 ```
@@ -111,7 +111,7 @@ Add a capture mode that fixes:
 Recommended URL:
 
 ```text
-vault-kosmos.html?capture=1&seed=1907&time=0&dpr=1&quality=high&camera=overview
+kosmos-oden-lite.html?capture=1&seed=1907&time=0&dpr=1&quality=high&camera=overview
 ```
 
 Save current r128 screenshots and performance data.
@@ -550,9 +550,9 @@ npm run bench
 Verify output:
 
 ```bash
-grep -R "https://" vault-kosmos.html dist/kosmos-embed.html
-grep -R "script src" vault-kosmos.html dist/kosmos-embed.html
-sha256sum main.js vault-kosmos.html dist/kosmos-embed.html
+grep -R "https://" kosmos-oden-lite.html dist/kosmos-embed.html
+grep -R "script src" kosmos-oden-lite.html dist/kosmos-embed.html
+sha256sum main.js kosmos-oden-lite.html dist/kosmos-embed.html
 ```
 
 Expected:
@@ -638,7 +638,7 @@ The exact version is illustrative; use the project's chosen SemVer decision.
 The RC release must include:
 
 - plugin files;
-- `vault-kosmos.html`;
+- `kosmos-oden-lite.html`;
 - checksums;
 - build information;
 - SBOM;

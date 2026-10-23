@@ -340,15 +340,15 @@ export function buildCosmos(graph: any, opts: CosmosOptions = {}): KosmosGraph {
   graph.galaxies = galaxyIds.map((A) => ({ id: A, center: galaxyCenter.get(A) }));
   graph.galaxyCenter = galaxyCenter;
 
-  // OKF+ temporal layer: superseded notes render as ghosts; lineage joins the
+  // GKX temporal layer: superseded notes render as ghosts; lineage joins the
   // link set; chrono span for time-travel. Semantics come from the core (§4);
   // this pass only maps them onto visual state.
   let tmin = Infinity, tmax = -Infinity;
   for (const n of nodes) {
-    if (n.okf) n.__ghost = !!n.okf.invalidAt;
+    if (n.gkx) n.__ghost = !!n.gkx.invalidAt;
     const tv = n.validAt ? Date.parse(n.validAt) : NaN;
     if (n.kind === "file" && !Number.isNaN(tv)) { if (tv < tmin) tmin = tv; if (tv > tmax) tmax = tv; }
-    if (n.okf && n.okf.invalidAt) { const iv = Date.parse(n.okf.invalidAt); if (!Number.isNaN(iv) && iv > tmax) tmax = iv; }
+    if (n.gkx && n.gkx.invalidAt) { const iv = Date.parse(n.gkx.invalidAt); if (!Number.isNaN(iv) && iv > tmax) tmax = iv; }
   }
   graph.__timeSpan = (tmin < tmax) ? { min: tmin, max: tmax } : null;
   for (const l of graph.links) {

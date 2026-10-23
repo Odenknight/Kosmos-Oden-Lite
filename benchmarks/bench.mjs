@@ -41,13 +41,13 @@ function makeVault(n) {
       const t = Math.floor(rand() * n);
       links.push(`[[Area${String(t % areas).padStart(2, "0")}/Note ${t}]]`);
     }
-    const okf = i % 7 === 0
+    const gkx = i % 7 === 0
       ? `type: idea\ntimestamp: 2026-01-${String((i % 27) + 1).padStart(2, "0")}T00:00:00Z\n` +
         (i % 21 === 0 && i > 0 ? `supersedes:\n  - Note ${i - 7}\n` : "")
       : `tags: [t${i % 11}]\n`;
     files.push({
       relativePath: `${area}/Note ${i}.md`,
-      content: `---\n${okf}---\n# Note ${i}\n\nBody of note ${i}. ${links.join(" ")}\n`,
+      content: `---\n${gkx}---\n# Note ${i}\n\nBody of note ${i}. ${links.join(" ")}\n`,
       modifiedTime: 1735689600000 + i * 60000,
       createdTime: 1735689600000 + i * 60000,
       kind: "note",

@@ -4,7 +4,7 @@
  * The model is *temporal validity intervals*, not full bitemporality: each
  * note carries
  *
- *     valid_at   = OKF+ timestamp, or the documented fallback
+ *     valid_at   = GKX timestamp, or the documented fallback
  *                  (file created-time, else modified-time, else index time)
  *     invalid_at = earliest valid_at of any DIRECT successor, or null
  *
@@ -93,16 +93,16 @@ export function projectAtTime(notes: ProjectableNote[], atMs: number): TemporalP
 }
 
 /**
- * Documented valid_at fallback chain: OKF+ timestamp when parseable, else
+ * Documented valid_at fallback chain: GKX timestamp when parseable, else
  * file created-time, else modified-time, else the index build time.
  */
 export function resolveValidAt(
-  okfTimestampMs: number | null,
+  gkxTimestampMs: number | null,
   createdTimeMs: number | undefined,
   modifiedTimeMs: number | undefined,
   nowMs: number
 ): number {
-  if (okfTimestampMs != null) return okfTimestampMs;
+  if (gkxTimestampMs != null) return gkxTimestampMs;
   if (createdTimeMs != null && Number.isFinite(createdTimeMs)) return createdTimeMs;
   if (modifiedTimeMs != null && Number.isFinite(modifiedTimeMs)) return modifiedTimeMs;
   return nowMs;

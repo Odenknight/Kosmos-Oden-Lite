@@ -14,7 +14,7 @@ async function run() {
   frame.addEventListener("load", () => {
     setTimeout(() => {
       frame.contentWindow.postMessage({
-        protocol: "vault-kosmos", version: 1, type: "vault-snapshot",
+        protocol: "kosmos-oden-lite", version: 1, type: "vault-snapshot",
         payload: {
           files: [
             { relativePath: "A/one.md", content: "# one\n[[two]]" },

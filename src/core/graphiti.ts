@@ -7,10 +7,10 @@
  * ingest is not assumed searchable until the caller performs a read check.
  */
 import { codeUnitCompare, contentHash } from "./paths";
-import type { GraphitiEpisode, KosmosGraph, KosmosNode, OkfRelation } from "./types";
+import type { GraphitiEpisode, KosmosGraph, KosmosNode, GkxRelation } from "./types";
 
 export const GRAPHITI_CORE_VERSION = "0.29.0";
-export const GRAPHITI_ADAPTER_SCHEMA = "okf-plus-graphiti/2.3.0";
+export const GRAPHITI_ADAPTER_SCHEMA = "gkx-graphiti/2.3.0";
 export const DEFAULT_GRAPHITI_CONTENT_CHARS = 20_000;
 export const DEFAULT_GRAPHITI_ATTRIBUTE_CHARS = 250;
 
@@ -130,14 +130,14 @@ export function deterministicUuid(input: string): string {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function episodeUuid(node: KosmosNode, namespace: string): string {
-  const uid = node.okf?.uid;
+  const uid = node.gkx?.uid;
   return uid && UUID.test(uid) ? uid : deterministicUuid(`${namespace}\u0000${node.path}`);
 }
 
 function referenceTimeSource(node: KosmosNode): string {
-  const projectedCreated = node.okf?.projection?.authored.createdAt;
-  if (typeof projectedCreated === "string" && !Number.isNaN(Date.parse(projectedCreated))) return "okf.created_at";
-  if (node.okf?.timestamp && !Number.isNaN(Date.parse(node.okf.timestamp))) return "okf.timestamp";
+  const projectedCreated = node.gkx?.projection?.authored.createdAt;
+  if (typeof projectedCreated === "string" && !Number.isNaN(Date.parse(projectedCreated))) return "gkx.created_at";
+  if (node.gkx?.timestamp && !Number.isNaN(Date.parse(node.gkx.timestamp))) return "gkx.timestamp";
   if (node.createdAt) return "file.created_at";
   if (node.updatedAt) return "file.updated_at";
   return "index_time_fallback";
@@ -158,10 +158,10 @@ function bounded(value: unknown, max: number, depth = 0): unknown {
 }
 
 function sagaFor(node: KosmosNode): { id: string; kind: string } | null {
-  const type = (node.okf?.type || node.type || "").toLowerCase();
+  const type = (node.gkx?.type || node.type || "").toLowerCase();
   const path = node.path.toLowerCase();
-  if ((node.okf?.supersedesIds?.length ?? 0) > 0 || (node.okf?.supersededByIds?.length ?? 0) > 0) {
-    return { id: `lineage:${node.okf?.uid ?? contentHash(node.path)}`, kind: "version-lineage" };
+  if ((node.gkx?.supersedesIds?.length ?? 0) > 0 || (node.gkx?.supersededByIds?.length ?? 0) > 0) {
+    return { id: `lineage:${node.gkx?.uid ?? contentHash(node.path)}`, kind: "version-lineage" };
   }
   if (type.includes("spec") || path.includes("spec")) {
     return { id: `specification:${slug(node.label.replace(/v?\d+(?:\.\d+)*/gi, ""))}`, kind: "versioned-specification" };
@@ -172,9 +172,9 @@ function sagaFor(node: KosmosNode): { id: string; kind: string } | null {
   return null;
 }
 
-function effectiveRelationshipEntries(node: KosmosNode): Array<{ relation: OkfRelation | string; target: string }> {
-  const source = node.okf?.projection?.effective.relationships ?? node.okf?.relations ?? {};
-  const output: Array<{ relation: OkfRelation | string; target: string }> = [];
+function effectiveRelationshipEntries(node: KosmosNode): Array<{ relation: GkxRelation | string; target: string }> {
+  const source = node.gkx?.projection?.effective.relationships ?? node.gkx?.relations ?? {};
+  const output: Array<{ relation: GkxRelation | string; target: string }> = [];
   for (const [relation, rawTargets] of Object.entries(source)) {
     const targets = Array.isArray(rawTargets) ? rawTargets : [rawTargets];
     for (const rawTarget of targets) {
@@ -210,7 +210,7 @@ export function buildGraphitiEpisodes(graph: KosmosGraph, options: GraphitiOptio
   const vault = options.vault || "vault";
   const namespace = options.vaultIdentity || vault;
   const maxAttributeChars = options.maxAttributeChars ?? DEFAULT_GRAPHITI_ATTRIBUTE_CHARS;
-  const groupId = options.groupId || `okf-${slug(vault)}-${hash32(namespace).toString(16).padStart(8, "0")}-assertions`;
+  const groupId = options.groupId || `gkx-${slug(vault)}-${hash32(namespace).toString(16).padStart(8, "0")}-assertions`;
   const corpusId = options.corpusId || groupId;
   const processingTime = options.processingTime || graph.stats.indexedAt;
   const byId = new Map(graph.nodes.map((node) => [node.id, node]));
@@ -219,9 +219,9 @@ export function buildGraphitiEpisodes(graph: KosmosGraph, options: GraphitiOptio
 
   for (const node of graph.nodes) {
     if (node.kind !== "file") continue;
-    const okf = node.okf;
-    const projection = okf?.projection;
-    const title = okf?.title || node.label;
+    const gkx = node.gkx;
+    const projection = gkx?.projection;
+    const title = gkx?.title || node.label;
     const timestamp = node.validAt ?? node.createdAt ?? processingTime;
     const sourceOrigin = typeof (projection?.authored.authorship as any)?.origin === "string"
       ? String((projection?.authored.authorship as any).origin)
@@ -235,10 +235,10 @@ export function buildGraphitiEpisodes(graph: KosmosGraph, options: GraphitiOptio
     const metadata: Record<string, string | number | boolean | null> = {
       vault_identity: contentHash(namespace),
       source_path_hash: contentHash(node.path),
-      okf_version: okf?.okfVersion ?? null,
-      uid: okf?.uid ?? null,
-      note_type: okf?.type || node.type || "note",
-      sensitivity: String(projection?.effective.sensitivity ?? okf?.sensitivity ?? "internal"),
+      gkx_version: gkx?.gkxVersion ?? null,
+      uid: gkx?.uid ?? null,
+      note_type: gkx?.type || node.type || "note",
+      sensitivity: String(projection?.effective.sensitivity ?? gkx?.sensitivity ?? "internal"),
       policy_version: projection?.assessment.policy.version ?? "legacy",
       corpus_id: corpusId,
       workspace_id: groupId,
@@ -252,13 +252,13 @@ export function buildGraphitiEpisodes(graph: KosmosGraph, options: GraphitiOptio
       name: title,
       episode_body: JSON.stringify(bounded({
         schema: GRAPHITI_ADAPTER_SCHEMA,
-        profile: "okf-plus-2.3-validating-projection",
+        profile: "gkx-2.3-validating-projection",
         adapter: "Kosmos Governed Context Projection",
         title,
         path: node.path,
-        uid: okf?.uid ?? null,
-        type: okf?.type || node.type || "note",
-        description: okf?.description ?? null,
+        uid: gkx?.uid ?? null,
+        type: gkx?.type || node.type || "note",
+        description: gkx?.description ?? null,
         tags: node.tags,
         labels: projection ? {
           authored: projection.authored.labels,
@@ -316,26 +316,26 @@ export function buildGraphitiEpisodes(graph: KosmosGraph, options: GraphitiOptio
           policy_id: projection?.assessment.policy.id ?? null,
           policy_version: projection?.assessment.policy.version ?? null,
           policy_hash: projection?.assessment.policy.hash ?? null,
-          schema_id: "okf-plus-graphiti",
+          schema_id: "gkx-graphiti",
           schema_version: "2.3.0",
           schema_hash: `fnv1a32-with-length:${contentHash(GRAPHITI_ADAPTER_SCHEMA)}`,
         },
         lineage: {
-          resolved_supersedes: (okf?.supersedesIds ?? []).map(label),
-          declared_supersedes: okf?.supersedes ?? [],
+          resolved_supersedes: (gkx?.supersedesIds ?? []).map(label),
+          declared_supersedes: gkx?.supersedes ?? [],
         },
         related_to: semantic,
         saga,
       }, maxAttributeChars)),
       source: "json",
-      source_description: `OKF+ origin-separated source projection (${sourceOrigin}) · KGCP non-authoritative Graphiti adapter · vault "${vault}" · ${node.path}`,
+      source_description: `GKX origin-separated source projection (${sourceOrigin}) · KGCP non-authoritative Graphiti adapter · vault "${vault}" · ${node.path}`,
       reference_time: timestamp,
       group_id: groupId,
       episode_metadata: metadata,
     });
 
     for (const relationship of effectiveRelationshipEntries(node)) {
-      const subjectUid = okf?.uid ?? episodeUuid(node, namespace);
+      const subjectUid = gkx?.uid ?? episodeUuid(node, namespace);
       output.push({
         uuid: deterministicUuid(`${subjectUid}\u0000${relationship.relation}\u0000${relationship.target}`),
         name: `${title} ${relationship.relation} ${relationship.target}`,
@@ -350,7 +350,7 @@ export function buildGraphitiEpisodes(graph: KosmosGraph, options: GraphitiOptio
           processing_time: processingTime,
         }),
         source: "fact_triple",
-        source_description: `Effective non-proposed OKF+ relationship projection from ${node.path}`,
+        source_description: `Effective non-proposed GKX relationship projection from ${node.path}`,
         reference_time: timestamp,
         group_id: groupId,
         episode_metadata: { ...metadata, episode_kind: "fact_triple", relationship: relationship.relation },

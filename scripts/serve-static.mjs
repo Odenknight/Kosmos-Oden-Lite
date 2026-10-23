@@ -15,7 +15,7 @@ http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://x");
     let p = decodeURIComponent(url.pathname);
-    if (p === "/") p = "/vault-kosmos.html";
+    if (p === "/") p = "/kosmos-oden-lite.html";
     const file = normalize(join(root, p));
     if (!file.replace(/\\/g, "/").startsWith(root.replace(/\\/g, "/"))) { res.writeHead(403); res.end(); return; }
     const data = await readFile(file);

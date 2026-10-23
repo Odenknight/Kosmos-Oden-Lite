@@ -1,4 +1,4 @@
-# Vault Kosmos — universal Agent API guide (v0.6.5-alpha.8)
+# Kosmos-Oden-Lite — universal Agent API guide (v0.6.5-alpha.8)
 
 **Read-only · localhost by default · token-protected · MCP 2025-11-25**
 
@@ -6,16 +6,16 @@
 > create a vault-local copy with the actual address, token, and stdio-adapter
 > path filled in.
 
-Vault Kosmos exposes one vendor-neutral MCP Streamable HTTP endpoint. Anthropic,
+Kosmos-Oden-Lite exposes one vendor-neutral MCP Streamable HTTP endpoint. Anthropic,
 OpenAI, and other harnesses use the same tools and protocol; their config files
-are only setup conveniences. Source notes and accepted OKF+ semantic events are
+are only setup conveniences. Source notes and accepted GKX semantic events are
 authoritative. API responses and Graphiti episodes are read projections.
-Kosmos-Oden implements the OKF+ v2.3 Validating Projection Profile, not a full
+Kosmos-Oden implements the GKX v2.3 Validating Projection Profile, not a full
 GKOS governance engine.
 
 ## Start the connector
 
-1. Open **Obsidian → Settings → Community plugins → Vault Kosmos**.
+1. Open **Obsidian → Settings → Community plugins → Kosmos-Oden-Lite**.
 2. Set **Default sensitivity for unlabeled notes** first — it appears above the
    enable toggle on purpose. Any note with no explicit `sensitivity` field is
    projected at this level. It ships **fail-closed to `secret`**, so unlabeled
@@ -28,7 +28,7 @@ GKOS governance engine.
    that your notes may be reachable over the network and that the
    default-sensitivity setting governs unlabeled notes — check it first.
 4. Keep **Require auth token** enabled.
-5. Choose the highest OKF+ sensitivity agents may read (the read *ceiling*). The
+5. Choose the highest GKX sensitivity agents may read (the read *ceiling*). The
    default is `internal`; `confidential` and `phi` remain hidden until
    explicitly enabled.
 
@@ -42,7 +42,7 @@ The settings page has copy buttons for every configuration below.
 ### Anthropic Claude Code
 
 ```bash
-claude mcp add --transport http --header "Authorization: Bearer <TOKEN>" vault-kosmos "http://127.0.0.1:4816/mcp"
+claude mcp add --transport http --header "Authorization: Bearer <TOKEN>" kosmos-oden-lite "http://127.0.0.1:4816/mcp"
 ```
 
 Project-scoped `.mcp.json`:
@@ -50,7 +50,7 @@ Project-scoped `.mcp.json`:
 ```json
 {
   "mcpServers": {
-    "vault-kosmos": {
+    "kosmos-oden-lite": {
       "type": "streamable-http",
       "url": "http://127.0.0.1:4816/mcp",
       "headers": { "Authorization": "Bearer <TOKEN>" }
@@ -64,7 +64,7 @@ Project-scoped `.mcp.json`:
 These clients share Codex `config.toml` on the same desktop host:
 
 ```toml
-[mcp_servers.vault-kosmos]
+[mcp_servers.kosmos-oden-lite]
 url = "http://127.0.0.1:4816/mcp"
 http_headers = { Authorization = "Bearer <TOKEN>" }
 ```
@@ -82,7 +82,7 @@ the MCP session and protocol headers. It replaces the old downloaded
 ```json
 {
   "mcpServers": {
-    "vault-kosmos": {
+    "kosmos-oden-lite": {
       "command": "node",
       "args": ["<PLUGIN-DIRECTORY>/kosmos-mcp-stdio.mjs"],
       "env": {
@@ -111,14 +111,14 @@ batches are not part of the current transport contract.
 
 | Tool | Result |
 |---|---|
-| `vault_overview` | Sensitivity-filtered OKF+ projection statistics |
+| `vault_overview` | Sensitivity-filtered GKX projection statistics |
 | `search_notes` | Lexical title/alias/tag/path search |
 | `get_note` | Readable source body, legacy metadata, v2.3 projection, lineage, and links |
 | `get_lineage` | Supersession chain, oldest to newest |
 | `get_related` | Explicit `related_to`, legacy Related, outgoing, and backlink neighbors |
 | `graph_at_time` | Point-in-time temporal-validity projection |
 | `export_graphiti_episodes` | Paginated non-authoritative episodes with stable UUIDs |
-| `get_okf_note` | Origin-separated v2.3 validating projection |
+| `get_gkx_note` | Origin-separated v2.3 validating projection |
 | `get_assessment` / `assess_note` | Policy-bound documentation/support assessment for one note |
 | `get_diagnostics` / `validate_note` | Stable diagnostics and in-memory validity result |
 | `get_effective_labels` | Authored, derived, proposed, approved, and effective labels |
@@ -134,14 +134,14 @@ separate authorized decision exists.
 
 Graphiti pages default to 20 episodes and cap at 100. Follow `nextCursor`.
 Earlier episodes never receive later `superseded_by`, `head`, or `invalid_at`
-state. A valid OKF+ UUID becomes the Graphiti episode UUID, making re-ingestion
+state. A valid GKX UUID becomes the Graphiti episode UUID, making re-ingestion
 idempotent; legacy notes receive a deterministic fallback UUID.
 
 ## REST and troubleshooting
 
 Read-only REST mirrors are available at `/overview`, `/diagnostics`, `/graph`,
 `/notes`, `/note`, `/lineage`, `/related`, `/at`, paginated `/episodes`, and
-the `/okf/` routes listed by the server root. Note selectors accept `uid`,
+the `/gkx/` routes listed by the server root. Note selectors accept `uid`,
 `path`, or `title`. Validate/assess routes compute in memory and remain GET-only.
 
 - `401`: token missing or stale.

@@ -8,7 +8,7 @@ import {
   parseFrontmatter,
   parseMarkdownFile,
   parseMarkdownLinks,
-  parseOkfPlus,
+  parseGkxPlus,
   parseWikiLinks,
 } from "../dist/kosmos-core.mjs";
 
@@ -71,16 +71,16 @@ test("tags + aliases normalize from every YAML shape", () => {
   assert.deepEqual(p.aliases, ["X", "Y"]);
 });
 
-test("OKF+: Related footer produces semantic targets", () => {
+test("GKX: Related footer produces semantic targets", () => {
   const { data, content } = parseFrontmatter("---\ntype: idea\n---\nBody\n\n**Related:** [[A]], [[B|alias]]");
-  const okf = parseOkfPlus(data, content);
-  assert.ok(okf);
-  assert.deepEqual(okf.related, ["A", "B"]);
+  const gkx = parseGkxPlus(data, content);
+  assert.ok(gkx);
+  assert.deepEqual(gkx.related, ["A", "B"]);
 });
 
-test("OKF+ 2.2: flat governance fields and canonical wikilink lists parse", () => {
+test("GKX 2.2: flat governance fields and canonical wikilink lists parse", () => {
   const { data, content } = parseFrontmatter(`---
-okf_version: "2.2"
+gkx_version: "2.2"
 uid: "7f3a9c1e-4b2d-4e8a-9c6f-1d5e8a2b7c4d"
 type: semantic
 title: Engine
@@ -100,22 +100,22 @@ related_to:
   - "[[Fuel]]"
 ---
 Body`);
-  const okf = parseOkfPlus(data, content);
-  assert.equal(okf.okfVersion, "2.2");
-  assert.equal(okf.uid, "7f3a9c1e-4b2d-4e8a-9c6f-1d5e8a2b7c4d");
-  assert.equal(okf.description, "Governed engine note");
-  assert.equal(okf.epistemicState, "verified_inference");
-  assert.equal(okf.scopeId, "kosmos");
-  assert.equal(okf.sensitivity, "confidential");
-  assert.deepEqual(okf.supersedes, ["Engine v1"]);
-  assert.deepEqual(okf.forkedTo, ["Alternative"]); // forked_by read compatibility
-  assert.deepEqual(okf.relations.depends_on, ["Ledger"]);
-  assert.deepEqual(okf.related, ["Fuel"]);
+  const gkx = parseGkxPlus(data, content);
+  assert.equal(gkx.gkxVersion, "2.2");
+  assert.equal(gkx.uid, "7f3a9c1e-4b2d-4e8a-9c6f-1d5e8a2b7c4d");
+  assert.equal(gkx.description, "Governed engine note");
+  assert.equal(gkx.epistemicState, "verified_inference");
+  assert.equal(gkx.scopeId, "kosmos");
+  assert.equal(gkx.sensitivity, "confidential");
+  assert.deepEqual(gkx.supersedes, ["Engine v1"]);
+  assert.deepEqual(gkx.forkedTo, ["Alternative"]); // forked_by read compatibility
+  assert.deepEqual(gkx.relations.depends_on, ["Ledger"]);
+  assert.deepEqual(gkx.related, ["Fuel"]);
 });
 
-test("OKF+: absent markers -> null; invalid timestamp -> fallback validAt", () => {
+test("GKX: absent markers -> null; invalid timestamp -> fallback validAt", () => {
   const { data, content } = parseFrontmatter("---\nunrelated: x\n---\nBody");
-  assert.equal(parseOkfPlus(data, content), null);
+  assert.equal(parseGkxPlus(data, content), null);
 
   // invalid timestamp: node falls back to file times, never NaN/crash (§24)
   const graph = buildGraph(

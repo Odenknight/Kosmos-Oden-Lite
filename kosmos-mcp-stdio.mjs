@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * First-party MCP stdio adapter for Vault Kosmos.
+ * First-party MCP stdio adapter for Kosmos-Oden-Lite.
  *
  * Some desktop harnesses can launch stdio servers but cannot attach custom
  * headers to a local Streamable HTTP endpoint. This adapter translates one
@@ -19,7 +19,7 @@ try {
   const parsed = new URL(endpoint);
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("unsupported protocol");
 } catch {
-  process.stderr.write("Vault Kosmos stdio adapter: KOSMOS_MCP_URL must be an http(s) URL\n");
+  process.stderr.write("Kosmos-Oden-Lite stdio adapter: KOSMOS_MCP_URL must be an http(s) URL\n");
   process.exit(2);
 }
 
@@ -32,7 +32,7 @@ function requestError(message, detail) {
   writeMessage({
     jsonrpc: "2.0",
     id: message?.id ?? null,
-    error: { code: -32000, message: "Vault Kosmos MCP transport error", data: detail },
+    error: { code: -32000, message: "Kosmos-Oden-Lite MCP transport error", data: detail },
   });
 }
 

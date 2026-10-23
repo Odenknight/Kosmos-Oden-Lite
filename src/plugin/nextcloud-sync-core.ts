@@ -1,7 +1,9 @@
 /** Pure, DOM-free Nextcloud sync settings, URL, exclusion, and three-way planning logic. */
 export const NEXTCLOUD_SYNC_SCHEMA = 2;
 export const OBSIDIAN_CONFIG_PATTERN = ".obsidian/**";
-export const PROTECTED_SYNC_EXCLUDES = [".obsidian/plugins/vault-kosmos-oden/data.json"];
+// The second entry is the former plugin id's folder: the one-time settings
+// import leaves it in place, and it still holds the old Agent API token.
+export const PROTECTED_SYNC_EXCLUDES = [".obsidian/plugins/kosmos-oden-lite/data.json", ".obsidian/plugins/vault-kosmos-oden/data.json"];
 export const DEFAULT_SYNC_EXCLUDES = [".git/**", ".trash/**"];
 
 export interface NextcloudSettings {
@@ -11,7 +13,7 @@ export interface NextcloudSettings {
 }
 export const DEFAULT_NEXTCLOUD_SETTINGS: NextcloudSettings = {
   schemaVersion: NEXTCLOUD_SYNC_SCHEMA, enabled: false, serverUrl: "", username: "",
-  remoteFolder: "Vault-Kosmos", syncOnStartup: false, intervalMinutes: 0,
+  remoteFolder: "Kosmos-Oden-Lite", syncOnStartup: false, intervalMinutes: 0,
   propagateDeletes: false, syncObsidianConfig: false, excludePatterns: [...DEFAULT_SYNC_EXCLUDES],
 };
 export interface SyncRecord { localHash: string; remoteEtag: string; remoteMtime: number; remoteSize: number; syncedAt: number; }
@@ -28,7 +30,7 @@ export function migrateNextcloudSettings(raw: any): NextcloudSettings {
   s.syncObsidianConfig = s.syncObsidianConfig === true;
   s.intervalMinutes = Math.max(0, Math.min(1440, Math.floor(Number(s.intervalMinutes) || 0)));
   s.serverUrl = String(s.serverUrl || "").trim(); s.username = String(s.username || "").trim();
-  s.remoteFolder = normalizeRemotePath(String(s.remoteFolder || "Vault-Kosmos")) || "Vault-Kosmos";
+  s.remoteFolder = normalizeRemotePath(String(s.remoteFolder || "Kosmos-Oden-Lite")) || "Kosmos-Oden-Lite";
   s.excludePatterns = Array.isArray(s.excludePatterns)
     ? s.excludePatterns.map(String).map((v) => v.trim()).filter((v) => v && v.toLowerCase() !== OBSIDIAN_CONFIG_PATTERN).slice(0, 200)
     : [...DEFAULT_SYNC_EXCLUDES];

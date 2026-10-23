@@ -79,7 +79,7 @@ export function resolveLinkTarget(idx: Resolver, sourcePath: string, target: str
 }
 
 /**
- * Resolve an OKF+ lineage reference (title / basename / path / alias).
+ * Resolve an GKX lineage reference (title / basename / path / alias).
  * Reports whether the resolution was ambiguous so lineage validation can warn.
  */
 export function resolveTitleRef(

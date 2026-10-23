@@ -152,7 +152,7 @@ export function layoutCosmos(graph: any): KosmosGraph {
   if (graph.diagnostics) graph.diagnostics.residualCollisions = residual;
   graph.__residualCollisions = residual;
   if (residual > 0 && typeof console !== "undefined") {
-    console.debug(`Vault Kosmos layout: ${residual} residual body intersection(s) after corrective pass`);
+    console.debug(`Kosmos-Oden-Lite layout: ${residual} residual body intersection(s) after corrective pass`);
   }
 
   // orbital parameters: every body revolves about world +Y around its parent.

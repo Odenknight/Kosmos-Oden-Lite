@@ -1,4 +1,4 @@
-# KRS-Lite maintenance policy
+# Kosmos-Oden-Lite maintenance policy
 
 **Lifecycle:** Frozen Core Edition, maintained on the `1.0.x` line.
 

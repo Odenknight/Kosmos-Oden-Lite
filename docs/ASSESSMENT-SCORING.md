@@ -1,4 +1,4 @@
-# OKF+ 2.3 Assessment Scoring
+# GKX 2.3 Assessment Scoring
 
 The deterministic assessment reports:
 

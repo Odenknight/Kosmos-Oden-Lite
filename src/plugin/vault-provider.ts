@@ -10,7 +10,7 @@
 import type { App, TFile } from "obsidian";
 import { KosmosIndex } from "../core/incremental";
 import { stripFrontmatter } from "../core/graphiti";
-import type { Okf23ProjectionOptions } from "../core/okf23";
+import type { Gkx23ProjectionOptions } from "../core/gkx23";
 import type { AgentDataProvider } from "./agent-server";
 import type { KosmosGraph, SourceFile } from "../core/types";
 
@@ -67,7 +67,7 @@ export function attachmentListFrom(all: Array<{ path: string; extension?: string
 
 export class VaultDataProvider implements AgentDataProvider {
   private app: App;
-  private readonly projectionOptions: () => Okf23ProjectionOptions;
+  private readonly projectionOptions: () => Gkx23ProjectionOptions;
   private index: KosmosIndex;
   private fullDirty = true;
   private changedPaths = new Set<string>();
@@ -82,7 +82,7 @@ export class VaultDataProvider implements AgentDataProvider {
    *   re-projects unlabeled notes at the new default. Incremental reparses reuse
    *   the same index/options, staying consistent between full builds.
    */
-  constructor(app: App, projectionOptions: () => Okf23ProjectionOptions = () => ({})) {
+  constructor(app: App, projectionOptions: () => Gkx23ProjectionOptions = () => ({})) {
     this.app = app;
     this.projectionOptions = projectionOptions;
     this.index = new KosmosIndex(this.projectionOptions());

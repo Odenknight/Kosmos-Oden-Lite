@@ -31,7 +31,7 @@ test("every episode carries stable UUID + collision-resistant assertion namespac
     assert.equal(e.source, "json");
     assert.ok(e.source_description.includes("My Vault"));
     assert.ok(!Number.isNaN(Date.parse(e.reference_time)), "reference_time must parse");
-    assert.match(e.group_id, /^okf-my-vault-[0-9a-f]{8}-assertions$/);
+    assert.match(e.group_id, /^gkx-my-vault-[0-9a-f]{8}-assertions$/);
     assert.equal(typeof e.episode_metadata.source_path_hash, "string");
     assert.equal(e.episode_metadata.corpus_id, e.group_id);
   }
@@ -70,10 +70,10 @@ test("content rides along when supplied", () => {
   assert.equal(fuel.content_truncated, false);
 });
 
-test("valid OKF+ uid is reused as Graphiti episode uuid across path changes", () => {
+test("valid GKX uid is reused as Graphiti episode uuid across path changes", () => {
   const uid = "7f3a9c1e-4b2d-4e8a-9c6f-1d5e8a2b7c4d";
-  const one = buildGraph([{ relativePath: "A.md", content: `---\nokf_version: "2.2"\nuid: "${uid}"\ntype: semantic\ntimestamp: 2026-01-01T00:00:00Z\n---\na` }], []);
-  const two = buildGraph([{ relativePath: "Moved/A.md", content: `---\nokf_version: "2.2"\nuid: "${uid}"\ntype: semantic\ntimestamp: 2026-01-01T00:00:00Z\n---\na` }], ["Moved"]);
+  const one = buildGraph([{ relativePath: "A.md", content: `---\ngkx_version: "2.2"\nuid: "${uid}"\ntype: semantic\ntimestamp: 2026-01-01T00:00:00Z\n---\na` }], []);
+  const two = buildGraph([{ relativePath: "Moved/A.md", content: `---\ngkx_version: "2.2"\nuid: "${uid}"\ntype: semantic\ntimestamp: 2026-01-01T00:00:00Z\n---\na` }], ["Moved"]);
   assert.equal(buildGraphitiEpisodes(one)[0].uuid, uid);
   assert.equal(buildGraphitiEpisodes(two)[0].uuid, uid);
 });
@@ -83,12 +83,12 @@ test("stripFrontmatter removes only the YAML header", () => {
   assert.equal(stripFrontmatter("No header"), "No header");
 });
 
-test("OKF+ 2.3 adapter exports governance, evidence, hashes, metadata and saga hints", () => {
-  const graph = buildGraph([{ relativePath:"Research/Spec v2.md", content:`---\nokf_version: "2.3"\nuid: "019b2d14-4230-7db7-87d4-7d81cfaec932"\ntitle: Spec v2\ntype: specification\ncreated_at: "2026-07-18T12:00:00.000Z"\nupdated_at: "2026-07-18T13:00:00.000Z"\nsensitivity:\n  level: restricted\nevidence:\n  supports:\n    - target: "claim:a"\nrelationships:\n  implements:\n    - target: "spec:one"\n---\nBody` }],["Research"]);
+test("GKX 2.3 adapter exports governance, evidence, hashes, metadata and saga hints", () => {
+  const graph = buildGraph([{ relativePath:"Research/Spec v2.md", content:`---\ngkx_version: "2.3"\nuid: "019b2d14-4230-7db7-87d4-7d81cfaec932"\ntitle: Spec v2\ntype: specification\ncreated_at: "2026-07-18T12:00:00.000Z"\nupdated_at: "2026-07-18T13:00:00.000Z"\nsensitivity:\n  level: restricted\nevidence:\n  supports:\n    - target: "claim:a"\nrelationships:\n  implements:\n    - target: "spec:one"\n---\nBody` }],["Research"]);
   const episodes=buildGraphitiEpisodes(graph,{vault:"V",vaultIdentity:"workspace-1",sagaMapping:true,processingTime:"2026-07-18T14:00:00.000Z"});
   const note=episodes.find((e)=>e.source==="json"), triple=episodes.find((e)=>e.source==="fact_triple");
   const body=JSON.parse(note.episode_body);
-  assert.equal(body.schema,"okf-plus-graphiti/2.3.0");
+  assert.equal(body.schema,"gkx-graphiti/2.3.0");
   assert.equal(body.governance.effective.sensitivity,"restricted");
   assert.ok(body.integrity.policy_hash);
   assert.ok(body.integrity.schema_hash);

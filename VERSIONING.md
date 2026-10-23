@@ -9,7 +9,7 @@ gkos-standard wins.
 Kosmos-Oden Lite is the **Frozen Core Edition** of the Kosmos-Oden line.
 
 This designation means the edition preserves a stable, established core rather
-than continuously tracking the newest GKOS Engine release. Its purpose is to
+than continuously tracking the newest GKOS-Engine release. Its purpose is to
 protect existing vault behavior, note compatibility, and a predictable user
 experience.
 
@@ -42,9 +42,11 @@ indefinitely:
   **Compatibility** in `CHANGELOG.md`.
 - New capability belongs in the full **Kosmos-Oden** product, not here.
 
-The Obsidian plugin id (`manifest.json` → `"id": "vault-kosmos-oden"`) is
-**frozen**. Changing it orphans every existing install; it is not a versioning
-decision and is out of scope for any patch.
+The Obsidian plugin id (`manifest.json` → `"id": "kosmos-oden-lite"`) is
+**frozen**. It was changed once, from its former id, by an explicit owner
+decision (the breaking GKX rename, with a one-time settings import). Changing it
+again orphans every existing install; it is not a versioning decision and is out
+of scope for any patch.
 
 `src/core/version.ts` (`KOSMOS_VERSION`) is the single source of truth;
 `package.json`, `manifest.json` and `versions.json` are asserted against it by
@@ -53,14 +55,14 @@ See `docs/RELEASE-PROCESS.md` for the release mechanics.
 
 ## Vendored core: reviewed backports with allowlisted deltas
 
-`src/core/` is a **vendored copy** of the [GKOS Engine](https://github.com/Odenknight/GKOS-Engine)'s
+`src/core/` is a **vendored copy** of the [GKOS-Engine](https://github.com/Odenknight/GKOS-Engine)'s
 `src/`. It is not a fork to be independently developed, and it is not expected
 to advance automatically with every upstream release.
 
 - The reconciled engine baseline is declared in `package.json` as
   `"engineParity"` (currently `v1.0.7`). Under the Frozen Core policy, this is
   the source baseline used by the drift checker; it does not imply parity with
-  the newest GKOS Engine version.
+  the newest GKOS-Engine version.
 - Engine fixes reach this repo as **reviewed backports**: port the relevant
   upstream change verbatim where practical, do not re-derive or expand it.
 - A backport is accepted only when it addresses a bug, security issue,

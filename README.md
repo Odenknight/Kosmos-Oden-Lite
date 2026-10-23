@@ -3,30 +3,36 @@
 **A 3D cosmos for your notes, and note formatting that quietly makes them more
 useful — to you, and to AI.**
 
-Kosmos-Oden-Lite (aka Vault-Kosmos OdenKnight Lite Edition) is the **Frozen Core Edition** and final, polished form of the
-classic **Vault Kosmos** line: an Obsidian plugin that renders your vault as a
+Kosmos-Oden-Lite is the **Frozen Core Edition** and final, polished form of the
+classic cosmos-viewer line: an Obsidian plugin that renders your vault as a
 navigable "Local Cluster of Galaxies" — folders become galaxies, notes become
 stars and planets, links become the gravity between them — and gives your notes
 clean, human-editable frontmatter (the **GKOS-Engine-Lite schema**: GKX Notes
 2.2 with the optional Agent-Ready flat 2.3 profile) so both you and your AI
 tools can find, trust, and connect what you know.
 
-GKX (Governed Knowledge Exchange) is the current name for the format previously
-published as OKF+. Vault-Kosmos keeps reading existing OKF+ 2.2/2.3 notes; the
-rename does not require a vault migration.
+GKX (Governed Knowledge Exchange) is the note format this plugin reads and writes.
+
+**Breaking rename.** This release renames the plugin and its note format in one
+step: the plugin id is now `kosmos-oden-lite` (formerly `vault-kosmos-oden`), the
+frontmatter key is `gkx_version`, runtime state lives in `.gkx/`, and diagnostics
+use `GKX-*` codes. The old names are not accepted as aliases. Notes that still
+use `okf_version` must have that key renamed to `gkx_version` (the value stays the
+same). On first load the plugin imports your settings once from the old
+`vault-kosmos-oden` plugin folder, which it leaves untouched.
 
 ## What “Frozen Core Edition” means
 
 The core behavior, data model, plugin identity, and user-facing workflow of this
 edition are intentionally frozen. It is a stable product line, not a rolling
-mirror of the newest GKOS Engine release.
+mirror of the newest GKOS-Engine release.
 
 - Existing vault behavior and note compatibility take priority over adopting new
   engine features.
 - Maintenance is limited to bug fixes, security fixes, data-integrity repairs,
   compatibility corrections, and release/documentation hygiene.
 - Relevant upstream fixes may be selectively backported after review, but a new
-  GKOS Engine version is not adopted automatically and current-engine parity is
+  GKOS-Engine version is not adopted automatically and current-engine parity is
   not implied.
 - New capabilities, new governance semantics, and architectural expansion belong
   in the main [Kosmos-Oden](https://github.com/Odenknight/Kosmos-Oden) project.
@@ -44,7 +50,7 @@ something simple yet effective — not for governing tens of thousands of
 documents. It is feature-complete and maintained under the Frozen Core policy.
 New feature development continues in the main
 [Kosmos-Oden](https://github.com/Odenknight/Kosmos-Oden) project, which builds
-the full GKOS Engine (governance sidecars, proposal and decision records, the
+the full GKOS-Engine (governance sidecars, proposal and decision records, the
 standalone engine) on the same lineage. See [VERSIONING.md](VERSIONING.md) for
 what that means in practice: patches-only on the `1.0.x` line, with a declared
 vendored-core baseline and reviewed backports rather than automatic parity.
@@ -55,8 +61,8 @@ This project began as an act of admiration. **[Vault Kosmos](https://github.com/
 by **H4R7W16** turned an Obsidian vault into a living night sky, and that idea
 — that a knowledge base deserves to be *seen*, not just searched — inspired
 everything that followed. Kosmos-Oden started as a fork and rebuild of that
-work, and this Lite edition deliberately keeps the **Vault Kosmos** name on
-the viewer as a mark of respect to the author whose idea started it.
+work, and this Lite edition credits that original project as a mark of respect
+to the author whose idea started it.
 
 From there it grew in one direction the original never aimed at: making the
 notes themselves more trustworthy. A deterministic formatting engine was added
@@ -96,11 +102,10 @@ care about stay visible and editable; the machinery stays out of the way.**
 ## Attribution and license
 
 - Original concept and inspiration: **Vault Kosmos** by
-  [H4R7W16](https://github.com/H4R7W16/vault-kosmos). The viewer keeps the
-  Vault Kosmos name in tribute.
+  [H4R7W16](https://github.com/H4R7W16/vault-kosmos).
 - Rebuild of galaxy, formatting engine, and Lite edition: **Shaun "Oden" Marshall**
   ([Odenknight](https://github.com/Odenknight)).
-- Note-format profiles: **GKX** (Governed Knowledge Exchange; formerly OKF+) under the
+- Note-format profiles: **GKX** (Governed Knowledge Exchange) under the
   **GKOS** (Governed Knowledge Operations Standard) governance model —
   see [gkos-standard](https://github.com/Odenknight/gkos-standard).
 - License: [MIT](LICENSE). Documentation and original graphics in the GKOS
@@ -111,9 +116,9 @@ care about stay visible and editable; the machinery stays out of the way.**
 | | Kosmos-Oden-Lite — Frozen Core Edition | Kosmos-Oden |
 |---|---|---|
 | Audience | Everyday vaults, individuals | Governed knowledge work, agentic systems |
-| Note formats | GKX Notes (2.2) + Agent-Ready flat 2.3; reads legacy OKF+ | Same, plus the full GKOS Engine roadmap (sidecars, proposals, decisions, Machine Dialect, standalone engine) |
+| Note formats | GKX Notes (2.2) + Agent-Ready flat 2.3 | Same, plus the full GKOS-Engine roadmap (sidecars, proposals, decisions, Machine Dialect, standalone engine) |
 | Core policy | Frozen baseline; reviewed fixes and selective backports | Active engine and product evolution |
-| Viewer branding | **Vault Kosmos** (tribute) | **Kosmos-Oden)** |
+| Viewer branding | **Kosmos-Oden-Lite** | **Kosmos-Oden** |
 | Future | Stable `1.0.x` maintenance line; no automatic current-engine parity | Active feature development |
 
 The editions share a common lineage and compatible note formats. Notes formatted

@@ -53,8 +53,10 @@ export function vaultDepth(p: string): number {
   return n.split("/").filter(Boolean).length;
 }
 
-/** Default metadata folders skipped by every scanner (§8). Configurable later. */
-export const DEFAULT_IGNORED_DIRS = [".okf", ".obsidian", ".git", "node_modules", ".trash"];
+/** Default metadata folders skipped by every scanner (§8). Configurable later.
+ *  ".okf" is the pre-rename state folder (backups, migration and enrichment
+ *  copies of notes); it is skipped, never read as GKX data. */
+export const DEFAULT_IGNORED_DIRS = [".gkx", ".okf", ".obsidian", ".git", "node_modules", ".trash"];
 
 export function shouldIgnoreVaultPath(p: string, ignoredDirs: string[] = DEFAULT_IGNORED_DIRS): boolean {
   const n = normalizeVaultRelative(p);

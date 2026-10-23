@@ -1,7 +1,7 @@
-# OKF+ 2.3 Schema and Policy Loading
+# GKX 2.3 Schema and Policy Loading
 
 Beta.11 bundles one immutable v2.3 validating-projection contract and the
-read-only `policy:okf23-default-v1` policy. `get_policy` and `/okf/policy`
+read-only `policy:gkx23-default-v1` policy. `get_policy` and `/gkx/policy`
 report its version, hash, and trust state. A 2.3 note is never silently
 validated as 2.2; older notes enter compatibility mode.
 

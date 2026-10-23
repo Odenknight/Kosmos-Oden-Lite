@@ -1,4 +1,4 @@
-# BUILD DIRECTIVE — Vault Kosmos v0.5.5 Correctness, Standalone Runtime, Temporal Lineage, Incremental Indexing, Security, Testing, and Documentation Rebuild
+# BUILD DIRECTIVE — Kosmos-Oden-Lite v0.5.5 Correctness, Standalone Runtime, Temporal Lineage, Incremental Indexing, Security, Testing, and Documentation Rebuild
 
 **Repository:** `Odenknight/Kosmos-Oden`
 **Target release:** `v0.5.5`
@@ -9,7 +9,7 @@
 
 # 1. Mission
 
-Rebuild Vault Kosmos so that the implementation, public README claims, standalone experience, temporal lineage model, Agent API, MCP compatibility, Graphiti export, incremental update behavior, and automated tests are mutually consistent and technically defensible.
+Rebuild Kosmos-Oden-Lite so that the implementation, public README claims, standalone experience, temporal lineage model, Agent API, MCP compatibility, Graphiti export, incremental update behavior, and automated tests are mutually consistent and technically defensible.
 
 This is not a cosmetic README update.
 
@@ -60,7 +60,7 @@ No CDN dependency is permitted for the normal plugin or standalone viewer.
 The standalone artifact must function when opened directly from disk as:
 
 ```text
-file:///path/to/vault-kosmos.html
+file:///path/to/kosmos-oden-lite.html
 ```
 
 where browser security capabilities permit local directory selection.
@@ -83,7 +83,7 @@ At minimum, centralize:
 
 ```text
 Markdown parsing
-OKF+ parsing
+GKX parsing
 link resolution
 canonical lineage resolution
 temporal validity calculation
@@ -102,7 +102,7 @@ src/
     types.ts
     paths.ts
     markdown.ts
-    okf.ts
+    gkx.ts
     resolver.ts
     lineage.ts
     temporal.ts
@@ -231,10 +231,10 @@ but these should be projections of the canonical lineage graph rather than indep
 For each note:
 
 ```text
-valid_at = OKF+ timestamp
+valid_at = GKX timestamp
 ```
 
-or a documented fallback timestamp when no valid OKF+ timestamp exists.
+or a documented fallback timestamp when no valid GKX timestamp exists.
 
 For each note with successors:
 
@@ -285,7 +285,7 @@ Expose warnings through:
 
 # 4. Clarify the Temporal Model
 
-Vault Kosmos v0.5.5 must not describe its current note model as fully bitemporal unless true transaction-time history is actually implemented.
+Kosmos-Oden-Lite v0.5.5 must not describe its current note model as fully bitemporal unless true transaction-time history is actually implemented.
 
 The current required model is:
 
@@ -361,7 +361,7 @@ It must not claim to reconstruct an edit that was overwritten in place and no lo
 Create a distributable file:
 
 ```text
-vault-kosmos.html
+kosmos-oden-lite.html
 ```
 
 The user must be able to:
@@ -376,7 +376,7 @@ Open Knowledge Folder
 ```
 
 5. Select a directory containing Markdown notes.
-6. Have Vault Kosmos recursively scan and render the directory.
+6. Have Kosmos-Oden-Lite recursively scan and render the directory.
 
 No Obsidian installation may be required.
 
@@ -807,7 +807,7 @@ Optionally preserve raw declarations separately:
 
 ```json
 {
-  "source_okf": {
+  "source_gkx": {
     "declared_supersedes": [],
     "declared_superseded_by": []
   }
@@ -841,7 +841,7 @@ Graphiti-ingestable episode format
 and:
 
 ```text
-OKF+ lineage metadata is preserved in the JSON episode body
+GKX lineage metadata is preserved in the JSON episode body
 ```
 
 Do not claim that Graphiti is guaranteed to reconstruct the exact same internal lineage graph unless an integration test proves that behavior.
@@ -1045,7 +1045,7 @@ The README must state this accurately.
 Never claim:
 
 ```text
-Vault Kosmos never writes anything to the vault
+Kosmos-Oden-Lite never writes anything to the vault
 ```
 
 when explicit export commands can create files.
@@ -1190,7 +1190,7 @@ The source should remain modular.
 The release artifact should be:
 
 ```text
-vault-kosmos.html
+kosmos-oden-lite.html
 ```
 
 containing all runtime dependencies.
@@ -1206,7 +1206,7 @@ inline JavaScript
 inline CSS
 inline Three.js
         ↓
-vault-kosmos.html
+kosmos-oden-lite.html
 ```
 
 The source HTML used during development does not have to be one giant manually maintained file.
@@ -1506,7 +1506,7 @@ Add checks that:
 
 ```text
 main.js exists
-vault-kosmos.html exists
+kosmos-oden-lite.html exists
 manifest version matches package version
 versions.json is updated
 standalone file contains no unexpected external runtime dependency
@@ -1547,7 +1547,7 @@ Use these accuracy rules.
 ## Allowed claim
 
 ```text
-Vault Kosmos uses hierarchical packing and collision-resolution passes to keep visual bodies separated.
+Kosmos-Oden-Lite uses hierarchical packing and collision-resolution passes to keep visual bodies separated.
 ```
 
 Do not use:
@@ -1563,7 +1563,7 @@ unless proven as an invariant.
 ## Allowed claim
 
 ```text
-OKF+ notes support temporal validity intervals and point-in-time graph reconstruction based on retained timestamps and supersession history.
+GKX notes support temporal validity intervals and point-in-time graph reconstruction based on retained timestamps and supersession history.
 ```
 
 Do not use:
@@ -1587,7 +1587,7 @@ This claim may be added only after the code is fixed.
 ## Allowed claim
 
 ```text
-Graphiti-compatible episode exports preserve OKF+ structure and are ordered chronologically for ingestion.
+Graphiti-compatible episode exports preserve GKX structure and are ordered chronologically for ingestion.
 ```
 
 Do not guarantee Graphiti will infer the exact same knowledge graph unless integration testing proves that claim.
@@ -1635,7 +1635,7 @@ Standalone — No Obsidian Required
 Example workflow:
 
 ```text
-1. Download vault-kosmos.html.
+1. Download kosmos-oden-lite.html.
 2. Open it in your browser.
 3. Click Open Knowledge Folder.
 4. Select the root of your Markdown or Obsidian vault.
@@ -1804,7 +1804,7 @@ src/
 main.js
 styles.css
 
-vault-kosmos.html
+kosmos-oden-lite.html
 
 kosmos-build.mjs
 
@@ -1840,7 +1840,7 @@ The rebuild is not complete until all of the following are true.
 
 ### Standalone
 
-* `vault-kosmos.html` opens directly without a server.
+* `kosmos-oden-lite.html` opens directly without a server.
 * No internet connection is required.
 * User can select a directory.
 * Directory contents recursively render.
@@ -1901,7 +1901,7 @@ artifact checks pass
 
 # 39. Final Engineering Standard
 
-Treat Vault Kosmos v0.5.5 as three products sharing one semantic engine:
+Treat Kosmos-Oden-Lite v0.5.5 as three products sharing one semantic engine:
 
 ```text
                     ┌─────────────────────┐

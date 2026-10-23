@@ -49,16 +49,16 @@ versions/types instead of acting on arbitrary `postMessage` data.
 ### Host → renderer
 
 ```ts
-{ protocol: "vault-kosmos", version: 1, type: "vault-snapshot",
+{ protocol: "kosmos-oden-lite", version: 1, type: "vault-snapshot",
   payload: { files: [{ relativePath, content }], folders?, attachments?, label? } }
 
-{ protocol: "vault-kosmos", version: 1, type: "vault-delta",
+{ protocol: "kosmos-oden-lite", version: 1, type: "vault-delta",
   payload: { changed?, removed?, renames?, folders?, attachments?, label? } }
 
-{ protocol: "vault-kosmos", version: 1, type: "agent-traversal",
+{ protocol: "kosmos-oden-lite", version: 1, type: "agent-traversal",
   payload: { paths: string[], tool: string } }
 
-{ protocol: "vault-kosmos", version: 1, type: "visibility",
+{ protocol: "kosmos-oden-lite", version: 1, type: "visibility",
   payload: { visible: boolean } }
 ```
 
@@ -83,10 +83,10 @@ instantly when it is revealed.
 ### Renderer → host
 
 ```ts
-{ protocol: "vault-kosmos", version: 1, type: "open-note",
+{ protocol: "kosmos-oden-lite", version: 1, type: "open-note",
   payload: { path, label? } }
 
-{ protocol: "vault-kosmos", version: 1, type: "open-folder",
+{ protocol: "kosmos-oden-lite", version: 1, type: "open-folder",
   payload: { path } }
 ```
 
@@ -99,7 +99,7 @@ of falling through to link resolution.
 
 ### Validation
 
-- `protocol` must equal `"vault-kosmos"` (foreign messages are ignored silently).
+- `protocol` must equal `"kosmos-oden-lite"` (foreign messages are ignored silently).
 - `version` must equal the current version (1); unknown versions are rejected
   with a logged reason.
 - `type` must be recognized; payload shape is checked.

@@ -8,7 +8,7 @@
  *   dist/kosmos-agent-server.mjs  ESM bundle of the Agent API server core
  *                                 (consumed by tests)
  *   dist/kosmos-embed.html        single-file page for the plugin iframe
- *   vault-kosmos.html             single-file STANDALONE viewer (repo root)
+ *   kosmos-oden-lite.html             single-file STANDALONE viewer (repo root)
  *   main.js                       Obsidian plugin bundle (embeds the iframe page)
  *
  * Every artifact bundles Three.js (exact-pinned ESM `three`, esbuild-bundled
@@ -69,7 +69,10 @@ async function buildNodeBundles() {
   writeFileSync(resolve(root, "dist/kosmos-protocol.mjs"), protocol);
   const nextcloudSync = await bundle("src/plugin/nextcloud-sync-test-entry.ts", { format: "esm", platform: "neutral", extra: { minify: false } });
   writeFileSync(resolve(root, "dist/kosmos-nextcloud-sync.mjs"), nextcloudSync);
-  console.log("built dist/kosmos-core.mjs, dist/kosmos-agent-server.mjs, dist/kosmos-layout.mjs, dist/kosmos-protocol.mjs, dist/kosmos-nextcloud-sync.mjs");
+  // one-time settings import from the former plugin id is pure and unit-testable
+  const legacySettings = await bundle("src/plugin/legacy-settings.ts", { format: "esm", platform: "neutral", extra: { minify: false } });
+  writeFileSync(resolve(root, "dist/kosmos-legacy-settings.mjs"), legacySettings);
+  console.log("built dist/kosmos-core.mjs, dist/kosmos-agent-server.mjs, dist/kosmos-layout.mjs, dist/kosmos-protocol.mjs, dist/kosmos-nextcloud-sync.mjs, dist/kosmos-legacy-settings.mjs");
 }
 
 const RENDERER_PROVENANCE = JSON.parse(readFileSync(resolve(root, "renderer-provenance.json"), "utf8"));
@@ -104,14 +107,14 @@ ${escapeInline(appJs)}
 
 async function buildStandalone() {
   const app = await bundle("src/standalone/standalone.ts");
-  const html = composePage(`Vault Kosmos ${VERSION} — Standalone`, app);
-  writeFileSync(resolve(root, "vault-kosmos.html"), html);
-  console.log(`built vault-kosmos.html (${(html.length / 1024).toFixed(0)} KB, single file)`);
+  const html = composePage(`Kosmos-Oden-Lite ${VERSION} — Standalone`, app);
+  writeFileSync(resolve(root, "kosmos-oden-lite.html"), html);
+  console.log(`built kosmos-oden-lite.html (${(html.length / 1024).toFixed(0)} KB, single file)`);
 }
 
 async function buildEmbed() {
   const app = await bundle("src/plugin/embed.ts");
-  const html = composePage(`Vault Kosmos ${VERSION} (plugin)`, app);
+  const html = composePage(`Kosmos-Oden-Lite ${VERSION} (plugin)`, app);
   writeFileSync(resolve(root, "dist/kosmos-embed.html"), html);
   console.log(`built dist/kosmos-embed.html (${(html.length / 1024).toFixed(0)} KB)`);
 }

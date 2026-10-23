@@ -1,9 +1,9 @@
 {
-  "id": "vault-kosmos-oden",
-  "name": "Vault Kosmos (KRS-Lite)",
+  "id": "kosmos-oden-lite",
+  "name": "Kosmos-Oden-Lite",
   "version": "1.0.6",
   "minAppVersion": "1.11.4",
-  "description": "Kosmos Research Studio Lite: a responsive 3D knowledge view with the GKX v2.3 Validating Projection API, read-only MCP Agent API, origin-separated Graphiti adapter, and native Nextcloud WebDAV sync.",
+  "description": "See your vault as a 3D cosmos of galaxies, stars and planets, keep notes in clean human-editable GKX frontmatter, and give AI tools read-only access through a local REST and MCP API. Optional Nextcloud sync.",
   "author": "OdenKnight",
   "authorUrl": "https://github.com/Odenknight/Kosmos-Oden-Lite",
   "isDesktopOnly": false

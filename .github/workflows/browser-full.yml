@@ -48,8 +48,14 @@ jobs:
       - run: npm run build
       - name: Install Playwright + browsers
         run: |
-          npm install --no-save --save-exact @playwright/test@1.48.2
-          npx playwright install --with-deps chromium firefox webkit
+          # Uses the repository's pinned @playwright/test (package.json), which knows
+          # the r720-ci pool's Debian 13 image. If the system-dependency install still
+          # fails on a runner, fall back to the browser alone; the test step then shows
+          # any missing system library.
+          npx playwright install --with-deps chromium firefox webkit || {
+            echo "::warning title=Playwright::system dependency install failed on this runner; installing browsers only"
+            npx playwright install chromium firefox webkit
+          }
       - name: Renderer specs — Firefox + WebKit (advisory)
         id: ffwk
         continue-on-error: true

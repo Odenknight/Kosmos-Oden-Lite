@@ -1,10 +1,10 @@
 import { parseFrontmatter } from "./markdown";
 import { codeUnitCompare } from "./paths";
-import { applyOkfEnrichmentFrontmatter, makeOkfUuidV4, sha256Text, type OkfEnrichmentFrontmatterUpdates } from "./okf-migration";
+import { applyGkxEnrichmentFrontmatter, makeGkxUuidV4, sha256Text, type GkxEnrichmentFrontmatterUpdates } from "./gkx-migration";
 
-export type OkfEnrichmentField = "description" | "type" | "tags" | "supersedes" | "related_to";
+export type GkxEnrichmentField = "description" | "type" | "tags" | "supersedes" | "related_to";
 
-export interface OkfEvidenceBlock {
+export interface GkxEvidenceBlock {
   id: number;
   startLine: number;
   endLine: number;
@@ -13,8 +13,8 @@ export interface OkfEvidenceBlock {
   fingerprint: string;
 }
 
-export interface OkfEnrichmentSuggestion {
-  field: OkfEnrichmentField;
+export interface GkxEnrichmentSuggestion {
+  field: GkxEnrichmentField;
   value: string | string[];
   confidence: number;
   reason: string;
@@ -22,7 +22,7 @@ export interface OkfEnrichmentSuggestion {
   source: "deterministic" | "llm";
 }
 
-export interface OkfEvidenceAssessment {
+export interface GkxEvidenceAssessment {
   status: "adequate" | "weak" | "insufficient";
   /** Structural evidence quality only. It is not semantic truth or author competence. */
   qualityScore: number;
@@ -47,12 +47,12 @@ const proseScore = (text: string): number => {
  * claimed: these objective rules can identify prose-shaped evidence, not
  * guarantee that an author placed the important idea near the top.
  */
-export async function selectOkfEvidenceWindow(raw: string, options: EvidenceWindowOptions = {}): Promise<OkfEvidenceBlock[]> {
+export async function selectGkxEvidenceWindow(raw: string, options: EvidenceWindowOptions = {}): Promise<GkxEvidenceBlock[]> {
   const maxParagraphs = Math.max(1, Math.min(8, options.maxParagraphs ?? 4));
   const maxChars = Math.max(400, Math.min(12_000, options.maxChars ?? 4_000));
   const { content } = parseFrontmatter(raw);
   const lines = content.split(/\r?\n/);
-  const candidates: Array<{ start: number; end: number; text: string; rule: OkfEvidenceBlock["selectionRule"]; score: number }> = [];
+  const candidates: Array<{ start: number; end: number; text: string; rule: GkxEvidenceBlock["selectionRule"]; score: number }> = [];
   let inFence = false, paragraph: string[] = [], start = 0, heading = "";
   const fallbackParts: string[] = [];
   const flush = (end: number) => {
@@ -88,7 +88,7 @@ export async function selectOkfEvidenceWindow(raw: string, options: EvidenceWind
     const fallback = fallbackParts.join(" ").replace(/\s+/g, " ").slice(0, maxChars);
     if (fallback.length >= 20) selected.push({ start: 1, end: lines.length, text: fallback, rule: "fallback-prose", score: 0 });
   }
-  const out: OkfEvidenceBlock[] = [];
+  const out: GkxEvidenceBlock[] = [];
   for (let i = 0; i < selected.length; i++) out.push({ id: i + 1, startLine: selected[i].start, endLine: selected[i].end, selectionRule: selected[i].rule, text: selected[i].text, fingerprint: `sha256:${await sha256Text(selected[i].text)}` });
   return out;
 }
@@ -99,7 +99,7 @@ export async function selectOkfEvidenceWindow(raw: string, options: EvidenceWind
  * author expressed the genuinely important idea, so weak evidence is surfaced
  * for review instead of being "repaired" by guessing.
  */
-export function assessOkfEvidence(blocks: OkfEvidenceBlock[]): OkfEvidenceAssessment {
+export function assessGkxEvidence(blocks: GkxEvidenceBlock[]): GkxEvidenceAssessment {
   if (!blocks.length) return { status: "insufficient", qualityScore: 0, basis: "deterministic-evidence-quality", reasons: ["No qualifying prose-shaped evidence was found outside excluded structures."] };
   const reasons: string[] = [];
   const chars = blocks.reduce((sum, block) => sum + block.text.length, 0);
@@ -117,9 +117,9 @@ export function assessOkfEvidence(blocks: OkfEvidenceBlock[]): OkfEvidenceAssess
   return { status: score >= 0.65 ? "adequate" : "weak", qualityScore: score, basis: "deterministic-evidence-quality", reasons };
 }
 
-export function deterministicOkfSuggestions(blocks: OkfEvidenceBlock[]): OkfEnrichmentSuggestion[] {
+export function deterministicGkxSuggestions(blocks: GkxEvidenceBlock[]): GkxEnrichmentSuggestion[] {
   const all = blocks.map((block) => block.text).join("\n");
-  const suggestions: OkfEnrichmentSuggestion[] = [];
+  const suggestions: GkxEnrichmentSuggestion[] = [];
   const first = blocks[0];
   if (first && first.text.length >= 40) suggestions.push({ field: "description", value: first.text.slice(0, 280), confidence: 0.62, reason: "First qualifying prose block; review because position is not proof of importance.", evidenceBlockIds: [first.id], source: "deterministic" });
   const tags = [...new Set((all.match(/(^|\s)#[A-Za-z][\w/-]*/g) ?? []).map((tag) => tag.trim().slice(1)))].slice(0, 20);
@@ -132,11 +132,11 @@ export function deterministicOkfSuggestions(blocks: OkfEvidenceBlock[]): OkfEnri
   return suggestions.slice(0, 16);
 }
 
-export function validateLlmEnrichmentResponse(value: unknown, blocks: OkfEvidenceBlock[], maxSuggestions = 12): OkfEnrichmentSuggestion[] {
-  const allowed = new Set<OkfEnrichmentField>(["description", "type", "tags", "supersedes", "related_to"]);
+export function validateLlmEnrichmentResponse(value: unknown, blocks: GkxEvidenceBlock[], maxSuggestions = 12): GkxEnrichmentSuggestion[] {
+  const allowed = new Set<GkxEnrichmentField>(["description", "type", "tags", "supersedes", "related_to"]);
   const rows = Array.isArray((value as any)?.suggestions) ? (value as any).suggestions : [];
   const blockIds = new Set(blocks.map((block) => block.id));
-  const out: OkfEnrichmentSuggestion[] = [];
+  const out: GkxEnrichmentSuggestion[] = [];
   for (const row of rows.slice(0, Math.max(1, Math.min(24, maxSuggestions)))) {
     if (!row || !allowed.has(row.field) || !(typeof row.value === "string" || Array.isArray(row.value))) continue;
     const ids = Array.isArray(row.evidenceBlockIds) ? row.evidenceBlockIds.filter((id: unknown) => Number.isInteger(id) && blockIds.has(id as number)).slice(0, 8) : [];
@@ -159,23 +159,23 @@ export function validateLlmEnrichmentResponse(value: unknown, blocks: OkfEvidenc
   return out;
 }
 
-export interface OkfEnrichmentReviewDecision {
+export interface GkxEnrichmentReviewDecision {
   suggestionIndex: number;
   decision: "accepted" | "rejected";
   edited: boolean;
-  originalSuggestion: OkfEnrichmentSuggestion;
-  finalSuggestion?: OkfEnrichmentSuggestion;
+  originalSuggestion: GkxEnrichmentSuggestion;
+  finalSuggestion?: GkxEnrichmentSuggestion;
 }
 
-export interface OkfEnrichmentApplySource {
+export interface GkxEnrichmentApplySource {
   path: string;
   proposalId: string;
   expectedNoteHash: string;
   content: string;
-  decisions: OkfEnrichmentReviewDecision[];
+  decisions: GkxEnrichmentReviewDecision[];
 }
 
-export interface OkfEnrichmentApplyEntry {
+export interface GkxEnrichmentApplyEntry {
   path: string;
   proposalId: string;
   status: "ready" | "no-change" | "blocked";
@@ -183,30 +183,30 @@ export interface OkfEnrichmentApplyEntry {
   expectedNoteHash: string;
   originalHash: string;
   proposedHash?: string;
-  decisions: OkfEnrichmentReviewDecision[];
+  decisions: GkxEnrichmentReviewDecision[];
   resolvedRelationships: Array<{ field: "supersedes" | "related_to"; value: string; path: string }>;
-  /** In-memory only; removed by publicOkfEnrichmentApplyPlan. */
+  /** In-memory only; removed by publicGkxEnrichmentApplyPlan. */
   originalContent: string;
-  /** In-memory only; removed by publicOkfEnrichmentApplyPlan. */
+  /** In-memory only; removed by publicGkxEnrichmentApplyPlan. */
   proposedContent?: string;
 }
 
-export interface OkfEnrichmentApplyPlan {
-  schema: "okf-plus-enrichment-apply-plan/1";
+export interface GkxEnrichmentApplyPlan {
+  schema: "gkx-enrichment-apply-plan/1";
   runId: string;
   createdAt: string;
   planHash: string;
   totals: { notes: number; ready: number; blocked: number; noChange: number; reviewed: number; accepted: number; rejected: number; edited: number };
-  entries: OkfEnrichmentApplyEntry[];
+  entries: GkxEnrichmentApplyEntry[];
 }
 
-export interface OkfEnrichmentApplyPlanOptions {
+export interface GkxEnrichmentApplyPlanOptions {
   now?: () => Date;
   uuid?: () => string;
   resolveRelationship?: (sourcePath: string, wikilinkTarget: string) => Promise<string | null>;
 }
 
-function applyPlanMaterial(plan: Omit<OkfEnrichmentApplyPlan, "planHash"> | OkfEnrichmentApplyPlan): unknown {
+function applyPlanMaterial(plan: Omit<GkxEnrichmentApplyPlan, "planHash"> | GkxEnrichmentApplyPlan): unknown {
   return {
     schema: plan.schema, runId: plan.runId, createdAt: plan.createdAt, totals: plan.totals,
     entries: plan.entries.map((entry) => ({
@@ -217,7 +217,7 @@ function applyPlanMaterial(plan: Omit<OkfEnrichmentApplyPlan, "planHash"> | OkfE
   };
 }
 
-function reviewedSuggestion(suggestion: OkfEnrichmentSuggestion): OkfEnrichmentSuggestion {
+function reviewedSuggestion(suggestion: GkxEnrichmentSuggestion): GkxEnrichmentSuggestion {
   const field = suggestion.field;
   if (!["description", "type", "tags", "supersedes", "related_to"].includes(field)) throw new Error(`unsupported reviewed field: ${field}`);
   let value: string | string[];
@@ -240,20 +240,20 @@ function reviewedSuggestion(suggestion: OkfEnrichmentSuggestion): OkfEnrichmentS
 }
 
 /** Build a note-body-free, hash-bound plan from explicit review decisions. */
-export async function createOkfEnrichmentApplyPlan(
-  sources: OkfEnrichmentApplySource[],
-  options: OkfEnrichmentApplyPlanOptions = {},
-): Promise<OkfEnrichmentApplyPlan> {
+export async function createGkxEnrichmentApplyPlan(
+  sources: GkxEnrichmentApplySource[],
+  options: GkxEnrichmentApplyPlanOptions = {},
+): Promise<GkxEnrichmentApplyPlan> {
   const now = options.now ?? (() => new Date());
-  const uuid = options.uuid ?? makeOkfUuidV4;
+  const uuid = options.uuid ?? makeGkxUuidV4;
   const createdAt = now().toISOString();
-  const runId = `okf-enrich-${createdAt.replace(/[-:.]/g, "")}-${uuid().slice(0, 8)}`;
-  const entries: OkfEnrichmentApplyEntry[] = [];
+  const runId = `gkx-enrich-${createdAt.replace(/[-:.]/g, "")}-${uuid().slice(0, 8)}`;
+  const entries: GkxEnrichmentApplyEntry[] = [];
   for (const source of [...sources].sort((a, b) => codeUnitCompare(a.path, b.path))) {
     const originalHash = await sha256Text(source.content);
-    const entry: OkfEnrichmentApplyEntry = { path: source.path, proposalId: source.proposalId, status: "no-change", reasons: [], expectedNoteHash: source.expectedNoteHash, originalHash, decisions: source.decisions.map((decision) => ({ ...decision })), resolvedRelationships: [], originalContent: source.content };
+    const entry: GkxEnrichmentApplyEntry = { path: source.path, proposalId: source.proposalId, status: "no-change", reasons: [], expectedNoteHash: source.expectedNoteHash, originalHash, decisions: source.decisions.map((decision) => ({ ...decision })), resolvedRelationships: [], originalContent: source.content };
     if (originalHash !== source.expectedNoteHash) { entry.status = "blocked"; entry.reasons.push("note content changed after the enrichment proposal was generated"); entries.push(entry); continue; }
-    const accepted: OkfEnrichmentSuggestion[] = [];
+    const accepted: GkxEnrichmentSuggestion[] = [];
     try {
       for (const decision of entry.decisions) if (decision.decision === "accepted") {
         if (!decision.finalSuggestion) throw new Error(`accepted suggestion ${decision.suggestionIndex} has no reviewed value`);
@@ -267,10 +267,10 @@ export async function createOkfEnrichmentApplyPlan(
       if (new Set(values).size > 1) entry.reasons.push(`multiple conflicting ${field} values were accepted`);
     }
     if (entry.reasons.length) { entry.status = "blocked"; entries.push(entry); continue; }
-    const updates: OkfEnrichmentFrontmatterUpdates = {};
+    const updates: GkxEnrichmentFrontmatterUpdates = {};
     for (const suggestion of accepted) {
       if (suggestion.field === "description") updates.description = suggestion.value as string;
-      else if (suggestion.field === "type") updates.type = suggestion.value as OkfEnrichmentFrontmatterUpdates["type"];
+      else if (suggestion.field === "type") updates.type = suggestion.value as GkxEnrichmentFrontmatterUpdates["type"];
       else {
         const values = Array.isArray(suggestion.value) ? suggestion.value : [suggestion.value];
         const existing = (updates as any)[suggestion.field] ?? [];
@@ -286,7 +286,7 @@ export async function createOkfEnrichmentApplyPlan(
     }
     if (entry.reasons.length) { entry.status = "blocked"; entries.push(entry); continue; }
     try {
-      entry.proposedContent = applyOkfEnrichmentFrontmatter({ path: source.path, content: source.content }, updates);
+      entry.proposedContent = applyGkxEnrichmentFrontmatter({ path: source.path, content: source.content }, updates);
       entry.proposedHash = await sha256Text(entry.proposedContent);
       entry.status = entry.proposedContent === source.content ? "no-change" : "ready";
       if (entry.status === "no-change") entry.reasons.push("accepted values already match canonical frontmatter");
@@ -295,11 +295,11 @@ export async function createOkfEnrichmentApplyPlan(
   }
   const decisions = entries.flatMap((entry) => entry.decisions);
   const totals = { notes: entries.length, ready: entries.filter((entry) => entry.status === "ready").length, blocked: entries.filter((entry) => entry.status === "blocked").length, noChange: entries.filter((entry) => entry.status === "no-change").length, reviewed: decisions.length, accepted: decisions.filter((decision) => decision.decision === "accepted").length, rejected: decisions.filter((decision) => decision.decision === "rejected").length, edited: decisions.filter((decision) => decision.edited).length };
-  const base = { schema: "okf-plus-enrichment-apply-plan/1" as const, runId, createdAt, totals, entries };
+  const base = { schema: "gkx-enrichment-apply-plan/1" as const, runId, createdAt, totals, entries };
   return { ...base, planHash: await sha256Text(JSON.stringify(applyPlanMaterial(base))) };
 }
 
-export async function verifyOkfEnrichmentApplyPlan(plan: OkfEnrichmentApplyPlan): Promise<boolean> {
+export async function verifyGkxEnrichmentApplyPlan(plan: GkxEnrichmentApplyPlan): Promise<boolean> {
   if (await sha256Text(JSON.stringify(applyPlanMaterial(plan))) !== plan.planHash) return false;
   for (const entry of plan.entries) {
     if (await sha256Text(entry.originalContent) !== entry.originalHash) return false;
@@ -308,6 +308,6 @@ export async function verifyOkfEnrichmentApplyPlan(plan: OkfEnrichmentApplyPlan)
   return true;
 }
 
-export function publicOkfEnrichmentApplyPlan(plan: OkfEnrichmentApplyPlan): unknown {
+export function publicGkxEnrichmentApplyPlan(plan: GkxEnrichmentApplyPlan): unknown {
   return { ...plan, entries: plan.entries.map(({ originalContent: _original, proposedContent: _proposed, ...entry }) => entry) };
 }

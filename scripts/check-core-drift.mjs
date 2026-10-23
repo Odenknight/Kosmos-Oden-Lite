@@ -2,7 +2,7 @@
 /**
  * Vendored-core drift check.
  *
- * `src/core/` is a vendored copy of the GKOS Engine's `src/`. This repo is
+ * `src/core/` is a vendored copy of the GKOS-Engine's `src/`. This repo is
  * patches-only (see VERSIONING.md), so the vendored copy must stay at a known
  * engine parity tag with a small, explicitly declared set of intentional
  * deltas (product identity, assessor id, doc comments). Anything else is
@@ -21,6 +21,11 @@
  *      allowlist.
  *   5. Files present in the engine but deliberately not vendored (and vice
  *      versa) must also be declared in the allowlist.
+ *   6. The parity tag predates the GKX rename. The allowlist's "nameMapping"
+ *      declares that rename as ordered regex substitutions (with protected
+ *      spans that must stay verbatim); they are applied to the engine's file
+ *      names and contents before diffing, so the rename itself is not drift
+ *      but every other difference is still diffed and fingerprinted.
  *
  * This check is metadata/hygiene only — it never modifies the tree.
  *
@@ -52,6 +57,18 @@ if (allowlist.engineParity !== parityTag) {
       "Re-baseline the allowlist when you move the parity tag.",
   );
   process.exit(1);
+}
+
+/** Apply the declared engine-to-Lite name mapping (identity when absent). */
+const nameMapping = allowlist.nameMapping;
+const keepRes = (nameMapping?.keep ?? []).map((p) => new RegExp(p, "g"));
+const replaceRules = (nameMapping?.replace ?? []).map(([p, r]) => [new RegExp(p, "g"), r]);
+function mapEngineName(s) {
+  if (!nameMapping) return s;
+  const kept = [];
+  for (const re of keepRes) s = s.replace(re, (m) => { kept.push(m); return `\u0000${kept.length - 1}\u0000`; });
+  for (const [re, r] of replaceRules) s = s.replace(re, r);
+  return s.replace(/\u0000(\d+)\u0000/g, (_, i) => kept[Number(i)]);
 }
 
 const repo = process.env.GKOS_ENGINE_REPO || allowlist.engineRepo || "https://github.com/Odenknight/GKOS-Engine";
@@ -91,7 +108,9 @@ const stale = [];
 
 try {
   const liteFiles = readdirSync(coreDir).filter((f) => f.endsWith(".ts")).sort();
-  const engineFiles = readdirSync(engineSrc).filter((f) => f.endsWith(".ts")).sort();
+  // Engine files under their mapped (Lite) names; engineOriginal maps back for reading.
+  const engineOriginal = new Map(readdirSync(engineSrc).filter((f) => f.endsWith(".ts")).map((f) => [mapEngineName(f), f]));
+  const engineFiles = [...engineOriginal.keys()].sort();
 
   // --- file-set differences -------------------------------------------------
   const notVendored = engineFiles.filter((f) => !liteFiles.includes(f));
@@ -122,7 +141,7 @@ try {
     const b = join(work, "lite");
     mkdirSync(a, { recursive: true });
     mkdirSync(b, { recursive: true });
-    writeFileSync(join(a, f), readNorm(join(engineSrc, f)));
+    writeFileSync(join(a, f), mapEngineName(readNorm(join(engineSrc, engineOriginal.get(f)))));
     writeFileSync(join(b, f), readNorm(join(coreDir, f)));
 
     const r = spawnSync("git", ["diff", "--no-index", "--no-color", "--unified=1", "--", join(a, f), join(b, f)], { encoding: "utf8" });

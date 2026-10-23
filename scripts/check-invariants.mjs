@@ -72,20 +72,20 @@ must(!/Math\.random\s*\(/.test(serverCode), "no Math.random() may appear in the 
 must(/hostAllowed/.test(server), "Host validation must be present");
 must(/originAllowed/.test(server), "Origin validation must be present");
 must(/timingSafeEqual/.test(server), "token comparison must be constant-time");
-const okfParser = read("src/core/okf.ts");
-must(sec.invalid_sensitivity_fails_closed_as === "secret" && /return typeof v === "string" && v\.trim\(\) \? "secret"/.test(okfParser), "invalid explicit sensitivity must fail closed as secret");
-const okf23 = read("src/core/okf23.ts");
-must(sec.invalid_v23_sensitivity_fails_closed_as === "secret" && /effectiveSensitivity = "secret"/.test(okf23), "invalid v2.3 sensitivity must fail closed as secret");
-must(sec.missing_sensitivity_fails_closed_as === "secret" && new RegExp(`FAIL_CLOSED_SENSITIVITY_DEFAULT: OkfSensitivity = "${sec.missing_sensitivity_fails_closed_as}"`).test(okf23), "missing sensitivity must fail closed to the policy default (secret)");
+const gkxParser = read("src/core/gkx.ts");
+must(sec.invalid_sensitivity_fails_closed_as === "secret" && /return typeof v === "string" && v\.trim\(\) \? "secret"/.test(gkxParser), "invalid explicit sensitivity must fail closed as secret");
+const gkx23 = read("src/core/gkx23.ts");
+must(sec.invalid_v23_sensitivity_fails_closed_as === "secret" && /effectiveSensitivity = "secret"/.test(gkx23), "invalid v2.3 sensitivity must fail closed as secret");
+must(sec.missing_sensitivity_fails_closed_as === "secret" && new RegExp(`FAIL_CLOSED_SENSITIVITY_DEFAULT: GkxSensitivity = "${sec.missing_sensitivity_fails_closed_as}"`).test(gkx23), "missing sensitivity must fail closed to the policy default (secret)");
 must(new RegExp(`agentDefaultSensitivity: FAIL_CLOSED_SENSITIVITY_DEFAULT`).test(server) && sec.default_sensitivity_setting_default === "secret", "the default-sensitivity setting must ship fail-closed to secret");
 must(/GET only \(read-only API\)/.test(server) && !/\bcase "\/write"|app\.post\(|writeFile/.test(server), "Agent API must expose no write routes");
 
-const projectionPolicy = policy.okf23_projection || {};
-must(projectionPolicy.profile === "validating-projection" && /OKF23_PROFILE/.test(okf23), "OKF+ 2.3 must identify the validating projection profile");
-must(projectionPolicy.full_gkos_claimed === false && /conformanceClaim: "reader-and-deterministic-assessor"/.test(okf23), "OKF+ 2.3 must not claim full GKOS conformance");
-must(projectionPolicy.proposed_values_effective_without_approval === false && /origins\.authored, origins\.derived, origins\.approved/.test(okf23), "proposed OKF+ values must not enter effective state");
-must(projectionPolicy.scores_are_truth === false && /documentation-and-support-quality-not-truth/.test(okf23), "assessment must disclaim truth scoring");
-must(projectionPolicy.policy_hash_required === true && /hash: "sha256:[0-9a-f]{64}"/.test(okf23), "OKF+ 2.3 policy must carry a SHA-256 hash");
+const projectionPolicy = policy.gkx23_projection || {};
+must(projectionPolicy.profile === "validating-projection" && /GKX23_PROFILE/.test(gkx23), "GKX 2.3 must identify the validating projection profile");
+must(projectionPolicy.full_gkos_claimed === false && /conformanceClaim: "reader-and-deterministic-assessor"/.test(gkx23), "GKX 2.3 must not claim full GKOS conformance");
+must(projectionPolicy.proposed_values_effective_without_approval === false && /origins\.authored, origins\.derived, origins\.approved/.test(gkx23), "proposed GKX values must not enter effective state");
+must(projectionPolicy.scores_are_truth === false && /documentation-and-support-quality-not-truth/.test(gkx23), "assessment must disclaim truth scoring");
+must(projectionPolicy.policy_hash_required === true && /hash: "sha256:[0-9a-f]{64}"/.test(gkx23), "GKX 2.3 policy must carry a SHA-256 hash");
 must(projectionPolicy.remote_schema_updates_enabled === false && /remoteUpdatesEnabled: false/.test(server), "remote schema updates must remain disabled");
 
 /* ---- build invariants ---- */
@@ -103,25 +103,25 @@ must(!/allow-same-origin/.test(mainCode), "iframe sandbox must NOT include allow
 const protocol = read("src/plugin/protocol.ts");
 must(/KOSMOS_PROTOCOL_VERSION/.test(protocol) && /validateHostMessage/.test(protocol), "host↔renderer protocol must be versioned and validated");
 
-/* ---- OKF+ migration invariants ---- */
-const migrationCore = read("src/core/okf-migration.ts");
-const migrationHost = read("src/plugin/okf-migration.ts");
+/* ---- GKX migration invariants ---- */
+const migrationCore = read("src/core/gkx-migration.ts");
+const migrationHost = read("src/plugin/gkx-migration.ts");
 const migrationCode = stripComments(migrationCore + "\n" + migrationHost);
-const mig = policy.okf_migration || {};
-must(mig.audit_before_apply === true && /createOkfMigrationPlan/.test(migrationCore) && /OkfMigrationPreviewModal/.test(migrationHost), "OKF+ writes must be preceded by an explicit audit preview");
-must(mig.plan_hash === "sha256" && /subtle\.digest\("SHA-256"/.test(migrationCore) && /verifyOkfMigrationPlan/.test(migrationHost), "OKF+ apply must verify and bind to a SHA-256 plan");
-must(mig.byte_exact_backup === true && /readBinary/.test(migrationHost) && /writeBinary/.test(migrationHost), "OKF+ migration must make byte-exact binary backups");
-must(mig.source_match_before_write === true && /current !== entry\.originalContent/.test(migrationHost), "OKF+ migration must skip sources changed after the plan");
-must(mig.body_preserved === true && /fm\.body/.test(migrationCore), "OKF+ migration must preserve the human-authored body");
-must(mig.llm_required === false && mig.network_dispatch_allowed === false && !/\bfetch\s*\(|XMLHttpRequest|WebSocket/.test(migrationCode), "OKF+ migration must remain LLM-free and make no network dispatch");
+const mig = policy.gkx_migration || {};
+must(mig.audit_before_apply === true && /createGkxMigrationPlan/.test(migrationCore) && /GkxMigrationPreviewModal/.test(migrationHost), "GKX writes must be preceded by an explicit audit preview");
+must(mig.plan_hash === "sha256" && /subtle\.digest\("SHA-256"/.test(migrationCore) && /verifyGkxMigrationPlan/.test(migrationHost), "GKX apply must verify and bind to a SHA-256 plan");
+must(mig.byte_exact_backup === true && /readBinary/.test(migrationHost) && /writeBinary/.test(migrationHost), "GKX migration must make byte-exact binary backups");
+must(mig.source_match_before_write === true && /current !== entry\.originalContent/.test(migrationHost), "GKX migration must skip sources changed after the plan");
+must(mig.body_preserved === true && /fm\.body/.test(migrationCore), "GKX migration must preserve the human-authored body");
+must(mig.llm_required === false && mig.network_dispatch_allowed === false && !/\bfetch\s*\(|XMLHttpRequest|WebSocket/.test(migrationCode), "GKX migration must remain LLM-free and make no network dispatch");
 
 /* ---- standalone invariants (artifact must exist and be self-contained) ---- */
-if (existsSync(resolve(root, "vault-kosmos.html"))) {
-  const html = read("vault-kosmos.html");
+if (existsSync(resolve(root, "kosmos-oden-lite.html"))) {
+  const html = read("kosmos-oden-lite.html");
   must(!/<script[^>]+src=/i.test(html), "standalone must not load external scripts");
   must(!/url\(\s*['"]?https?:/i.test(html), "standalone must not reference remote CSS urls");
 } else {
-  problems.push("vault-kosmos.html missing — run npm run build");
+  problems.push("kosmos-oden-lite.html missing — run npm run build");
 }
 
 /* ---- release forbidden files must never be tracked ---- */

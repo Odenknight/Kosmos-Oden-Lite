@@ -19,7 +19,7 @@
  */
 import { assembleGraph, parseSourceFile, type NoteRecord } from "./graph";
 import { contentHash, normalizeVaultRelative } from "./paths";
-import type { Okf23ProjectionOptions } from "./okf23";
+import type { Gkx23ProjectionOptions } from "./gkx23";
 import type { GraphDelta, KosmosDiagnostics, KosmosGraph, SourceFile } from "./types";
 
 export interface IndexChanges {
@@ -72,9 +72,9 @@ export class KosmosIndex {
   /** Deterministic projection options (e.g. the fail-closed defaultSensitivity)
    *  threaded to every parseSourceFile call so incrementally-reparsed notes
    *  resolve missing sensitivity to the SAME configured default as a full build. */
-  private readonly projectionOptions: Okf23ProjectionOptions;
+  private readonly projectionOptions: Gkx23ProjectionOptions;
 
-  constructor(projectionOptions: Okf23ProjectionOptions = {}) {
+  constructor(projectionOptions: Gkx23ProjectionOptions = {}) {
     this.projectionOptions = projectionOptions;
   }
 
@@ -208,7 +208,7 @@ export class KosmosIndex {
     for (const n of graph.nodes) {
       meta.set(
         n.id,
-        `${n.label}${n.status ?? ""}${n.type ?? ""}${n.tags.join(",")}${n.aliases.join(",")}${n.validAt ?? ""}${n.okf?.invalidAt ?? ""}${n.okf?.head ? 1 : 0}`
+        `${n.label}${n.status ?? ""}${n.type ?? ""}${n.tags.join(",")}${n.aliases.join(",")}${n.validAt ?? ""}${n.gkx?.invalidAt ?? ""}${n.gkx?.head ? 1 : 0}`
       );
     }
     return meta;
