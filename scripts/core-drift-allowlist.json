@@ -79,8 +79,8 @@
       "fingerprint": "sha256:d8e9c18d6e7b9018d8415765ccf22ec6"
     },
     "gkx-migration.ts": {
-      "reason": "Doc-comment delta only: the timestamp-precedence comment points at src/core/timestamps.ts (Lite's vendored path) rather than src/timestamps.ts.",
-      "fingerprint": "sha256:28fb6461389cb308b73f9313f58f75c8"
+      "reason": "Legacy migration backport: consume okf_version on conversion, distinguish legacy OKF from Google's draft in audit reports, and remove redundant replace(Z, Z). Retains the Lite timestamp-comment path. Current Engine no longer has the Google classifier; consumed-key and no-op fixes are also submitted upstream.",
+      "fingerprint": "sha256:fe2c336172a5d0651a75e2549e1a04b8"
     },
     "gkx23.ts": {
       "reason": "Product identity: assessor id is tool:kosmos-oden with KOSMOS_VERSION rather than tool:gkos-engine with ENGINE_VERSION. Plus SENSITIVITY_LEVELS is exported so the plugin's default-sensitivity picker reads the one canonical vocabulary.",

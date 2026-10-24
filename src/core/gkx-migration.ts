@@ -17,6 +17,7 @@ export type GkxAuditStatus =
   | "gkx-2.2"
   | "gkx-2.3"
   | "google-okf-0.1"
+  | "legacy-okf"
   | "google-reserved"
   | "needs-gkx"
   | "blocked";
@@ -66,7 +67,7 @@ export const DEFAULT_GKX_MIGRATION_DEFAULTS: GkxMigrationDefaults = {
 export interface GkxMigrationEntry {
   path: string;
   status: GkxAuditStatus;
-  standard: "GKX 2.3" | "GKX 2.2" | "Google OKF 0.1 draft" | "Google OKF reserved" | "none";
+  standard: "GKX 2.3" | "GKX 2.2" | "Legacy OKF" | "Google OKF 0.1 draft" | "Google OKF reserved" | "none";
   findings: GkxMigrationFinding[];
   review: GkxMigrationReview;
   /** Original governed values replaced by upgrade-all; persisted in the bound plan. */
@@ -136,7 +137,7 @@ const RECOGNIZED = new Set<string>(CANONICAL_KEYS);
 // sources list, so consuming it would silently DROP a user's flat sources
 // field. It stays in the unknown-field passthrough and is preserved verbatim.
 const CONVERTER_CONSUMED = new Set<string>([
-  "created_at", "updated_at", "authorship_origin",
+  "created_at", "updated_at", "authorship_origin", "okf_version",
 ]);
 const LINEAGE_KEYS = ["supersedes", "superseded_by", "forked_from", "forked_to"] as const;
 const RELATION_KEYS = [
@@ -1114,16 +1115,18 @@ async function auditOne(source: GkxMigrationSource, opts: AuditOptions): Promise
   // Google OKF v0.1 draft conformance is intentionally minimal: parseable YAML
   // frontmatter and a non-empty type. Producer-defined extra keys are allowed.
   if (fm.state === "valid" && nonempty(scalar(fm, "type"))) {
-    if (opts.mode !== "upgrade-all" && opts.mode !== "convert-to-23") return assessed({ path: source.path, status: "google-okf-0.1", standard: "Google OKF 0.1 draft", findings: [], originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
+    const legacy = fm.byKey.has("okf_version");
+    const standard = legacy ? "Legacy OKF" : "Google OKF 0.1 draft";
+    if (opts.mode !== "upgrade-all" && opts.mode !== "convert-to-23") return assessed({ path: source.path, status: legacy ? "legacy-okf" : "google-okf-0.1", standard, findings: [], originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
     const override = upgradeOverrides(fm);
-    if (override.blockers.length) return assessed({ path: source.path, status: "blocked", standard: "Google OKF 0.1 draft", findings: override.blockers, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
+    if (override.blockers.length) return assessed({ path: source.path, status: "blocked", standard, findings: override.blockers, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
     const uid = migrationUid(fm, opts.uuid, true);
     const proposedContent = opts.mode === "convert-to-23"
       ? proposedNativeGkx23(fm, source, uid, opts.createdAt, opts.defaults, override.salvage)
       : proposedGkx(fm, source, uid, opts.createdAt, opts.defaults, override.salvage);
     const target = opts.mode === "convert-to-23" ? "native GKX 2.3" : "the human-editable GKX 2.2 Properties format";
-    const findings = [{ code: "upgrade-google-okf", message: `Google OKF/legacy frontmatter will be upgraded to ${target}.` }, ...override.findings];
-    return assessed({ path: source.path, status: "needs-gkx", standard: "Google OKF 0.1 draft", findings, salvage: override.salvage, originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
+    const findings = [{ code: legacy ? "upgrade-legacy-okf" : "upgrade-google-okf", message: `${standard} frontmatter will be upgraded to ${target}.` }, ...override.findings];
+    return assessed({ path: source.path, status: "needs-gkx", standard, findings, salvage: override.salvage, originalHash, proposedHash: await sha256Text(proposedContent), originalContent: source.content, proposedContent, uid });
   }
   const explicit = invalidExplicitGovernance(fm);
   if (explicit.length && opts.mode !== "upgrade-all" && opts.mode !== "convert-to-23") return assessed({ path: source.path, status: "blocked", standard: "none", findings: explicit, originalHash, originalContent: source.content, uid: scalar(fm, "uid") });
@@ -1149,7 +1152,7 @@ export async function createGkxMigrationPlan(
   const now = suppliedNow ?? (() => new Date());
   const uuid = suppliedUuid ?? makeGkxUuidV4;
   const createdAt = now().toISOString();
-  const runId = `gkx-${createdAt.replace(/[-:.]/g, "").replace("Z", "Z")}-${uuid().slice(0, 8)}`;
+  const runId = `gkx-${createdAt.replace(/[-:.]/g, "")}-${uuid().slice(0, 8)}`;
   const entries: GkxMigrationEntry[] = [];
   for (const source of [...sources].sort((a, b) => codeUnitCompare(a.path, b.path))) {
     if (source.path.toLowerCase().startsWith(".gkx/")) continue;
@@ -1169,7 +1172,7 @@ export async function createGkxMigrationPlan(
     }
   }
   const totals: GkxMigrationPlan["totals"] = {
-    notes: entries.length, changes: 0, "gkx-2.2": 0, "gkx-2.3": 0, "google-okf-0.1": 0,
+    notes: entries.length, changes: 0, "gkx-2.2": 0, "gkx-2.3": 0, "google-okf-0.1": 0, "legacy-okf": 0,
     "google-reserved": 0, "needs-gkx": 0, blocked: 0,
   };
   for (const entry of entries) { totals[entry.status]++; if (entry.status === "needs-gkx") totals.changes++; }

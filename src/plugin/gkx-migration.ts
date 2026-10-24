@@ -177,6 +177,7 @@ export class GkxMigrationPreviewModal extends Modal {
     const summary = contentEl.createEl("ul");
     summary.createEl("li", { text: `${plan.totals["gkx-2.2"]} already use human-editable GKX 2.2 Properties` });
     summary.createEl("li", { text: `${plan.totals["gkx-2.3"]} already conform to native GKX 2.3` });
+    summary.createEl("li", { text: `${plan.totals["legacy-okf"]} use legacy OKF metadata and require explicit conversion` });
     summary.createEl("li", { text: `${plan.totals["google-okf-0.1"]} conform to Google's OKF 0.1 draft${upgradeAll ? "" : " and will be left unchanged"}` });
     summary.createEl("li", { text: `${plan.totals["google-reserved"]} reserved index.md/log.md files${upgradeAll ? " are included when mechanically recoverable" : " will be left unchanged"}` });
     summary.createEl("li", { text: `${plan.totals["needs-gkx"]} can be safely repaired or converted to ${convertTo23 ? "flat editable GKX 2.3" : "editable GKX 2.2"}` });
