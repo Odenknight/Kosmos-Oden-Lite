@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  automaticSyncSchedule,
   buildNextcloudDavRoot,
   effectiveSyncExcludes,
   isExcluded,
@@ -78,4 +79,12 @@ test("sync state resets when the remote scope changes", () => {
   const old = { schemaVersion: 2, scope: "one", files: { "a.md": S("a", "1") } };
   assert.equal(Object.keys(migrateNextcloudState(old, "one").files).length, 1);
   assert.equal(Object.keys(migrateNextcloudState(old, "two").files).length, 0);
+});
+
+test("automatic sync (startup and interval) stays off while the pre-rename plugin is enabled", () => {
+  const s = migrateNextcloudSettings({ enabled: true, syncOnStartup: true, intervalMinutes: 15 });
+  assert.deepEqual(automaticSyncSchedule(s, false), { startup: true, intervalMs: 15 * 60_000 });
+  assert.deepEqual(automaticSyncSchedule(s, true), { startup: false, intervalMs: 0 }, "old plugin enabled: no periodic sync");
+  assert.deepEqual(automaticSyncSchedule(migrateNextcloudSettings({ enabled: false, syncOnStartup: true, intervalMinutes: 15 }), false), { startup: false, intervalMs: 0 });
+  assert.deepEqual(automaticSyncSchedule(migrateNextcloudSettings({ enabled: true, intervalMinutes: 0 }), false), { startup: false, intervalMs: 0 });
 });
