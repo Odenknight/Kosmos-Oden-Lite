@@ -112,3 +112,10 @@ export function syncScope(settings: NextcloudSettings): string {
   if (!settings.serverUrl || !settings.username) return "";
   try { return buildNextcloudDavRoot(settings.serverUrl, settings.username, settings.remoteFolder).toLowerCase(); } catch { return ""; }
 }
+/** Which automatic syncs (startup run, periodic timer) the plugin schedules on load.
+ *  Both stay off while the pre-rename plugin is enabled, so the two plugins do not
+ *  sync the same remote folder with separate state. The manual command is unaffected. */
+export function automaticSyncSchedule(settings: NextcloudSettings, legacyPluginEnabled: boolean): { startup: boolean; intervalMs: number } {
+  if (!settings.enabled || legacyPluginEnabled) return { startup: false, intervalMs: 0 };
+  return { startup: settings.syncOnStartup, intervalMs: settings.intervalMinutes > 0 ? settings.intervalMinutes * 60_000 : 0 };
+}

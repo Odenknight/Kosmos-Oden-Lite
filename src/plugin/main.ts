@@ -27,6 +27,7 @@ import {
   DEFAULT_NEXTCLOUD_SETTINGS,
   NextcloudSyncEngine,
   NextcloudWebDavClient,
+  automaticSyncSchedule,
   emptyNextcloudState,
   migrateNextcloudSettings,
   migrateNextcloudState,
@@ -359,7 +360,7 @@ export default class KosmosOdenLitePlugin extends Plugin {
     if (settingsChanged) await this.saveAgentSettings();
     if (imported) new Notice("Kosmos-Oden-Lite: settings were imported from the old Vault Kosmos plugin. The old plugin folder was left unchanged. Disable the old plugin.");
     const legacyEnabled = this.legacyPluginEnabled();
-    if (legacyEnabled) new Notice("Kosmos-Oden-Lite: the old Vault Kosmos plugin is still enabled. The Agent API and startup sync stay off until you disable it and reload.", 15000);
+    if (legacyEnabled) new Notice("Kosmos-Oden-Lite: the old Vault Kosmos plugin is still enabled. The Agent API and automatic Nextcloud sync (startup and interval) stay off until you disable it and reload.", 15000);
     this.provider = new VaultDataProvider(this.app, () => ({ defaultSensitivity: this.agentSettings.agentDefaultSensitivity }));
     this.agentApi = new KosmosAgentServer(nodeRequire("http"), this.agentSettings, this.provider);
     this.addSettingTab(new KosmosSettingTab(this.app, this));
@@ -388,12 +389,13 @@ export default class KosmosOdenLitePlugin extends Plugin {
     this.addCommand({ id: "export-graphiti-episodes", name: "Export Graphiti episodes (GKX)", callback: () => void this.exportGraphitiEpisodes() });
     this.addCommand({ id: "sync-nextcloud-now", name: "Sync vault with Nextcloud now", callback: () => void this.runNextcloudSync(true) });
 
+    const autoSync = automaticSyncSchedule(this.nextcloudSettings, legacyEnabled);
     // Don't react to the startup metadata-resolve storm; the view's initial load already
     // captures the fully-resolved vault. Only go live once the workspace has settled.
     this.app.workspace.onLayoutReady(() => {
       this.eventsLive = true;
       this.provider.markFullDirty();
-      if (this.nextcloudSettings.enabled && this.nextcloudSettings.syncOnStartup && !legacyEnabled) {
+      if (autoSync.startup) {
         this.startupSyncTimer = window.setTimeout(() => {
           this.startupSyncTimer = null;
           void this.runNextcloudSync(false);
@@ -401,11 +403,8 @@ export default class KosmosOdenLitePlugin extends Plugin {
       }
     });
 
-    if (this.nextcloudSettings.enabled && this.nextcloudSettings.intervalMinutes > 0) {
-      this.registerInterval(window.setInterval(
-        () => void this.runNextcloudSync(false),
-        this.nextcloudSettings.intervalMinutes * 60_000,
-      ));
+    if (autoSync.intervalMs > 0) {
+      this.registerInterval(window.setInterval(() => void this.runNextcloudSync(false), autoSync.intervalMs));
     }
 
     const views = (): KosmosView[] =>

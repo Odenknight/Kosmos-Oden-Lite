@@ -23,6 +23,9 @@ changes, called out under **Compatibility**).
 
 ### Fixed
 
+- Periodic Nextcloud sync no longer starts while the old `vault-kosmos-oden`
+  plugin is still enabled; the startup sync was already held back. The notice
+  now says that automatic sync (startup and interval) stays off.
 - Added the existing vendored-core drift check to the normal `verify` command,
   so release builds cannot bypass the declared GKOS-Engine parity contract.
 

@@ -1,5 +1,6 @@
 /** DOM/Obsidian-free public surface used by the sync planner tests. */
 export {
+  automaticSyncSchedule,
   buildNextcloudDavRoot,
   effectiveSyncExcludes,
   emptyNextcloudState,

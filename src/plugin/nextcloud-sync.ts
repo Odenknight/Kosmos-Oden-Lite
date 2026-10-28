@@ -19,6 +19,7 @@ export {
   OBSIDIAN_CONFIG_PATTERN, PROTECTED_SYNC_EXCLUDES, effectiveSyncExcludes,
   buildNextcloudDavRoot, emptyNextcloudState, isExcluded, migrateNextcloudSettings,
   migrateNextcloudState, normalizeRemotePath, planSync, safeRelativePath, syncScope,
+  automaticSyncSchedule,
 } from "./nextcloud-sync-core";
 export type {
   LocalEntry, NextcloudSettings, NextcloudSyncState, RemoteEntry, SyncAction,
