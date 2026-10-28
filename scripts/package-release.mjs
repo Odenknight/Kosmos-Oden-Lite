@@ -48,7 +48,7 @@ const buildInfo = {
   schemaVersion: 1,
   project: "kosmos-oden-lite",
   version: pkg.version,
-  repository: "https://github.com/Odenknight/Kosmos-Oden",
+  repository: "https://github.com/Odenknight/Kosmos-Oden-Lite",
   gitCommit: process.env.GITHUB_SHA || git("rev-parse HEAD"),
   gitTag: process.env.GITHUB_REF_NAME || git("describe --tags --exact-match", ""),
   workflow: process.env.GITHUB_WORKFLOW || null,

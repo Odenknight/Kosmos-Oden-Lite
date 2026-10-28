@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Kosmos-Oden are documented here. Format based on
+All notable changes to Kosmos-Oden-Lite are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/); versioning is
 [SemVer](https://semver.org/) (pre-1.0: minor versions may include breaking
 changes, called out under **Compatibility**).
